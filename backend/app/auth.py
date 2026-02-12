@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -63,11 +63,31 @@ async def get_current_user(
 
     if user is None:
         raise credentials_exception
-    if user.status != UserStatus.ACTIVE.value:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Hesap aktif değil",
-        )
+    return user
+
+
+async def get_current_user_optional(request: Request, db: AsyncSession = Depends(get_db)) -> User | None:
+    """Return current user if Authorization header present, otherwise None."""
+    auth = request.headers.get("authorization")
+    if not auth:
+        return None
+    token = None
+    if auth.startswith("Bearer "):
+        token = auth.split(" ", 1)[1]
+    else:
+        token = auth
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str = payload.get("sub")
+        token_type: str = payload.get("type")
+        if user_id is None or token_type != "access":
+            return None
+    except JWTError:
+        return None
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
     return user
 
 
@@ -92,3 +112,4 @@ def require_roles(*roles: UserRole):
 require_super_admin = require_roles(UserRole.SUPER_ADMIN)
 require_admin_or_above = require_roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
 require_manager_or_above = require_roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
+require_member_or_above = require_roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER, UserRole.USER, UserRole.MEMBER)

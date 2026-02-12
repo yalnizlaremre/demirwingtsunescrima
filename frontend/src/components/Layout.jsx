@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 export default function Layout() {
-  const { user, logout, isAdmin, isManager, isUser, isSuperAdmin } = useAuth();
+  const { user, logout, isAdmin, isManager, isUser, isMember, isSuperAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,16 +20,16 @@ export default function Layout() {
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, show: true },
-    { to: '/schools', label: 'Okullar', icon: School, show: isAdmin },
+    { to: '/schools', label: 'Okullar', icon: School, show: isAdmin || isMember },
     { to: '/students', label: 'Ogrenciler', icon: GraduationCap, show: isAdmin || isManager },
     { to: '/students/pending', label: 'Onay Bekleyenler', icon: Users, show: isAdmin || isManager },
     { to: '/lessons', label: 'Dersler', icon: BookOpen, show: isAdmin || isManager },
     { to: '/events', label: 'Etkinlikler', icon: CalendarDays, show: true },
     { to: '/grades', label: 'Dereceler', icon: Shield, show: isAdmin },
     { to: '/products', label: 'Urunler', icon: Package, show: true },
-    { to: '/requests', label: 'Talepler', icon: MessageSquare, show: true },
+    { to: '/requests', label: 'Talepler', icon: MessageSquare, show: !isMember },
     { to: '/mail', label: 'Mail', icon: Mail, show: isAdmin || isManager },
-    { to: '/media', label: 'Medya', icon: Image, show: isAdmin || (isManager && user?.can_upload_media) },
+    { to: '/media', label: 'Medya', icon: Image, show: isAdmin || (isManager && user?.can_upload_media) || isMember || isUser },
     { to: '/users', label: 'Kullanicilar', icon: Users, show: isAdmin },
   ];
 
@@ -41,8 +41,9 @@ export default function Layout() {
       ADMIN: { label: 'Admin', class: 'bg-blue-100 text-blue-800' },
       MANAGER: { label: 'Egitmen', class: 'bg-emerald-100 text-emerald-800' },
       USER: { label: 'Ogrenci', class: 'bg-amber-100 text-amber-800' },
+      MEMBER: { label: 'Uye', class: 'bg-gray-100 text-gray-800' },
     };
-    const r = roles[user?.role] || roles.USER;
+    const r = roles[user?.role] || roles.MEMBER;
     return <span className={`badge ${r.class}`}>{r.label}</span>;
   };
 

@@ -24,8 +24,11 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     try {
-      await register(form);
-      toast.success('Kayit basarili! Onay bekleniyor.');
+      // Do not send empty school_id as empty string
+      const payload = { ...form };
+      if (!payload.school_id) delete payload.school_id;
+      await register(payload);
+      toast.success('Kayit basarili! Giris yapabilirsiniz.');
       navigate('/login');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Kayit basarisiz');
@@ -44,7 +47,7 @@ export default function Register() {
             <Shield size={32} className="text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white">Wing Tsun & Escrima</h1>
-          <p className="text-dark-400 mt-2">Ogrenci Kayit</p>
+          <p className="text-dark-400 mt-2">Uye Kayit</p>
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">
@@ -109,7 +112,6 @@ export default function Register() {
               value={form.school_id}
               onChange={(e) => update('school_id', e.target.value)}
               className="select-field"
-              required
             >
               <option value="">Okul secin...</option>
               {schools.map((s) => (

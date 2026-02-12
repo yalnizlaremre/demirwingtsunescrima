@@ -45,7 +45,7 @@ export default function App() {
       >
         <Route path="/" element={<Dashboard />} />
         <Route path="/schools" element={
-          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']}>
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MEMBER']}>
             <Schools />
           </ProtectedRoute>
         } />
@@ -78,7 +78,7 @@ export default function App() {
           </ProtectedRoute>
         } />
         <Route path="/media" element={
-          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']}>
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'MEMBER', 'USER']}>
             <Media />
           </ProtectedRoute>
         } />

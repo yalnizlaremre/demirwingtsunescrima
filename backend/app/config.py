@@ -1,5 +1,8 @@
 from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import List
+from pathlib import Path
+import secrets
 
 
 class Settings(BaseSettings):
@@ -7,7 +10,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./wteo.db"
 
     # JWT
-    SECRET_KEY: str = "your-secret-key-change-this-in-production"
+    # Use an env-provided SECRET_KEY in production. For dev, a random key is
+    # generated so the app runs out-of-the-box (not suitable for prod).
+    SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -18,7 +23,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5173"
 
     # Upload
-    UPLOAD_DIR: str = "uploads"
+    UPLOAD_DIR: Path = Path("uploads")
     MAX_UPLOAD_SIZE: int = 10485760  # 10MB
 
     @property

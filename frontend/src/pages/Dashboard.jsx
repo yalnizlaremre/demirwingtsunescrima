@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
 import {
   School, Users, GraduationCap, CalendarDays,
-  MessageSquare, Shield, Clock, Award,
+  MessageSquare, Shield, Clock, Award, ArrowRight,
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, isAdmin, isManager, isUser } = useAuth();
+  const { user, isAdmin, isManager, isUser, isMember } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -99,6 +100,28 @@ export default function Dashboard() {
                   <span className="text-dark-500">Kalan Saat</span>
                   <span className="font-semibold">{stats.escrima_remaining_hours || 0}</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isMember && (
+        <div className="space-y-6">
+          <div className="card bg-blue-50 border border-blue-200">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600">
+                <School size={22} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg text-blue-900">Okula Katilma Talebi Olusturun</h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  Henuz bir okula kayitli degilsiniz. Okullar sayfasindan bir okula katilma talebi olusturabilirsiniz.
+                  Talebiniz onaylandiginda ogrenci olarak sisteme erisim saglayabileceksiniz.
+                </p>
+                <Link to="/schools" className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 hover:text-blue-800">
+                  Okullari Gor <ArrowRight size={16} />
+                </Link>
               </div>
             </div>
           </div>

@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-import os
+from pathlib import Path
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
 
 from app.config import settings
 from app.database import engine
@@ -12,7 +14,7 @@ from app.models.base import Base
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create upload directory
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
     # Create tables (dev only - use alembic in production)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -25,6 +27,11 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 # CORS
 app.add_middleware(
@@ -54,6 +61,7 @@ from app.routers import (
     media,
     dashboard,
 )
+from app.routers import enrollments
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
@@ -68,6 +76,7 @@ app.include_router(requests.router, prefix="/api/requests", tags=["Requests"])
 app.include_router(mail.router, prefix="/api/mail", tags=["Mail"])
 app.include_router(media.router, prefix="/api/media", tags=["Media"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(enrollments.router, prefix="/api/enrollments", tags=["Enrollments"])
 
 
 @app.get("/api/health")

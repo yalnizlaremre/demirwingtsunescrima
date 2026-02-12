@@ -23,14 +23,14 @@ async def list_schools(
     is_active: bool | None = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(School)
     count_query = select(func.count(School.id))
 
     # MANAGER only sees their own school
-    if current_user.role == UserRole.MANAGER.value:
+    if current_user and current_user.role == UserRole.MANAGER.value:
         school_ids_q = select(SchoolManager.school_id).where(
             SchoolManager.user_id == current_user.id
         )

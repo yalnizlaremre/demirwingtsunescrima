@@ -5,7 +5,8 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Plus, Edit2, Trash2, UserPlus, School } from 'lucide-react';
+import { Plus, Edit2, Trash2, UserPlus, School, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Schools() {
   const [schools, setSchools] = useState([]);
@@ -18,8 +19,15 @@ export default function Schools() {
   const [form, setForm] = useState({ name: '', address: '', description: '', phone: '', email: '' });
   const [managerUserId, setManagerUserId] = useState('');
   const [managers, setManagers] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
+  const { user, isAdmin, isMember } = useAuth();
 
-  useEffect(() => { fetchSchools(); }, []);
+  useEffect(() => {
+    fetchSchools();
+    if (isMember) {
+      fetchMyEnrollments();
+    }
+  }, []);
 
   const fetchSchools = async () => {
     try {
@@ -27,6 +35,27 @@ export default function Schools() {
       setSchools(res.data.items);
       setTotal(res.data.total);
     } catch {} finally { setLoading(false); }
+  };
+
+  const fetchMyEnrollments = async () => {
+    try {
+      const res = await api.get('/enrollments/');
+      setEnrollments(res.data.items || []);
+    } catch {}
+  };
+
+  const getEnrollmentStatus = (schoolId) => {
+    return enrollments.find((e) => e.school_id === schoolId);
+  };
+
+  const handleEnrollmentRequest = async (schoolId) => {
+    try {
+      await api.post('/enrollments/', { school_id: schoolId });
+      toast.success('Okula katilma talebiniz gonderildi');
+      fetchMyEnrollments();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Talep gonderilemedi');
+    }
   };
 
   const openCreate = () => {
@@ -95,6 +124,61 @@ export default function Schools() {
 
   if (loading) return <LoadingSpinner />;
 
+  // MEMBER view: school list with enrollment request buttons
+  if (isMember) {
+    return (
+      <div>
+        <PageHeader title="Okullar" subtitle="Bir okula katilma talebi olusturun" />
+
+        {schools.length === 0 ? (
+          <EmptyState message="Henuz okul eklenmemis" icon={School} />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {schools.map((s) => {
+              const enrollment = getEnrollmentStatus(s.id);
+              return (
+                <div key={s.id} className="card">
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-lg">{s.name}</h3>
+                    {s.address && <p className="text-sm text-dark-400 mt-1">{s.address}</p>}
+                    {s.description && <p className="text-sm text-dark-500 mt-2">{s.description}</p>}
+                    {s.phone && <p className="text-sm text-dark-400 mt-1">Tel: {s.phone}</p>}
+                  </div>
+                  <div>
+                    {!enrollment && (
+                      <button
+                        onClick={() => handleEnrollmentRequest(s.id)}
+                        className="btn-primary w-full flex items-center justify-center gap-2"
+                      >
+                        <UserPlus size={16} /> Katilma Talebi Olustur
+                      </button>
+                    )}
+                    {enrollment && enrollment.status === 'PENDING' && (
+                      <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                        <Clock size={16} /> <span className="text-sm font-medium">Talep Gonderildi - Onay Bekleniyor</span>
+                      </div>
+                    )}
+                    {enrollment && enrollment.status === 'APPROVED' && (
+                      <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                        <CheckCircle size={16} /> <span className="text-sm font-medium">Onaylandi</span>
+                      </div>
+                    )}
+                    {enrollment && enrollment.status === 'REJECTED' && (
+                      <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                        <XCircle size={16} /> <span className="text-sm font-medium">Reddedildi</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Admin view: full school management
   return (
     <div>
       <PageHeader title="Okullar" subtitle={`${total} okul`}>

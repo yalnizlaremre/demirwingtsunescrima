@@ -12,6 +12,8 @@ from app.auth import (
 )
 from app.models.user import User, UserRole, UserStatus
 from app.models.student import Student
+from app.models.enrollment import Enrollment
+from app.models.school import School
 from app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
@@ -64,21 +66,20 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
         first_name=data.first_name,
         last_name=data.last_name,
         phone=data.phone,
-        role=UserRole.USER.value,
-        status=UserStatus.PENDING.value,
+        role=UserRole.MEMBER.value,
+        status=UserStatus.ACTIVE.value,
     )
     db.add(user)
-    await db.flush()
-
-    if data.school_id:
-        student = Student(
-            user_id=user.id,
-            school_id=data.school_id,
-        )
-        db.add(student)
-
     await db.commit()
     await db.refresh(user)
+
+    # If school_id provided, create enrollment request automatically
+    if data.school_id:
+        school_res = await db.execute(select(School).where(School.id == data.school_id))
+        if school_res.scalar_one_or_none():
+            enrollment = Enrollment(user_id=user.id, school_id=data.school_id)
+            db.add(enrollment)
+            await db.commit()
 
     return UserResponse(
         id=str(user.id),

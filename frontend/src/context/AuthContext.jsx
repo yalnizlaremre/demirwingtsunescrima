@@ -52,6 +52,7 @@ export function AuthProvider({ children }) {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const isManager = user?.role === 'MANAGER';
   const isUser = user?.role === 'USER';
+  const isMember = user?.role === 'MEMBER';
   const isManagerOrAbove = isAdmin || isManager;
 
   return (
@@ -67,6 +68,7 @@ export function AuthProvider({ children }) {
         isSuperAdmin,
         isManager,
         isUser,
+        isMember,
         isManagerOrAbove,
       }}
     >
