@@ -7,7 +7,9 @@ from app.auth import get_current_user, require_manager_or_above, get_current_use
 from app.models.enrollment import Enrollment, EnrollmentStatus
 from app.models.user import User, UserRole, UserStatus
 from app.models.school import School
+from app.models.student import Student, StudentProgress, Branch
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentResponse, EnrollmentListResponse
+from app.services.grade_hours import get_hours_for_grade
 
 router = APIRouter()
 
@@ -99,11 +101,31 @@ async def approve_enrollment(enrollment_id: str, current_user: User = Depends(re
         await db.commit()
 
     # Create Student record if not exists
-    from app.models.student import Student
     student_exists = (await db.execute(select(Student).where(Student.user_id == e.user_id))).scalar_one_or_none()
     if not student_exists:
         s = Student(user_id=e.user_id, school_id=e.school_id)
         db.add(s)
+        await db.flush()  # flush to get student id
+
+        # Create StudentProgress records for both branches (BUG FIX)
+        for branch in Branch:
+            existing_progress = await db.execute(
+                select(StudentProgress).where(
+                    StudentProgress.student_id == s.id,
+                    StudentProgress.branch == branch.value,
+                )
+            )
+            if not existing_progress.scalar_one_or_none():
+                initial_hours = get_hours_for_grade(1)
+                progress = StudentProgress(
+                    student_id=s.id,
+                    branch=branch.value,
+                    current_grade=1,
+                    completed_hours=0,
+                    remaining_hours=initial_hours["required"],
+                )
+                db.add(progress)
+
         await db.commit()
     return {"message": "Onaylandi"}
 

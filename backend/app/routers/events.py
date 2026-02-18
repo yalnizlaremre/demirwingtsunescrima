@@ -17,8 +17,9 @@ from app.services.audit import create_audit_log
 from app.schemas.event import (
     EventCreate, EventUpdate, EventResponse, EventListResponse,
     EventRegistrationCreate, EventRegistrationResponse,
-    SeminarEvaluateRequest,
+    ExamEligibilityResponse, SeminarEvaluateRequest,
 )
+from app.services.grade_hours import check_exam_eligibility, get_hours_for_grade
 
 router = APIRouter()
 
@@ -267,14 +268,53 @@ async def register_for_event(
     # Exam only for seminars
     will_take_exam = data.will_take_exam if event.event_type == EventType.SEMINAR.value else False
 
+    needs_approval = False
+    exam_branch_wt = data.exam_branch_wt if will_take_exam else False
+    exam_branch_escrima = data.exam_branch_escrima if will_take_exam else False
+
+    # Check exam eligibility per branch
+    if will_take_exam:
+        progress_result = await db.execute(
+            select(StudentProgress).where(StudentProgress.student_id == student.id)
+        )
+        progress_list = progress_result.scalars().all()
+        progress_map = {p.branch: p for p in progress_list}
+
+        if exam_branch_wt:
+            wt_progress = progress_map.get(Branch.WING_TSUN.value)
+            wt_hours = float(wt_progress.completed_hours) if wt_progress else 0
+            wt_grade = wt_progress.current_grade if wt_progress else 1
+            wt_elig = check_exam_eligibility(wt_grade, wt_hours)
+            if wt_elig == "NOT_ELIGIBLE":
+                exam_branch_wt = False
+            elif wt_elig == "NEEDS_APPROVAL":
+                needs_approval = True
+
+        if exam_branch_escrima:
+            esc_progress = progress_map.get(Branch.ESCRIMA.value)
+            esc_hours = float(esc_progress.completed_hours) if esc_progress else 0
+            esc_grade = esc_progress.current_grade if esc_progress else 1
+            esc_elig = check_exam_eligibility(esc_grade, esc_hours)
+            if esc_elig == "NOT_ELIGIBLE":
+                exam_branch_escrima = False
+            elif esc_elig == "NEEDS_APPROVAL":
+                needs_approval = True
+
+        # If no exam branches left, disable exam
+        if not exam_branch_wt and not exam_branch_escrima:
+            will_take_exam = False
+            needs_approval = False
+
     reg = EventRegistration(
         event_id=event.id,
         student_id=student.id,
         register_wt=data.register_wt,
         register_escrima=data.register_escrima,
         will_take_exam=will_take_exam,
-        exam_branch_wt=data.exam_branch_wt if will_take_exam else False,
-        exam_branch_escrima=data.exam_branch_escrima if will_take_exam else False,
+        exam_branch_wt=exam_branch_wt,
+        exam_branch_escrima=exam_branch_escrima,
+        needs_manager_approval=needs_approval,
+        manager_approved=False,
     )
     db.add(reg)
     await db.commit()
@@ -289,6 +329,8 @@ async def register_for_event(
         will_take_exam=reg.will_take_exam,
         exam_branch_wt=reg.exam_branch_wt,
         exam_branch_escrima=reg.exam_branch_escrima,
+        needs_manager_approval=reg.needs_manager_approval,
+        manager_approved=reg.manager_approved,
         created_at=reg.created_at,
     )
 
@@ -316,11 +358,84 @@ async def list_event_registrations(
             will_take_exam=r.will_take_exam,
             exam_branch_wt=r.exam_branch_wt,
             exam_branch_escrima=r.exam_branch_escrima,
+            needs_manager_approval=r.needs_manager_approval,
+            manager_approved=r.manager_approved,
             created_at=r.created_at,
             student_name=r.student.user.full_name if r.student and r.student.user else None,
         )
         for r in registrations
     ]
+
+
+# --- Exam Eligibility ---
+
+@router.get("/{event_id}/my-eligibility", response_model=ExamEligibilityResponse)
+async def get_my_eligibility(
+    event_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Ogrencinin bu seminerdeki sinav uygunluk durumunu dondurur."""
+    student_result = await db.execute(
+        select(Student).where(Student.user_id == current_user.id)
+    )
+    student = student_result.scalar_one_or_none()
+    if not student:
+        return ExamEligibilityResponse()
+
+    progress_result = await db.execute(
+        select(StudentProgress).where(StudentProgress.student_id == student.id)
+    )
+    progress_list = progress_result.scalars().all()
+    progress_map = {p.branch: p for p in progress_list}
+
+    wt_p = progress_map.get(Branch.WING_TSUN.value)
+    esc_p = progress_map.get(Branch.ESCRIMA.value)
+
+    wt_grade = wt_p.current_grade if wt_p else 1
+    wt_hours = float(wt_p.completed_hours) if wt_p else 0
+    wt_hr = get_hours_for_grade(wt_grade)
+
+    esc_grade = esc_p.current_grade if esc_p else 1
+    esc_hours = float(esc_p.completed_hours) if esc_p else 0
+    esc_hr = get_hours_for_grade(esc_grade)
+
+    return ExamEligibilityResponse(
+        wt_eligibility=check_exam_eligibility(wt_grade, wt_hours),
+        escrima_eligibility=check_exam_eligibility(esc_grade, esc_hours),
+        wt_completed_hours=wt_hours,
+        wt_required_hours=wt_hr["required"],
+        wt_minimum_hours=wt_hr["minimum"],
+        escrima_completed_hours=esc_hours,
+        escrima_required_hours=esc_hr["required"],
+        escrima_minimum_hours=esc_hr["minimum"],
+    )
+
+
+# --- Manager Exam Approval ---
+
+@router.post("/{event_id}/registrations/{reg_id}/approve-exam")
+async def approve_exam_registration(
+    event_id: str,
+    reg_id: str,
+    current_user: User = Depends(require_admin_or_above),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(EventRegistration).where(
+            EventRegistration.id == reg_id,
+            EventRegistration.event_id == event_id,
+        )
+    )
+    reg = result.scalar_one_or_none()
+    if not reg:
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
+    if not reg.needs_manager_approval:
+        raise HTTPException(status_code=400, detail="Bu kayıt onay gerektirmiyor")
+
+    reg.manager_approved = True
+    await db.commit()
+    return {"message": "Sınav katılımı onaylandı"}
 
 
 # --- Seminar Evaluation ---
@@ -379,6 +494,10 @@ async def evaluate_seminar(
             old_grade = progress.current_grade
             new_grade = old_grade + 1
             progress.current_grade = new_grade
+            # Reset hours for new grade
+            new_hours = get_hours_for_grade(new_grade)
+            progress.completed_hours = 0
+            progress.remaining_hours = new_hours["required"]
 
             eval_record = SeminarEvaluation(
                 event_id=event.id,

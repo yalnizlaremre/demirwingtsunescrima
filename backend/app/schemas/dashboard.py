@@ -23,7 +23,11 @@ class StudentDashboardStats(BaseModel):
     wt_grade: int | None
     wt_completed_hours: float | None
     wt_remaining_hours: float | None
+    wt_required_hours: int | None = None
+    wt_minimum_hours: int | None = None
     escrima_grade: int | None
     escrima_completed_hours: float | None
     escrima_remaining_hours: float | None
+    escrima_required_hours: int | None = None
+    escrima_minimum_hours: int | None = None
     upcoming_events: int

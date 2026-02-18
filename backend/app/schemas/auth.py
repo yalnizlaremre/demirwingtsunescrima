@@ -12,7 +12,6 @@ class RegisterRequest(BaseModel):
     first_name: str
     last_name: str
     phone: str | None = None
-    school_id: str | None = None
 
 
 class TokenResponse(BaseModel):

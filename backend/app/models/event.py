@@ -60,6 +60,8 @@ class EventRegistration(Base, UUIDMixin):
     will_take_exam: Mapped[bool] = mapped_column(Boolean, default=False)
     exam_branch_wt: Mapped[bool] = mapped_column(Boolean, default=False)
     exam_branch_escrima: Mapped[bool] = mapped_column(Boolean, default=False)
+    needs_manager_approval: Mapped[bool] = mapped_column(Boolean, default=False)
+    manager_approved: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(), server_default=func.now(), nullable=False)
 
     event = relationship("Event", back_populates="registrations")

@@ -12,6 +12,7 @@ from app.models.student import Student, StudentProgress, Branch
 from app.models.event import Event
 from app.models.request import Request, RequestStatus
 from app.schemas.dashboard import DashboardStats, ManagerDashboardStats, StudentDashboardStats
+from app.services.grade_hours import get_hours_for_grade
 
 router = APIRouter()
 
@@ -128,22 +129,33 @@ async def _student_stats(user: User, db: AsyncSession) -> StudentDashboardStats:
     wt_grade = None
     wt_completed = None
     wt_remaining = None
+    wt_required = None
+    wt_minimum = None
     escrima_grade = None
     escrima_completed = None
     escrima_remaining = None
+    escrima_required = None
+    escrima_minimum = None
     school_name = None
 
     if student:
         school_name = student.school.name if student.school else None
         for p in student.progress:
+            hours_info = get_hours_for_grade(p.current_grade)
+            completed = float(p.completed_hours)
+            remaining = max(0, hours_info["required"] - completed)
             if p.branch == Branch.WING_TSUN.value:
                 wt_grade = p.current_grade
-                wt_completed = float(p.completed_hours)
-                wt_remaining = float(p.remaining_hours)
+                wt_completed = completed
+                wt_remaining = remaining
+                wt_required = hours_info["required"]
+                wt_minimum = hours_info["minimum"]
             elif p.branch == Branch.ESCRIMA.value:
                 escrima_grade = p.current_grade
-                escrima_completed = float(p.completed_hours)
-                escrima_remaining = float(p.remaining_hours)
+                escrima_completed = completed
+                escrima_remaining = remaining
+                escrima_required = hours_info["required"]
+                escrima_minimum = hours_info["minimum"]
 
     upcoming_events = await db.execute(
         select(func.count(Event.id)).where(
@@ -157,8 +169,12 @@ async def _student_stats(user: User, db: AsyncSession) -> StudentDashboardStats:
         wt_grade=wt_grade,
         wt_completed_hours=wt_completed,
         wt_remaining_hours=wt_remaining,
+        wt_required_hours=wt_required,
+        wt_minimum_hours=wt_minimum,
         escrima_grade=escrima_grade,
         escrima_completed_hours=escrima_completed,
         escrima_remaining_hours=escrima_remaining,
+        escrima_required_hours=escrima_required,
+        escrima_minimum_hours=escrima_minimum,
         upcoming_events=upcoming_events.scalar() or 0,
     )

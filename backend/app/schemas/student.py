@@ -29,6 +29,30 @@ class StudentProgressResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class BranchProgressDetail(BaseModel):
+    branch: str
+    current_grade: int
+    completed_hours: float
+    required_hours: int
+    minimum_hours: int
+    remaining_hours: float
+    exam_eligibility: str  # ELIGIBLE, NEEDS_APPROVAL, NOT_ELIGIBLE
+
+
+class StudentProfileResponse(BaseModel):
+    id: str
+    user_id: str
+    first_name: str
+    last_name: str
+    email: str
+    phone: str | None
+    school_name: str | None
+    school_id: str | None
+    progress: list[BranchProgressDetail] = []
+
+    model_config = {"from_attributes": True}
+
+
 class StudentResponse(BaseModel):
     id: str
     user_id: str

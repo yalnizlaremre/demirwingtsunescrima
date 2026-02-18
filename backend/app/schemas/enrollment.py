@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
@@ -13,7 +14,7 @@ class EnrollmentResponse(BaseModel):
     school_id: str
     status: str
     notes: Optional[str] = None
-    created_at: str
+    created_at: datetime
     user_name: Optional[str] = None
     user_email: Optional[str] = None
     school_name: Optional[str] = None

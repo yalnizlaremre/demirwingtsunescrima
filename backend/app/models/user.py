@@ -36,6 +36,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=UserStatus.PENDING.value)
     instructor_title: Mapped[str | None] = mapped_column(String(20), nullable=True)
     can_upload_media: Mapped[bool] = mapped_column(Boolean, default=False)
+    avatar_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     # Relationships
     managed_schools = relationship("SchoolManager", back_populates="manager", lazy="selectin")

@@ -124,6 +124,32 @@ export default function Schools() {
 
   if (loading) return <LoadingSpinner />;
 
+  // USER view: school list (read-only, no enrollment buttons)
+  if (user?.role === 'USER') {
+    return (
+      <div>
+        <PageHeader title="Okullar" subtitle={`${total} okul`} />
+
+        {schools.length === 0 ? (
+          <EmptyState message="Henuz okul eklenmemis" icon={School} />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {schools.map((s) => (
+              <div key={s.id} className="card">
+                <div className="mb-2">
+                  <h3 className="font-semibold text-lg">{s.name}</h3>
+                  {s.address && <p className="text-sm text-dark-400 mt-1">{s.address}</p>}
+                  {s.description && <p className="text-sm text-dark-500 mt-2">{s.description}</p>}
+                  {s.phone && <p className="text-sm text-dark-400 mt-1">Tel: {s.phone}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // MEMBER view: school list with enrollment request buttons
   if (isMember) {
     return (

@@ -72,10 +72,23 @@ class EventRegistrationResponse(BaseModel):
     will_take_exam: bool
     exam_branch_wt: bool
     exam_branch_escrima: bool
+    needs_manager_approval: bool = False
+    manager_approved: bool = False
     created_at: datetime
     student_name: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class ExamEligibilityResponse(BaseModel):
+    wt_eligibility: str = "NOT_ELIGIBLE"  # ELIGIBLE, NEEDS_APPROVAL, NOT_ELIGIBLE
+    escrima_eligibility: str = "NOT_ELIGIBLE"
+    wt_completed_hours: float = 0
+    wt_required_hours: int = 0
+    wt_minimum_hours: int = 0
+    escrima_completed_hours: float = 0
+    escrima_required_hours: int = 0
+    escrima_minimum_hours: int = 0
 
 
 class SeminarEvaluateRequest(BaseModel):

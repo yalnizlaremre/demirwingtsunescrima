@@ -1,20 +1,118 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.auth import get_current_user, require_admin_or_above, require_manager_or_above
+from app.auth import get_current_user, get_current_user_optional, require_admin_or_above, require_manager_or_above
 from app.models.user import User, UserRole
 from app.models.school import School, SchoolManager
+from app.models.student import Student
+from app.models.lesson import Lesson
+from app.models.media import Media
 from app.schemas.school import (
     SchoolCreate,
     SchoolUpdate,
     SchoolResponse,
     SchoolListResponse,
+    SchoolDetailResponse,
+    InstructorInfo,
+    LessonInfo,
     AssignManagerRequest,
 )
 
 router = APIRouter()
+
+
+@router.get("/my-school", response_model=SchoolDetailResponse)
+async def get_my_school(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Ogrencinin kayitli oldugu okul bilgilerini getirir."""
+    # Find student record for current user
+    student_result = await db.execute(
+        select(Student).where(Student.user_id == current_user.id)
+    )
+    student = student_result.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Bir okula kayitli degilsiniz")
+
+    # Get the school with managers
+    school_result = await db.execute(
+        select(School)
+        .options(selectinload(School.managers))
+        .where(School.id == student.school_id)
+    )
+    school = school_result.scalar_one_or_none()
+    if not school:
+        raise HTTPException(status_code=404, detail="Okul bulunamadi")
+
+    # Get instructors (managers)
+    instructors = []
+    for sm in (school.managers or []):
+        mgr_result = await db.execute(select(User).where(User.id == sm.user_id))
+        mgr = mgr_result.scalar_one_or_none()
+        if mgr:
+            instructors.append(InstructorInfo(
+                id=str(mgr.id),
+                first_name=mgr.first_name,
+                last_name=mgr.last_name,
+                email=mgr.email,
+                instructor_title=mgr.instructor_title,
+            ))
+
+    # Get recent lessons for this school
+    lessons_result = await db.execute(
+        select(Lesson)
+        .where(Lesson.school_id == school.id)
+        .order_by(Lesson.lesson_date.desc())
+        .limit(20)
+    )
+    lessons = [
+        LessonInfo(
+            id=str(l.id),
+            branch=l.branch,
+            lesson_type=l.lesson_type,
+            lesson_date=l.lesson_date,
+            duration_hours=float(l.duration_hours),
+            notes=l.notes,
+        )
+        for l in lessons_result.scalars().all()
+    ]
+
+    # Get media for this school
+    media_result = await db.execute(
+        select(Media)
+        .where(Media.school_id == school.id)
+        .order_by(Media.created_at.desc())
+        .limit(50)
+    )
+    media_list = [
+        {
+            "id": str(m.id),
+            "media_type": m.media_type,
+            "title": m.title,
+            "file_url": m.file_url,
+            "youtube_url": m.youtube_url,
+            "file_size": m.file_size,
+        }
+        for m in media_result.scalars().all()
+    ]
+
+    return SchoolDetailResponse(
+        id=str(school.id),
+        name=school.name,
+        address=school.address,
+        description=school.description,
+        phone=school.phone,
+        email=school.email,
+        is_active=school.is_active,
+        created_at=school.created_at,
+        instructors=instructors,
+        lessons=lessons,
+        media=media_list,
+    )
 
 
 @router.get("/", response_model=SchoolListResponse)

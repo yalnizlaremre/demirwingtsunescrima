@@ -6,9 +6,43 @@ from pathlib import Path
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 
+from sqlalchemy import text
+
 from app.config import settings
 from app.database import engine
 from app.models.base import Base
+
+
+async def _migrate_sqlite(conn):
+    """Add missing columns to existing tables (dev migration for SQLite)."""
+
+    async def _add_columns(table_name, columns_map):
+        result = await conn.execute(text(f"PRAGMA table_info({table_name})"))
+        existing = {row[1] for row in result.fetchall()}
+        for col, sql in columns_map.items():
+            if col not in existing:
+                await conn.execute(text(sql))
+
+    # event_registrations: exam columns
+    await _add_columns("event_registrations", {
+        "will_take_exam": "ALTER TABLE event_registrations ADD COLUMN will_take_exam BOOLEAN DEFAULT 0",
+        "exam_branch_wt": "ALTER TABLE event_registrations ADD COLUMN exam_branch_wt BOOLEAN DEFAULT 0",
+        "exam_branch_escrima": "ALTER TABLE event_registrations ADD COLUMN exam_branch_escrima BOOLEAN DEFAULT 0",
+        "needs_manager_approval": "ALTER TABLE event_registrations ADD COLUMN needs_manager_approval BOOLEAN DEFAULT 0",
+        "manager_approved": "ALTER TABLE event_registrations ADD COLUMN manager_approved BOOLEAN DEFAULT 0",
+    })
+
+    # users: avatar
+    await _add_columns("users", {
+        "avatar_url": "ALTER TABLE users ADD COLUMN avatar_url VARCHAR(1000)",
+    })
+
+    # media: youtube, title, school_id
+    await _add_columns("media", {
+        "youtube_url": "ALTER TABLE media ADD COLUMN youtube_url VARCHAR(1000)",
+        "title": "ALTER TABLE media ADD COLUMN title VARCHAR(500)",
+        "school_id": "ALTER TABLE media ADD COLUMN school_id VARCHAR(36) REFERENCES schools(id)",
+    })
 
 
 @asynccontextmanager
@@ -18,6 +52,9 @@ async def lifespan(app: FastAPI):
     # Create tables (dev only - use alembic in production)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Migrate existing tables with missing columns
+        if settings.DATABASE_URL.startswith("sqlite"):
+            await _migrate_sqlite(conn)
     yield
     await engine.dispose()
 

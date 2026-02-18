@@ -13,7 +13,7 @@ class LessonType(str, enum.Enum):
 
 LESSON_DURATION = {
     LessonType.GROUP: 2.0,
-    LessonType.PRIVATE: 3.0,
+    LessonType.PRIVATE: 2.0,
 }
 
 

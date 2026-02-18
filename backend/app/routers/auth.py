@@ -11,9 +11,6 @@ from app.auth import (
     get_current_user,
 )
 from app.models.user import User, UserRole, UserStatus
-from app.models.student import Student
-from app.models.enrollment import Enrollment
-from app.models.school import School
 from app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
@@ -73,14 +70,6 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
 
-    # If school_id provided, create enrollment request automatically
-    if data.school_id:
-        school_res = await db.execute(select(School).where(School.id == data.school_id))
-        if school_res.scalar_one_or_none():
-            enrollment = Enrollment(user_id=user.id, school_id=data.school_id)
-            db.add(enrollment)
-            await db.commit()
-
     return UserResponse(
         id=str(user.id),
         email=user.email,
@@ -91,6 +80,7 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
         status=user.status,
         instructor_title=user.instructor_title,
         can_upload_media=user.can_upload_media,
+        avatar_url=user.avatar_url,
         created_at=user.created_at,
     )
 
@@ -129,6 +119,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
         status=current_user.status,
         instructor_title=current_user.instructor_title,
         can_upload_media=current_user.can_upload_media,
+        avatar_url=current_user.avatar_url,
         created_at=current_user.created_at,
     )
 

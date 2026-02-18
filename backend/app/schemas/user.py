@@ -37,6 +37,7 @@ class UserResponse(BaseModel):
     status: str
     instructor_title: str | None
     can_upload_media: bool
+    avatar_url: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

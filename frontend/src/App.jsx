@@ -16,6 +16,8 @@ import Requests from './pages/Requests';
 import Mail from './pages/Mail';
 import Media from './pages/Media';
 import Users from './pages/Users';
+import Profile from './pages/Profile';
+import MySchool from './pages/MySchool';
 
 export default function App() {
   const { loading } = useAuth();
@@ -45,7 +47,7 @@ export default function App() {
       >
         <Route path="/" element={<Dashboard />} />
         <Route path="/schools" element={
-          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MEMBER']}>
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'USER']}>
             <Schools />
           </ProtectedRoute>
         } />
@@ -62,6 +64,12 @@ export default function App() {
         <Route path="/lessons" element={
           <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']}>
             <Lessons />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/my-school" element={
+          <ProtectedRoute roles={['USER']}>
+            <MySchool />
           </ProtectedRoute>
         } />
         <Route path="/events" element={<Events />} />

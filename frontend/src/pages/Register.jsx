@@ -1,33 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
 import toast from 'react-hot-toast';
 import { Shield } from 'lucide-react';
 
 export default function Register() {
   const [form, setForm] = useState({
-    email: '', password: '', first_name: '', last_name: '', phone: '', school_id: '',
+    email: '', password: '', first_name: '', last_name: '', phone: '',
   });
-  const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    api.get('/schools/?is_active=true&limit=100')
-      .then((res) => setSchools(res.data.items || []))
-      .catch(() => {});
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Do not send empty school_id as empty string
-      const payload = { ...form };
-      if (!payload.school_id) delete payload.school_id;
-      await register(payload);
+      await register(form);
       toast.success('Kayit basarili! Giris yapabilirsiniz.');
       navigate('/login');
     } catch (err) {
@@ -104,20 +93,6 @@ export default function Register() {
               onChange={(e) => update('phone', e.target.value)}
               className="input-field"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-dark-700 mb-1">Okul</label>
-            <select
-              value={form.school_id}
-              onChange={(e) => update('school_id', e.target.value)}
-              className="select-field"
-            >
-              <option value="">Okul secin...</option>
-              {schools.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary w-full">

@@ -6,7 +6,7 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Plus, CalendarDays, Users, CheckCircle2, ClipboardList } from 'lucide-react';
+import { Plus, CalendarDays, Users, CheckCircle2, ClipboardList, AlertTriangle } from 'lucide-react';
 
 export default function Events() {
   const { isAdmin, isUser } = useAuth();
@@ -59,16 +59,29 @@ export default function Events() {
     }
   };
 
-  const openRegister = (event) => {
+  const [eligibility, setEligibility] = useState(null);
+
+  const openRegister = async (event) => {
     setSelectedEvent(event);
     setRegForm({ register_wt: false, register_escrima: false, will_take_exam: false, exam_branch_wt: false, exam_branch_escrima: false });
+    setEligibility(null);
+    if (event.event_type === 'SEMINAR') {
+      try {
+        const res = await api.get(`/events/${event.id}/my-eligibility`);
+        setEligibility(res.data);
+      } catch {}
+    }
     setRegModalOpen(true);
   };
 
   const handleRegister = async () => {
     try {
-      await api.post(`/events/${selectedEvent.id}/register`, regForm);
-      toast.success('Kayit basarili');
+      const res = await api.post(`/events/${selectedEvent.id}/register`, regForm);
+      if (res.data.needs_manager_approval) {
+        toast.success('Kayit basarili! Sinav icin egitmen onayi bekleniyor.');
+      } else {
+        toast.success('Kayit basarili');
+      }
       setRegModalOpen(false);
       fetchEvents();
     } catch (err) {
@@ -76,12 +89,23 @@ export default function Events() {
     }
   };
 
+  const canTakeExam = (branch) => {
+    if (!eligibility) return false;
+    const elig = branch === 'wt' ? eligibility.wt_eligibility : eligibility.escrima_eligibility;
+    return elig === 'ELIGIBLE' || elig === 'NEEDS_APPROVAL';
+  };
+
+  const needsApproval = (branch) => {
+    if (!eligibility) return false;
+    return (branch === 'wt' ? eligibility.wt_eligibility : eligibility.escrima_eligibility) === 'NEEDS_APPROVAL';
+  };
+
   const openEvaluate = async (event) => {
     setSelectedEvent(event);
     setSelectedPassed([]);
     try {
       const res = await api.get(`/events/${event.id}/registrations`);
-      setRegistrations(res.data.filter(r => r.will_take_exam));
+      setRegistrations(res.data.filter(r => r.will_take_exam && (!r.needs_manager_approval || r.manager_approved)));
     } catch {}
     setEvalModalOpen(true);
   };
@@ -212,25 +236,49 @@ export default function Events() {
               <input type="checkbox" checked={regForm.register_escrima} onChange={(e) => setRegForm(p => ({ ...p, register_escrima: e.target.checked }))} className="w-4 h-4" />
               <span>Escrima {selectedEvent?.escrima_fee ? `(${selectedEvent.escrima_fee} TL)` : ''}</span>
             </label>
-            {selectedEvent?.event_type === 'SEMINAR' && (
+            {selectedEvent?.event_type === 'SEMINAR' && (canTakeExam('wt') || canTakeExam('escrima')) && (
               <>
                 <hr />
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" checked={regForm.will_take_exam} onChange={(e) => setRegForm(p => ({ ...p, will_take_exam: e.target.checked }))} className="w-4 h-4" />
+                  <input type="checkbox" checked={regForm.will_take_exam} onChange={(e) => setRegForm(p => ({ ...p, will_take_exam: e.target.checked, exam_branch_wt: false, exam_branch_escrima: false }))} className="w-4 h-4" />
                   <span className="font-medium">Sinava girecegim</span>
                 </label>
                 {regForm.will_take_exam && (
                   <div className="ml-7 space-y-2">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" checked={regForm.exam_branch_wt} onChange={(e) => setRegForm(p => ({ ...p, exam_branch_wt: e.target.checked }))} className="w-4 h-4" />
-                      <span>Wing Tsun sinavi</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" checked={regForm.exam_branch_escrima} onChange={(e) => setRegForm(p => ({ ...p, exam_branch_escrima: e.target.checked }))} className="w-4 h-4" />
-                      <span>Escrima sinavi</span>
-                    </label>
+                    {canTakeExam('wt') && (
+                      <div>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" checked={regForm.exam_branch_wt} onChange={(e) => setRegForm(p => ({ ...p, exam_branch_wt: e.target.checked }))} className="w-4 h-4" />
+                          <span>Wing Tsun sinavi</span>
+                        </label>
+                        {needsApproval('wt') && regForm.exam_branch_wt && (
+                          <p className="ml-7 text-xs text-amber-600 flex items-center gap-1 mt-1">
+                            <AlertTriangle size={12} /> Egitmen onayi gerekiyor ({eligibility?.wt_completed_hours}/{eligibility?.wt_required_hours} saat)
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {canTakeExam('escrima') && (
+                      <div>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" checked={regForm.exam_branch_escrima} onChange={(e) => setRegForm(p => ({ ...p, exam_branch_escrima: e.target.checked }))} className="w-4 h-4" />
+                          <span>Escrima sinavi</span>
+                        </label>
+                        {needsApproval('escrima') && regForm.exam_branch_escrima && (
+                          <p className="ml-7 text-xs text-amber-600 flex items-center gap-1 mt-1">
+                            <AlertTriangle size={12} /> Egitmen onayi gerekiyor ({eligibility?.escrima_completed_hours}/{eligibility?.escrima_required_hours} saat)
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
+              </>
+            )}
+            {selectedEvent?.event_type === 'SEMINAR' && !canTakeExam('wt') && !canTakeExam('escrima') && (
+              <>
+                <hr />
+                <p className="text-sm text-dark-400 italic">Sinav icin yeterli calisma saatiniz bulunmuyor.</p>
               </>
             )}
           </div>
