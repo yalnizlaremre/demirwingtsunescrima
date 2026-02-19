@@ -19,6 +19,7 @@ async def list_lessons(
     school_id: str | None = None,
     branch: str | None = None,
     lesson_type: str | None = None,
+    schedule_id: str | None = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     current_user: User = Depends(get_current_user),
@@ -43,6 +44,9 @@ async def list_lessons(
     if lesson_type:
         query = query.where(Lesson.lesson_type == lesson_type)
         count_query = count_query.where(Lesson.lesson_type == lesson_type)
+    if schedule_id:
+        query = query.where(Lesson.schedule_id == schedule_id)
+        count_query = count_query.where(Lesson.schedule_id == schedule_id)
 
     total_result = await db.execute(count_query)
     total = total_result.scalar()
@@ -66,6 +70,7 @@ async def list_lessons(
                 created_at=l.created_at,
                 school_name=l.school.name if l.school else None,
                 attendance_count=len(l.attendances) if l.attendances else 0,
+                schedule_id=str(l.schedule_id) if l.schedule_id else None,
             )
             for l in lessons
         ],

@@ -44,6 +44,11 @@ async def _migrate_sqlite(conn):
         "school_id": "ALTER TABLE media ADD COLUMN school_id VARCHAR(36) REFERENCES schools(id)",
     })
 
+    # lessons: schedule_id
+    await _add_columns("lessons", {
+        "schedule_id": "ALTER TABLE lessons ADD COLUMN schedule_id VARCHAR(36) REFERENCES lesson_schedules(id)",
+    })
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -99,6 +104,7 @@ from app.routers import (
     dashboard,
 )
 from app.routers import enrollments
+from app.routers import lesson_schedules
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
@@ -114,6 +120,7 @@ app.include_router(mail.router, prefix="/api/mail", tags=["Mail"])
 app.include_router(media.router, prefix="/api/media", tags=["Media"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(enrollments.router, prefix="/api/enrollments", tags=["Enrollments"])
+app.include_router(lesson_schedules.router, prefix="/api/lesson-schedules", tags=["LessonSchedules"])
 
 
 @app.get("/api/health")

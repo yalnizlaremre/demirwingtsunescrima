@@ -29,6 +29,7 @@ class LessonResponse(BaseModel):
     created_at: datetime
     school_name: str | None = None
     attendance_count: int = 0
+    schedule_id: str | None = None
 
     model_config = {"from_attributes": True}
 

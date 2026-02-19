@@ -3,6 +3,7 @@ from app.models.user import User
 from app.models.school import School, SchoolManager
 from app.models.student import Student, StudentProgress
 from app.models.grade import GradeRequirement
+from app.models.lesson_schedule import LessonSchedule
 from app.models.lesson import Lesson
 from app.models.attendance import Attendance
 from app.models.event import Event, EventSchool, EventRegistration, SeminarEvaluation
@@ -21,6 +22,7 @@ __all__ = [
     "Student",
     "StudentProgress",
     "GradeRequirement",
+    "LessonSchedule",
     "Lesson",
     "Attendance",
     "Event",

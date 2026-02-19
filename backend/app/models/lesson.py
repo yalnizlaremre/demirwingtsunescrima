@@ -31,10 +31,14 @@ class Lesson(Base, UUIDMixin):
         String(36), ForeignKey("users.id"), nullable=False
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    schedule_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("lesson_schedules.id", ondelete="SET NULL"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(), server_default=func.now(), nullable=False
     )
 
     school = relationship("School", back_populates="lessons")
     creator = relationship("User", foreign_keys=[created_by])
+    schedule = relationship("LessonSchedule", back_populates="lessons")
     attendances = relationship("Attendance", back_populates="lesson", lazy="selectin")
