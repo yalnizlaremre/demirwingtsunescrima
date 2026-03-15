@@ -12,6 +12,7 @@ from app.models.attendance import Attendance
 from app.models.student import Student, StudentProgress
 from app.models.audit_log import AuditAction
 from app.services.audit import create_audit_log
+from app.services.grade_hours import update_progress_hours
 from app.schemas.attendance import AttendanceCreate, AttendanceResponse, AttendanceListResponse
 
 router = APIRouter()
@@ -69,7 +70,7 @@ async def create_attendance(
         )
         db.add(att)
 
-        # Update student progress
+        # Update student progress (completed + remaining)
         progress_result = await db.execute(
             select(StudentProgress).where(
                 StudentProgress.student_id == sid,
@@ -78,7 +79,7 @@ async def create_attendance(
         )
         progress = progress_result.scalar_one_or_none()
         if progress:
-            progress.completed_hours = float(progress.completed_hours) + hours
+            update_progress_hours(progress, hours)
 
         await create_audit_log(
             db,
@@ -160,7 +161,7 @@ async def delete_attendance(
     lesson_result = await db.execute(select(Lesson).where(Lesson.id == att.lesson_id))
     lesson = lesson_result.scalar_one_or_none()
 
-    # Revert hours from student progress
+    # Revert hours from student progress (completed + remaining)
     if lesson:
         progress_result = await db.execute(
             select(StudentProgress).where(
@@ -170,7 +171,7 @@ async def delete_attendance(
         )
         progress = progress_result.scalar_one_or_none()
         if progress:
-            progress.completed_hours = max(0, float(progress.completed_hours) - float(att.hours_credited))
+            update_progress_hours(progress, -float(att.hours_credited))
 
     await create_audit_log(
         db,

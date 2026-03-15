@@ -8,7 +8,9 @@ from app.auth import get_current_user, require_manager_or_above
 from app.models.user import User, UserRole
 from app.models.school import SchoolManager
 from app.models.lesson import Lesson, LessonType, LESSON_DURATION
-from app.models.student import Branch
+from app.models.attendance import Attendance
+from app.models.student import Student, StudentProgress
+from app.services.grade_hours import update_progress_hours
 from app.schemas.lesson import LessonCreate, LessonUpdate, LessonResponse, LessonListResponse
 
 router = APIRouter()
@@ -158,11 +160,27 @@ async def delete_lesson(
     current_user: User = Depends(require_manager_or_above),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Lesson).where(Lesson.id == lesson_id))
+    result = await db.execute(
+        select(Lesson)
+        .options(selectinload(Lesson.attendances))
+        .where(Lesson.id == lesson_id)
+    )
     lesson = result.scalar_one_or_none()
     if not lesson:
         raise HTTPException(status_code=404, detail="Ders bulunamadı")
 
+    # Yoklama saatlerini geri al: dersin yoklamalarına ait saatleri StudentProgress'ten düş
+    for att in (lesson.attendances or []):
+        progress_result = await db.execute(
+            select(StudentProgress).where(
+                StudentProgress.student_id == att.student_id,
+                StudentProgress.branch == lesson.branch,
+            )
+        )
+        progress = progress_result.scalar_one_or_none()
+        if progress:
+            update_progress_hours(progress, -float(att.hours_credited))
+
     await db.delete(lesson)
     await db.commit()
-    return {"message": "Ders silindi"}
+    return {"message": "Ders silindi ve öğrenci saatleri geri alındı"}

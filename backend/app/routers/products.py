@@ -94,6 +94,7 @@ async def list_products(
                 description=p.description,
                 image_url=p.image_url,
                 sizes=p.sizes,
+                price=float(p.price) if p.price is not None else None,
                 is_active=p.is_active,
                 created_at=p.created_at,
                 category_name=p.category.name if p.category else None,
@@ -116,6 +117,7 @@ async def create_product(
         description=data.description,
         image_url=data.image_url,
         sizes=data.sizes,
+        price=data.price,
     )
     db.add(product)
     await db.commit()
@@ -128,6 +130,7 @@ async def create_product(
         description=product.description,
         image_url=product.image_url,
         sizes=product.sizes,
+        price=float(product.price) if product.price is not None else None,
         is_active=product.is_active,
         created_at=product.created_at,
     )
@@ -159,6 +162,7 @@ async def update_product(
         description=product.description,
         image_url=product.image_url,
         sizes=product.sizes,
+        price=float(product.price) if product.price is not None else None,
         is_active=product.is_active,
         created_at=product.created_at,
     )

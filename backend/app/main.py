@@ -49,6 +49,11 @@ async def _migrate_sqlite(conn):
         "schedule_id": "ALTER TABLE lessons ADD COLUMN schedule_id VARCHAR(36) REFERENCES lesson_schedules(id)",
     })
 
+    # products: price
+    await _add_columns("products", {
+        "price": "ALTER TABLE products ADD COLUMN price NUMERIC(10,2)",
+    })
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

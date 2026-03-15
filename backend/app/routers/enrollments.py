@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.auth import get_current_user, require_manager_or_above, get_current_user_optional, require_admin_or_above
@@ -16,13 +17,34 @@ router = APIRouter()
 
 @router.post("/", response_model=EnrollmentResponse)
 async def create_enrollment(data: EnrollmentCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    # user must be authenticated
-    # ensure user is not already a student at the school
-    # ensure only one pending enrollment per user/school
-    existing_q = select(Enrollment).where(Enrollment.user_id == user.id, Enrollment.school_id == data.school_id)
-    existing = (await db.execute(existing_q)).scalar_one_or_none()
-    if existing:
-        raise HTTPException(status_code=400, detail="Zaten bu okul için bir talebiniz bulunuyor")
+    # Onaylı enrollment varsa tekrar başvurulamaz
+    approved_q = select(Enrollment).where(
+        Enrollment.user_id == user.id,
+        Enrollment.school_id == data.school_id,
+        Enrollment.status == EnrollmentStatus.APPROVED.value,
+    )
+    if (await db.execute(approved_q)).scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Bu okula zaten kayıtlısınız")
+
+    # Beklemede olan enrollment varsa tekrar başvurulamaz
+    pending_q = select(Enrollment).where(
+        Enrollment.user_id == user.id,
+        Enrollment.school_id == data.school_id,
+        Enrollment.status == EnrollmentStatus.PENDING.value,
+    )
+    if (await db.execute(pending_q)).scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Bu okul için bekleyen bir talebiniz zaten var")
+
+    # Reddedilen enrollment varsa silinir ve yenisi oluşturulur
+    rejected_q = select(Enrollment).where(
+        Enrollment.user_id == user.id,
+        Enrollment.school_id == data.school_id,
+        Enrollment.status == EnrollmentStatus.REJECTED.value,
+    )
+    rejected = (await db.execute(rejected_q)).scalar_one_or_none()
+    if rejected:
+        await db.delete(rejected)
+        await db.flush()
 
     # ensure school exists
     school_res = await db.execute(select(School).where(School.id == data.school_id))
@@ -62,24 +84,28 @@ async def list_enrollments(
         count_q = count_q.where(Enrollment.status == status)
 
     total = (await db.execute(count_q)).scalar()
+
+    # selectinload ile user ve school tek sorguda çekilir (N+1 önlenir)
+    query = query.options(
+        selectinload(Enrollment.user),
+        selectinload(Enrollment.school),
+    )
     res = (await db.execute(query.order_by(Enrollment.created_at.desc()).offset(skip).limit(limit))).scalars().all()
 
-    # Enrich with user and school names
-    items = []
-    for r in res:
-        user_obj = (await db.execute(select(User).where(User.id == r.user_id))).scalar_one_or_none()
-        school_obj = (await db.execute(select(School).where(School.id == r.school_id))).scalar_one_or_none()
-        items.append(EnrollmentResponse(
+    items = [
+        EnrollmentResponse(
             id=str(r.id),
             user_id=r.user_id,
             school_id=r.school_id,
             status=r.status,
             notes=r.notes,
             created_at=r.created_at,
-            user_name=user_obj.full_name if user_obj else None,
-            user_email=user_obj.email if user_obj else None,
-            school_name=school_obj.name if school_obj else None,
-        ))
+            user_name=r.user.full_name if r.user else None,
+            user_email=r.user.email if r.user else None,
+            school_name=r.school.name if r.school else None,
+        )
+        for r in res
+    ]
 
     return EnrollmentListResponse(items=items, total=total)
 

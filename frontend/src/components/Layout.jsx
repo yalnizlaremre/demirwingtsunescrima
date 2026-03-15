@@ -31,7 +31,7 @@ export default function Layout() {
     { to: '/products', label: 'Urunler', icon: Package, show: true },
     { to: '/requests', label: 'Talepler', icon: MessageSquare, show: !isMember },
     { to: '/mail', label: 'Mail', icon: Mail, show: isAdmin || isManager },
-    { to: '/media', label: 'Medya', icon: Image, show: isAdmin || (isManager && user?.can_upload_media) || isUser },
+    { to: '/media', label: 'Medya', icon: Image, show: isAdmin || isManager || isUser || isMember },
     { to: '/users', label: 'Kullanicilar', icon: Users, show: isAdmin },
   ];
 

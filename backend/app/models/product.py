@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import String, Text, Boolean, ForeignKey
+from sqlalchemy import String, Text, Boolean, Numeric, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin, UUIDMixin
 from datetime import datetime
@@ -28,6 +28,7 @@ class Product(Base, UUIDMixin, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     sizes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     category = relationship("ProductCategory", back_populates="products")

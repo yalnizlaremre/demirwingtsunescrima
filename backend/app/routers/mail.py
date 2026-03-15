@@ -1,3 +1,4 @@
+import asyncio
 import json
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
@@ -12,6 +13,8 @@ from app.models.school import SchoolManager
 from app.models.email_log import EmailLog
 from app.models.audit_log import AuditAction
 from app.services.audit import create_audit_log
+from app.services.mail import send_email
+from app.config import settings
 from app.schemas.mail import SendMailRequest, EmailLogResponse, EmailLogListResponse
 
 router = APIRouter()
@@ -86,12 +89,31 @@ async def send_mail(
 
     await db.commit()
 
-    # Note: Actual email sending would be integrated here
-    # For now, we just log it
+    # Asenkron olarak mail gönder (background task gibi — yanıt beklemez)
+    mail_result = {"sent": 0, "failed": 0, "enabled": False}
+    if filtered_emails:
+        try:
+            mail_result = await send_email(
+                to_emails=filtered_emails,
+                subject=data.subject,
+                body=data.body,
+            )
+        except Exception:
+            pass  # Mail hatası isteği kesmemeli; log yeterli
+
+    if not settings.MAIL_ENABLED:
+        message = f"Mail servisi devre dışı (MAIL_ENABLED=false). {len(filtered_emails)} kişi için log oluşturuldu."
+    elif mail_result["failed"] > 0:
+        message = f"{mail_result['sent']} kişiye gönderildi, {mail_result['failed']} başarısız."
+    else:
+        message = f"Mail {mail_result['sent']} kişiye başarıyla gönderildi."
+
     return {
-        "message": f"Mail {len(filtered_emails)} kişiye gönderilmek üzere kaydedildi",
+        "message": message,
         "recipient_count": len(filtered_emails),
-        "recipients": filtered_emails,
+        "sent": mail_result["sent"],
+        "failed": mail_result["failed"],
+        "mail_enabled": settings.MAIL_ENABLED,
     }
 
 

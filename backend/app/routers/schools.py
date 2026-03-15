@@ -38,21 +38,20 @@ async def get_my_school(
     if not student:
         raise HTTPException(status_code=404, detail="Bir okula kayitli degilsiniz")
 
-    # Get the school with managers
+    # Get the school with managers (selectinload ile N+1 önlendi)
     school_result = await db.execute(
         select(School)
-        .options(selectinload(School.managers))
+        .options(selectinload(School.managers).selectinload(SchoolManager.manager))
         .where(School.id == student.school_id)
     )
     school = school_result.scalar_one_or_none()
     if not school:
         raise HTTPException(status_code=404, detail="Okul bulunamadi")
 
-    # Get instructors (managers)
+    # Get instructors (managers) - relationship üzerinden tek sorguda geldi
     instructors = []
     for sm in (school.managers or []):
-        mgr_result = await db.execute(select(User).where(User.id == sm.user_id))
-        mgr = mgr_result.scalar_one_or_none()
+        mgr = sm.manager
         if mgr:
             instructors.append(InstructorInfo(
                 id=str(mgr.id),

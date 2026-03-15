@@ -21,6 +21,20 @@ def get_hours_for_grade(grade: int) -> dict:
     return {"required": 0, "minimum": 0}
 
 
+def update_progress_hours(progress, added_hours: float) -> None:
+    """StudentProgress nesnesinin completed_hours ve remaining_hours alanlarını günceller.
+
+    Args:
+        progress: StudentProgress ORM nesnesi
+        added_hours: Eklenecek saat (negatif değer saati düşürür)
+    """
+    new_completed = max(0, float(progress.completed_hours) + added_hours)
+    hours_info = get_hours_for_grade(progress.current_grade)
+    new_remaining = max(0, hours_info["required"] - new_completed)
+    progress.completed_hours = new_completed
+    progress.remaining_hours = new_remaining
+
+
 def check_exam_eligibility(grade: int, completed_hours: float) -> str:
     """Ogrencinin sinava girme uygunlugunu kontrol eder.
 

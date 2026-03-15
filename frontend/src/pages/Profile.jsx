@@ -4,13 +4,17 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
-import { Award, Clock, Target, AlertTriangle, CheckCircle2, User, Camera, Upload } from 'lucide-react';
+import { Award, Clock, Target, AlertTriangle, CheckCircle2, User, Camera, Upload, School, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Profile() {
   const { user, fetchUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState({ first_name: '', last_name: '', phone: '' });
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -20,14 +24,32 @@ export default function Profile() {
   const loadProfile = async () => {
     setLoading(true);
     try {
-      // Try to get student profile (for USER role with student record)
       const res = await api.get('/students/my-profile');
       setProfile(res.data);
     } catch {
-      // Not a student or no student record - that's fine
       setProfile(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openEdit = () => {
+    setEditForm({ first_name: user?.first_name || '', last_name: user?.last_name || '', phone: user?.phone || '' });
+    setEditMode(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.put('/students/my-profile', editForm);
+      await fetchUser();
+      toast.success('Profil güncellendi');
+      setEditMode(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Güncelleme başarısız');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -40,14 +62,13 @@ export default function Profile() {
     setUploading(true);
 
     try {
-      const res = await api.post('/students/my-profile/avatar', formData, {
+      await api.post('/students/my-profile/avatar', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      toast.success('Profil resmi guncellendi');
-      // Refresh user data in context
+      toast.success('Profil resmi güncellendi');
       await fetchUser();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Profil resmi yuklenemedi');
+      toast.error(err.response?.data?.detail || 'Profil resmi yüklenemedi');
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -88,60 +109,107 @@ export default function Profile() {
 
       {/* Avatar + Kisisel Bilgiler */}
       <div className="card mb-6">
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          {/* Avatar */}
-          <div className="relative group">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-dark-200 flex items-center justify-center">
-              {user?.avatar_url ? (
-                <img src={user.avatar_url} alt="Profil" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-3xl font-bold text-dark-400">
-                  {user?.first_name?.[0]}{user?.last_name?.[0]}
-                </span>
-              )}
+        {!editMode ? (
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            {/* Avatar */}
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-dark-200 flex items-center justify-center">
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt="Profil" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-3xl font-bold text-dark-400">
+                    {user?.first_name?.[0]}{user?.last_name?.[0]}
+                  </span>
+                )}
+              </div>
+              <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                {uploading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
+                ) : (
+                  <Camera size={24} className="text-white" />
+                )}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
+              </label>
             </div>
-            <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-              {uploading ? (
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
-              ) : (
-                <Camera size={24} className="text-white" />
-              )}
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleAvatarUpload}
-                className="hidden"
-                disabled={uploading}
-              />
-            </label>
-          </div>
 
-          {/* Bilgiler */}
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center sm:text-left">
-            <div>
-              <p className="text-sm text-dark-500">Ad Soyad</p>
-              <p className="font-semibold">{user?.first_name} {user?.last_name}</p>
+            {/* Bilgiler */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center sm:text-left">
+              <div>
+                <p className="text-sm text-dark-500">Ad Soyad</p>
+                <p className="font-semibold">{user?.first_name} {user?.last_name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-dark-500">E-posta</p>
+                <p className="font-semibold">{user?.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-dark-500">Telefon</p>
+                <p className="font-semibold">{user?.phone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-dark-500">Rol</p>
+                <p className="font-semibold capitalize">{
+                  user?.role === 'SUPER_ADMIN' ? 'Super Admin' :
+                  user?.role === 'ADMIN' ? 'Admin' :
+                  user?.role === 'MANAGER' ? 'Eğitmen' :
+                  user?.role === 'USER' ? 'Öğrenci' : 'Üye'
+                }</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-dark-500">E-posta</p>
-              <p className="font-semibold">{user?.email}</p>
-            </div>
-            <div>
-              <p className="text-sm text-dark-500">Telefon</p>
-              <p className="font-semibold">{user?.phone || '-'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-dark-500">Rol</p>
-              <p className="font-semibold capitalize">{
-                user?.role === 'SUPER_ADMIN' ? 'Super Admin' :
-                user?.role === 'ADMIN' ? 'Admin' :
-                user?.role === 'MANAGER' ? 'Egitmen' :
-                user?.role === 'USER' ? 'Ogrenci' : 'Uye'
-              }</p>
-            </div>
+
+            <button onClick={openEdit} className="btn-secondary shrink-0">
+              <User size={16} /> Düzenle
+            </button>
           </div>
-        </div>
+        ) : (
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            <h3 className="font-semibold text-dark-700">Profil Düzenle</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Ad</label>
+                <input
+                  value={editForm.first_name}
+                  onChange={(e) => setEditForm(f => ({ ...f, first_name: e.target.value }))}
+                  className="input-field"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Soyad</label>
+                <input
+                  value={editForm.last_name}
+                  onChange={(e) => setEditForm(f => ({ ...f, last_name: e.target.value }))}
+                  className="input-field"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Telefon</label>
+                <input
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm(f => ({ ...f, phone: e.target.value }))}
+                  className="input-field"
+                  placeholder="+90 555 000 0000"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary" disabled={saving}>
+                {saving ? 'Kaydediliyor...' : 'Kaydet'}
+              </button>
+              <button type="button" onClick={() => setEditMode(false)} className="btn-secondary">
+                İptal
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Student Progress (only for students with profile) */}
@@ -213,11 +281,54 @@ export default function Profile() {
         </>
       )}
 
-      {/* No student profile yet */}
+      {/* No student profile yet — USER role ama henüz profil oluşturulmamış */}
       {!profile && user?.role === 'USER' && (
         <div className="card text-center py-8">
           <User size={48} className="mx-auto text-dark-400 mb-4" />
-          <p className="text-dark-500">Ogrenci profili henuz olusturulmamis.</p>
+          <p className="text-dark-500">Öğrenci profili henüz oluşturulmamış.</p>
+        </div>
+      )}
+
+      {/* MEMBER: okula katılma yönlendirmesi */}
+      {user?.role === 'MEMBER' && (
+        <div className="card bg-blue-50 border border-blue-200">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600 shrink-0">
+              <School size={22} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg text-blue-900">Okula Henüz Kayıtlı Değilsiniz</h3>
+              <p className="text-sm text-blue-700 mt-1">
+                İlerleme durumunuzu görmek için önce bir okula kayıt olmanız gerekiyor.
+                Okullar sayfasından katılmak istediğiniz okulu seçip başvurabilirsiniz.
+              </p>
+              <Link
+                to="/schools"
+                className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                Okullara Göz At →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MANAGER / ADMIN: öğrenci ilerleme kartı gösterilmez, bilgi mesajı */}
+      {(user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+        <div className="card bg-dark-50 border border-dark-200">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-dark-100 text-dark-500 shrink-0">
+              <Shield size={22} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-dark-700">
+                {user?.role === 'MANAGER' ? 'Eğitmen' : 'Yönetici'} Hesabı
+              </h3>
+              <p className="text-sm text-dark-500 mt-0.5">
+                Bu hesap türü için öğrenci ilerleme kartı bulunmuyor.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

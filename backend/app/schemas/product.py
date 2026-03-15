@@ -22,6 +22,7 @@ class ProductCreate(BaseModel):
     description: str | None = None
     sizes: str | None = None
     image_url: str | None = None
+    price: float | None = None
 
 
 class ProductUpdate(BaseModel):
@@ -30,6 +31,7 @@ class ProductUpdate(BaseModel):
     description: str | None = None
     sizes: str | None = None
     image_url: str | None = None
+    price: float | None = None
     is_active: bool | None = None
 
 
@@ -40,6 +42,7 @@ class ProductResponse(BaseModel):
     description: str | None
     image_url: str | None
     sizes: str | None
+    price: float | None = None
     is_active: bool
     created_at: datetime
     category_name: str | None = None

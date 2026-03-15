@@ -25,3 +25,6 @@ starlette==0.41.3
 python-dotenv==1.0.1
 aiofiles==24.1.0
 uuid6==2024.7.10
+
+# Email (SMTP)
+aiosmtplib==3.0.1

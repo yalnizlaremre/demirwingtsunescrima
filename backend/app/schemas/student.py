@@ -77,3 +77,10 @@ class StudentListResponse(BaseModel):
 
 class ApproveStudentRequest(BaseModel):
     approved: bool
+
+
+class UserProfileUpdate(BaseModel):
+    """Kullanıcının kendi ad/soyad/telefon bilgilerini güncellemesi için."""
+    first_name: str | None = None
+    last_name: str | None = None
+    phone: str | None = None

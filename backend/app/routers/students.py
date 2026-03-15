@@ -22,6 +22,7 @@ from app.schemas.student import (
     ApproveStudentRequest,
     StudentProfileResponse,
     BranchProgressDetail,
+    UserProfileUpdate,
 )
 from app.services.grade_hours import get_hours_for_grade, check_exam_eligibility
 
@@ -138,6 +139,28 @@ async def get_my_profile(
         school_id=str(student.school_id) if student.school_id else None,
         progress=progress_details,
     )
+
+
+@router.put("/my-profile")
+async def update_my_profile(
+    data: UserProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Kullanıcının kendi ad/soyad/telefon bilgilerini günceller."""
+    if data.first_name is not None:
+        current_user.first_name = data.first_name.strip()
+    if data.last_name is not None:
+        current_user.last_name = data.last_name.strip()
+    if data.phone is not None:
+        current_user.phone = data.phone.strip() or None
+
+    await db.commit()
+    return {
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
+        "phone": current_user.phone,
+    }
 
 
 @router.get("/", response_model=StudentListResponse)
