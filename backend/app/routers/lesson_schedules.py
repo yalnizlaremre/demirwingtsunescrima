@@ -149,7 +149,7 @@ async def create_schedule(
     except (ValueError, AttributeError):
         raise HTTPException(status_code=400, detail="Saat formati HH:MM olmali")
 
-    duration = LESSON_DURATION[lt]
+    duration = data.duration_hours if data.duration_hours is not None else LESSON_DURATION[lt]
 
     # Create schedule
     schedule = LessonSchedule(
@@ -321,6 +321,6 @@ async def extend_schedule(
     await db.commit()
 
     return {
-        "message": f"{generated} yeni ders olusturuldu",
-        "generated_count": generated,
+        "message": f"{generated} yeni ders olusturuldu.",
+        "generated": generated,
     }

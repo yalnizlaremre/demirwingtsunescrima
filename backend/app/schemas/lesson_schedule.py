@@ -10,6 +10,7 @@ class LessonScheduleCreate(BaseModel):
     start_time: str  # "19:00"
     start_date: str  # "2026-01-01"
     end_date: str  # "2026-12-31"
+    duration_hours: float | None = None  # None → LESSON_DURATION sabiti kullanılır
     notes: str | None = None
 
 

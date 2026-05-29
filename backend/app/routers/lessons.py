@@ -96,7 +96,7 @@ async def create_lesson(
             raise HTTPException(status_code=403, detail="Bu okul için ders oluşturamazsınız")
 
     lt = LessonType(data.lesson_type)
-    duration = LESSON_DURATION[lt]
+    duration = data.duration_hours if data.duration_hours is not None else LESSON_DURATION[lt]
 
     lesson = Lesson(
         school_id=data.school_id,
@@ -183,4 +183,4 @@ async def delete_lesson(
 
     await db.delete(lesson)
     await db.commit()
-    return {"message": "Ders silindi ve öğrenci saatleri geri alındı"}
+    return {"message": "Ders silindi"}

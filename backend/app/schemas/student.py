@@ -84,3 +84,12 @@ class UserProfileUpdate(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     phone: str | None = None
+
+
+class StudentApplyRequest(BaseModel):
+    """Kullanıcının bir okula öğrenci olarak başvurması için."""
+    school_id: str
+    date_of_birth: date | None = None
+    emergency_contact: str | None = None
+    emergency_phone: str | None = None
+    notes: str | None = None

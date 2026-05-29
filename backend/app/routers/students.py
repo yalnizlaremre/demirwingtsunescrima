@@ -23,6 +23,7 @@ from app.schemas.student import (
     StudentProfileResponse,
     BranchProgressDetail,
     UserProfileUpdate,
+    StudentApplyRequest,
 )
 from app.services.grade_hours import get_hours_for_grade, check_exam_eligibility
 
@@ -50,7 +51,11 @@ def _student_to_response(student: Student) -> StudentResponse:
                 branch=p.branch,
                 current_grade=p.current_grade,
                 completed_hours=float(p.completed_hours),
-                remaining_hours=float(p.remaining_hours),
+                # DB degerine guyvenmek yerine her seferinde hesapla; bayat veri onlenir
+                remaining_hours=max(
+                    0.0,
+                    get_hours_for_grade(p.current_grade)["required"] - float(p.completed_hours),
+                ),
             )
             for p in (student.progress or [])
         ],
@@ -63,7 +68,6 @@ async def upload_avatar(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Kullanici kendi profil resmini yukler."""
     content_type = file.content_type or ""
     if content_type not in ALLOWED_AVATAR_TYPES:
         raise HTTPException(status_code=400, detail="Sadece JPEG, PNG veya WebP yukleyebilirsiniz")
@@ -72,13 +76,11 @@ async def upload_avatar(
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Dosya boyutu 5MB'dan buyuk olamaz")
 
-    # Delete old avatar if exists
     if current_user.avatar_url:
         old_file = os.path.join(settings.UPLOAD_DIR, os.path.basename(current_user.avatar_url))
         if os.path.exists(old_file):
             os.remove(old_file)
 
-    # Save new avatar
     ext = os.path.splitext(file.filename)[1] if file.filename else ".jpg"
     unique_name = f"avatar_{uuid_mod.uuid4()}{ext}"
     file_path = os.path.join(settings.UPLOAD_DIR, unique_name)
@@ -97,7 +99,6 @@ async def get_my_profile(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Ogrencinin kendi profil bilgilerini getirir."""
     result = await db.execute(
         select(Student)
         .options(
@@ -109,7 +110,7 @@ async def get_my_profile(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Öğrenci profili bulunamadı")
+        raise HTTPException(status_code=404, detail="Ogrenci profili bulunamadi")
 
     progress_details = []
     for p in (student.progress or []):
@@ -147,7 +148,6 @@ async def update_my_profile(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Kullanıcının kendi ad/soyad/telefon bilgilerini günceller."""
     if data.first_name is not None:
         current_user.first_name = data.first_name.strip()
     if data.last_name is not None:
@@ -161,6 +161,72 @@ async def update_my_profile(
         "last_name": current_user.last_name,
         "phone": current_user.phone,
     }
+
+
+@router.post("/apply", response_model=StudentResponse)
+async def apply_to_school(
+    data: StudentApplyRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Giris yapmis kullanicinin bir okula ogrenci olarak basvurmasi.
+    - Kullanicinin zaten bir Student kaydi varsa 409 doner.
+    - School_id gecersizse 404 doner.
+    - Basvuru sonrasi kullanici statusu PENDING olur; manager onayi bekler.
+    """
+    from app.models.school import School
+
+    existing_student = await db.execute(
+        select(Student).where(Student.user_id == current_user.id)
+    )
+    if existing_student.scalar_one_or_none():
+        raise HTTPException(
+            status_code=409,
+            detail="Zaten bir okula basvurmus veya kayitlisiniz.",
+        )
+
+    school_result = await db.execute(
+        select(School).where(School.id == data.school_id, School.is_active == True)
+    )
+    if not school_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Okul bulunamadi veya aktif degil")
+
+    student = Student(
+        user_id=current_user.id,
+        school_id=data.school_id,
+        date_of_birth=data.date_of_birth,
+        emergency_contact=data.emergency_contact,
+        emergency_phone=data.emergency_phone,
+        notes=data.notes,
+    )
+    db.add(student)
+
+    current_user.status = UserStatus.PENDING.value
+
+    await create_audit_log(
+        db,
+        action=AuditAction.STUDENT_APPLIED,
+        entity_type="Student",
+        entity_id=current_user.id,
+        performed_by=current_user.id,
+        details=f"Okul basvurusu yapildi: school_id={data.school_id}",
+    )
+
+    await db.commit()
+    await db.refresh(student)
+
+    result = await db.execute(
+        select(Student)
+        .options(
+            selectinload(Student.user),
+            selectinload(Student.school),
+            selectinload(Student.progress),
+        )
+        .where(Student.id == student.id)
+    )
+    student = result.scalar_one()
+    return _student_to_response(student)
 
 
 @router.get("/", response_model=StudentListResponse)
@@ -180,14 +246,12 @@ async def list_students(
     )
     count_query = select(func.count(Student.id))
 
-    # MANAGER only sees own school students
     if current_user.role == UserRole.MANAGER.value:
         school_ids_q = select(SchoolManager.school_id).where(
             SchoolManager.user_id == current_user.id
         )
         query = query.where(Student.school_id.in_(school_ids_q))
         count_query = count_query.where(Student.school_id.in_(school_ids_q))
-    # USER only sees themselves
     elif current_user.role == UserRole.USER.value:
         query = query.where(Student.user_id == current_user.id)
         count_query = count_query.where(Student.user_id == current_user.id)
@@ -197,7 +261,6 @@ async def list_students(
         count_query = count_query.where(Student.school_id == school_id)
 
     if search:
-        # Join with User to search by name
         query = query.join(Student.user).where(
             User.first_name.ilike(f"%{search}%") | User.last_name.ilike(f"%{search}%")
         )
@@ -232,7 +295,6 @@ async def list_pending_students(
         .where(User.status == UserStatus.PENDING.value)
     )
 
-    # MANAGER only sees own school
     if current_user.role == UserRole.MANAGER.value:
         school_ids_q = select(SchoolManager.school_id).where(
             SchoolManager.user_id == current_user.id
@@ -265,7 +327,7 @@ async def get_student(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
+        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
 
     return _student_to_response(student)
 
@@ -282,23 +344,22 @@ async def approve_student(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
+        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
 
     if student.user.status != UserStatus.PENDING.value:
-        raise HTTPException(status_code=400, detail="Bu öğrenci zaten işlenmiş")
+        raise HTTPException(status_code=400, detail="Bu ogrenci zaten islenmis")
 
-    # MANAGER can only approve own school students
     if current_user.role == UserRole.MANAGER.value:
         manager_schools = await db.execute(
             select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
         )
         school_ids = [row[0] for row in manager_schools.all()]
         if student.school_id not in school_ids:
-            raise HTTPException(status_code=403, detail="Bu öğrenci sizin okulunuzda değil")
+            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
 
     if data.approved:
         student.user.status = UserStatus.ACTIVE.value
-        # Create progress records for both branches
+        student.user.role = UserRole.USER.value  # MEMBER'dan USER'a yukselт
         for branch in Branch:
             existing = await db.execute(
                 select(StudentProgress).where(
@@ -323,7 +384,7 @@ async def approve_student(
             entity_type="Student",
             entity_id=student.id,
             performed_by=current_user.id,
-            details=f"Öğrenci onaylandı: {student.user.full_name}",
+            details=f"Ogrenci onaylandi: {student.user.full_name}",
         )
     else:
         student.user.status = UserStatus.INACTIVE.value
@@ -333,8 +394,112 @@ async def approve_student(
             entity_type="Student",
             entity_id=student.id,
             performed_by=current_user.id,
-            details=f"Öğrenci reddedildi: {student.user.full_name}",
+            details=f"Ogrenci reddedildi: {student.user.full_name}",
         )
 
     await db.commit()
-    return {"message": "Öğrenci onaylandı" if data.approved else "Öğrenci reddedildi"}
+    return {"message": "Ogrenci onaylandi" if data.approved else "Ogrenci reddedildi"}
+
+@router.post("/{student_id}/suspend")
+async def suspend_student(
+    student_id: str,
+    current_user: User = Depends(require_manager_or_above),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Ogrenciyi askiya alir: role USER -> MEMBER.
+    Giris yapabilir ama okula ozel icerik goremez.
+    MANAGER yalnizca kendi okul ogrencisini askiya alabilir.
+    """
+    result = await db.execute(
+        select(Student).options(selectinload(Student.user)).where(Student.id == student_id)
+    )
+    student = result.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+
+    if student.user.role not in (UserRole.USER.value, UserRole.MEMBER.value):
+        raise HTTPException(status_code=400, detail="Yalnizca USER rolundeki ogrenciler askiya alinabilir")
+
+    if student.user.role == UserRole.MEMBER.value:
+        raise HTTPException(status_code=400, detail="Ogrenci zaten askiya alinmis")
+
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        school_ids = [row[0] for row in manager_schools.all()]
+        if student.school_id not in school_ids:
+            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
+
+    student.user.role = UserRole.MEMBER.value
+
+    await create_audit_log(
+        db,
+        action=AuditAction.STUDENT_SUSPENDED,
+        entity_type="Student",
+        entity_id=student.id,
+        performed_by=current_user.id,
+        details=f"Ogrenci askiya alindi: {student.user.full_name}",
+        old_value=UserRole.USER.value,
+        new_value=UserRole.MEMBER.value,
+    )
+
+    await db.commit()
+    return {
+        "message": f"{student.user.full_name} askiya alindi. Giris yapabilir ama okul icerigi erisimi kaldirildi.",
+        "student_id": student_id,
+        "new_role": UserRole.MEMBER.value,
+    }
+
+
+@router.post("/{student_id}/reactivate")
+async def reactivate_student(
+    student_id: str,
+    current_user: User = Depends(require_manager_or_above),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Askiya alinmis ogrenciyi yeniden aktiflestirir: role MEMBER -> USER.
+    MANAGER yalnizca kendi okul ogrencisini aktiflestirebilir.
+    """
+    result = await db.execute(
+        select(Student).options(selectinload(Student.user)).where(Student.id == student_id)
+    )
+    student = result.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+
+    if student.user.role != UserRole.MEMBER.value:
+        raise HTTPException(status_code=400, detail="Ogrenci zaten aktif (USER rolunde)")
+
+    if student.user.status != UserStatus.ACTIVE.value:
+        raise HTTPException(status_code=400, detail="Kullanici aktif degil, once aktifleştirin")
+
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        school_ids = [row[0] for row in manager_schools.all()]
+        if student.school_id not in school_ids:
+            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
+
+    student.user.role = UserRole.USER.value
+
+    await create_audit_log(
+        db,
+        action=AuditAction.STUDENT_REACTIVATED,
+        entity_type="Student",
+        entity_id=student.id,
+        performed_by=current_user.id,
+        details=f"Ogrenci yeniden aktiflestirildi: {student.user.full_name}",
+        old_value=UserRole.MEMBER.value,
+        new_value=UserRole.USER.value,
+    )
+
+    await db.commit()
+    return {
+        "message": f"{student.user.full_name} yeniden aktiflestirildi.",
+        "student_id": student_id,
+        "new_role": UserRole.USER.value,
+    }

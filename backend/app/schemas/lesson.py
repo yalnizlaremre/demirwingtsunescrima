@@ -7,6 +7,7 @@ class LessonCreate(BaseModel):
     branch: str
     lesson_type: str
     lesson_date: datetime
+    duration_hours: float | None = None  # None -> LESSON_DURATION sabiti kullanilir
     notes: str | None = None
 
 

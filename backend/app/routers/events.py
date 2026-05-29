@@ -142,7 +142,7 @@ async def get_event(
     )
     event = result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
 
     return EventResponse(
         id=str(event.id),
@@ -174,7 +174,7 @@ async def update_event(
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
 
     update_data = data.model_dump(exclude_unset=True)
     school_ids = update_data.pop("selected_school_ids", None)
@@ -183,13 +183,11 @@ async def update_event(
         setattr(event, field, value)
 
     if school_ids is not None:
-        # Remove old
         old = await db.execute(
             select(EventSchool).where(EventSchool.event_id == event.id)
         )
         for es in old.scalars().all():
             await db.delete(es)
-        # Add new
         for sid in school_ids:
             db.add(EventSchool(event_id=event.id, school_id=sid))
 
@@ -223,7 +221,7 @@ async def delete_event(
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
 
     await db.delete(event)
     await db.commit()
@@ -239,23 +237,20 @@ async def register_for_event(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Get student profile
     student_result = await db.execute(
         select(Student).where(Student.user_id == current_user.id)
     )
     student = student_result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=400, detail="Öğrenci profili bulunamadı")
+        raise HTTPException(status_code=400, detail="Ogrenci profili bulunamadi")
 
-    # Check event
     event_result = await db.execute(select(Event).where(Event.id == event_id))
     event = event_result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
     if event.is_completed:
-        raise HTTPException(status_code=400, detail="Bu etkinlik tamamlanmış")
+        raise HTTPException(status_code=400, detail="Bu etkinlik tamamlanmis")
 
-    # Check duplicate
     existing = await db.execute(
         select(EventRegistration).where(
             EventRegistration.event_id == event.id,
@@ -263,16 +258,14 @@ async def register_for_event(
         )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Zaten kayıtlısınız")
+        raise HTTPException(status_code=400, detail="Zaten kayitlisiniz")
 
-    # Exam only for seminars
     will_take_exam = data.will_take_exam if event.event_type == EventType.SEMINAR.value else False
 
     needs_approval = False
     exam_branch_wt = data.exam_branch_wt if will_take_exam else False
     exam_branch_escrima = data.exam_branch_escrima if will_take_exam else False
 
-    # Check exam eligibility per branch
     if will_take_exam:
         progress_result = await db.execute(
             select(StudentProgress).where(StudentProgress.student_id == student.id)
@@ -300,7 +293,6 @@ async def register_for_event(
             elif esc_elig == "NEEDS_APPROVAL":
                 needs_approval = True
 
-        # If no exam branches left, disable exam
         if not exam_branch_wt and not exam_branch_escrima:
             will_take_exam = False
             needs_approval = False
@@ -375,7 +367,6 @@ async def get_my_eligibility(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Ogrencinin bu seminerdeki sinav uygunluk durumunu dondurur."""
     student_result = await db.execute(
         select(Student).where(Student.user_id == current_user.id)
     )
@@ -429,13 +420,13 @@ async def approve_exam_registration(
     )
     reg = result.scalar_one_or_none()
     if not reg:
-        raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
+        raise HTTPException(status_code=404, detail="Kayit bulunamadi")
     if not reg.needs_manager_approval:
-        raise HTTPException(status_code=400, detail="Bu kayıt onay gerektirmiyor")
+        raise HTTPException(status_code=400, detail="Bu kayit onay gerektirmiyor")
 
     reg.manager_approved = True
     await db.commit()
-    return {"message": "Sınav katılımı onaylandı"}
+    return {"message": "Sinav katilimi onaylandi"}
 
 
 # --- Seminar Evaluation ---
@@ -447,21 +438,38 @@ async def evaluate_seminar(
     current_user: User = Depends(require_admin_or_above),
     db: AsyncSession = Depends(get_db),
 ):
-    # Get event
+    # --- Temel kontroller ---
     event_result = await db.execute(select(Event).where(Event.id == event_id))
     event = event_result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
     if event.event_type != EventType.SEMINAR.value:
-        raise HTTPException(status_code=400, detail="Bu etkinlik seminer değil")
+        raise HTTPException(status_code=400, detail="Bu etkinlik seminer degil")
     if event.is_completed:
-        raise HTTPException(status_code=400, detail="Bu seminer zaten değerlendirilmiş")
+        raise HTTPException(status_code=400, detail="Bu seminer zaten degerlendirilmis")
+
+    # --- Guard: passed + failed toplam bossa reddet ---
+    all_evaluated_ids = set(data.passed_student_ids) | set(data.failed_student_ids)
+    if not all_evaluated_ids:
+        raise HTTPException(
+            status_code=400,
+            detail="En az bir ogrenci sonucu girilmeden seminer tamamlanamaz.",
+        )
+
+    # Ayni ogrencinin her iki listede olmasi tutarsizlik
+    overlap = set(data.passed_student_ids) & set(data.failed_student_ids)
+    if overlap:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Su ogrenciler hem gecti hem kaldi listesinde: {list(overlap)}",
+        )
 
     now = datetime.now(timezone.utc)
-    evaluated_count = 0
+    passed_count = 0
+    failed_count = 0
 
+    # --- Gecen ogrenciler: derece +1, saatler sifirla ---
     for sid in data.passed_student_ids:
-        # Get registration
         reg_result = await db.execute(
             select(EventRegistration).where(
                 EventRegistration.event_id == event.id,
@@ -473,7 +481,6 @@ async def evaluate_seminar(
         if not reg:
             continue
 
-        # Process each branch the student registered for exam
         for branch_flag, branch_enum in [
             (reg.exam_branch_wt, Branch.WING_TSUN),
             (reg.exam_branch_escrima, Branch.ESCRIMA),
@@ -494,12 +501,11 @@ async def evaluate_seminar(
             old_grade = progress.current_grade
             new_grade = old_grade + 1
             progress.current_grade = new_grade
-            # Reset hours for new grade
             new_hours = get_hours_for_grade(new_grade)
             progress.completed_hours = 0
             progress.remaining_hours = new_hours["required"]
 
-            eval_record = SeminarEvaluation(
+            db.add(SeminarEvaluation(
                 event_id=event.id,
                 student_id=sid,
                 branch=branch_enum.value,
@@ -508,8 +514,7 @@ async def evaluate_seminar(
                 grade_after=new_grade,
                 evaluated_by=current_user.id,
                 evaluated_at=now,
-            )
-            db.add(eval_record)
+            ))
 
             await create_audit_log(
                 db,
@@ -517,12 +522,63 @@ async def evaluate_seminar(
                 entity_type="StudentProgress",
                 entity_id=progress.id,
                 performed_by=current_user.id,
-                details=f"Seminer sınavı geçti: {branch_enum.value} {old_grade} -> {new_grade}",
+                details=f"Seminer sinavi gecti: {branch_enum.value} {old_grade} -> {new_grade}",
                 old_value=str(old_grade),
                 new_value=str(new_grade),
             )
+            passed_count += 1
 
-            evaluated_count += 1
+    # --- Kalan ogrenciler: derece/saat degismez, yalnizca kayit olusturulur ---
+    for sid in data.failed_student_ids:
+        reg_result = await db.execute(
+            select(EventRegistration).where(
+                EventRegistration.event_id == event.id,
+                EventRegistration.student_id == sid,
+                EventRegistration.will_take_exam == True,
+            )
+        )
+        reg = reg_result.scalar_one_or_none()
+        if not reg:
+            continue
+
+        for branch_flag, branch_enum in [
+            (reg.exam_branch_wt, Branch.WING_TSUN),
+            (reg.exam_branch_escrima, Branch.ESCRIMA),
+        ]:
+            if not branch_flag:
+                continue
+
+            progress_result = await db.execute(
+                select(StudentProgress).where(
+                    StudentProgress.student_id == sid,
+                    StudentProgress.branch == branch_enum.value,
+                )
+            )
+            progress = progress_result.scalar_one_or_none()
+            current_grade = progress.current_grade if progress else 0
+
+            db.add(SeminarEvaluation(
+                event_id=event.id,
+                student_id=sid,
+                branch=branch_enum.value,
+                passed=False,
+                grade_before=current_grade,
+                grade_after=current_grade,
+                evaluated_by=current_user.id,
+                evaluated_at=now,
+            ))
+
+            await create_audit_log(
+                db,
+                action=AuditAction.SEMINAR_EVALUATED,
+                entity_type="StudentProgress",
+                entity_id=progress.id if progress else sid,
+                performed_by=current_user.id,
+                details=f"Seminer sinavi kaldi: {branch_enum.value} derece {current_grade}",
+                old_value=str(current_grade),
+                new_value=str(current_grade),
+            )
+            failed_count += 1
 
     event.is_completed = True
 
@@ -532,8 +588,12 @@ async def evaluate_seminar(
         entity_type="Event",
         entity_id=event.id,
         performed_by=current_user.id,
-        details=f"Seminer değerlendirildi: {evaluated_count} derece artışı",
+        details=f"Seminer tamamlandi: {passed_count} gecti, {failed_count} kaldi",
     )
 
     await db.commit()
-    return {"message": f"Seminer değerlendirildi. {evaluated_count} derece artışı yapıldı."}
+    return {
+        "message": "Seminer degerlendirildi.",
+        "passed": passed_count,
+        "failed": failed_count,
+    }

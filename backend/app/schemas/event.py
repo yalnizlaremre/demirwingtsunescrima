@@ -93,3 +93,4 @@ class ExamEligibilityResponse(BaseModel):
 
 class SeminarEvaluateRequest(BaseModel):
     passed_student_ids: list[str]
+    failed_student_ids: list[str] = []
