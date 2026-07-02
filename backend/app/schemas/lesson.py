@@ -1,12 +1,14 @@
 from pydantic import BaseModel
 from datetime import datetime
 
+from app.utils import NaiveDatetime
+
 
 class LessonCreate(BaseModel):
     school_id: str
     branch: str
     lesson_type: str
-    lesson_date: datetime
+    lesson_date: NaiveDatetime
     duration_hours: float | None = None  # None -> LESSON_DURATION sabiti kullanilir
     notes: str | None = None
 
@@ -14,7 +16,7 @@ class LessonCreate(BaseModel):
 class LessonUpdate(BaseModel):
     branch: str | None = None
     lesson_type: str | None = None
-    lesson_date: datetime | None = None
+    lesson_date: NaiveDatetime | None = None
     notes: str | None = None
 
 

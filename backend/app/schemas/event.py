@@ -1,13 +1,15 @@
 from pydantic import BaseModel
 from datetime import datetime
 
+from app.utils import NaiveDatetime
+
 
 class EventCreate(BaseModel):
     name: str
     description: str | None = None
     event_type: str
-    start_datetime: datetime
-    end_datetime: datetime
+    start_datetime: NaiveDatetime
+    end_datetime: NaiveDatetime
     location: str | None = None
     capacity: int | None = None
     scope: str = "ALL_SCHOOLS"
@@ -19,8 +21,8 @@ class EventCreate(BaseModel):
 class EventUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
-    start_datetime: datetime | None = None
-    end_datetime: datetime | None = None
+    start_datetime: NaiveDatetime | None = None
+    end_datetime: NaiveDatetime | None = None
     location: str | None = None
     capacity: int | None = None
     scope: str | None = None

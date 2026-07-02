@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +12,7 @@ from app.models.event import Event
 from app.models.request import Request, RequestStatus
 from app.schemas.dashboard import DashboardStats, ManagerDashboardStats, StudentDashboardStats
 from app.services.grade_hours import get_hours_for_grade
+from app.utils import utcnow_naive
 
 router = APIRouter()
 
@@ -105,7 +105,7 @@ async def _manager_stats(user: User, db: AsyncSession) -> ManagerDashboardStats:
     upcoming_events = await db.execute(
         select(func.count(Event.id)).where(
             Event.is_completed == False,
-            Event.start_datetime >= datetime.now(timezone.utc),
+            Event.start_datetime >= utcnow_naive(),
         )
     )
 
@@ -160,7 +160,7 @@ async def _student_stats(user: User, db: AsyncSession) -> StudentDashboardStats:
     upcoming_events = await db.execute(
         select(func.count(Event.id)).where(
             Event.is_completed == False,
-            Event.start_datetime >= datetime.now(timezone.utc),
+            Event.start_datetime >= utcnow_naive(),
         )
     )
 
