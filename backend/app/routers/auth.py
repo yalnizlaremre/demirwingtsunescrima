@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from app.auth import (
     create_refresh_token,
     get_current_user,
 )
+from app.rate_limit import limiter
 from app.models.user import User, UserRole, UserStatus
 from app.schemas.auth import (
     LoginRequest,
@@ -26,7 +27,8 @@ router = APIRouter()
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login(request: Request, data: LoginRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
@@ -49,7 +51,8 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/register", response_model=UserResponse)
-async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(User).where(User.email == data.email))
     if existing.scalar_one_or_none():
         raise HTTPException(
