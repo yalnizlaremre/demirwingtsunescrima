@@ -42,3 +42,6 @@ backend/uploads/*
 # Database
 *.db
 *.sqlite3
+
+# Backups
+/backups/
