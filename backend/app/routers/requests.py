@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +12,7 @@ from app.models.request import Request, RequestType, RequestStatus
 from app.models.product import Product
 from app.models.audit_log import AuditAction
 from app.services.audit import create_audit_log
+from app.utils import utcnow_naive
 from app.schemas.request import (
     RequestCreate, RequestHandleAction, RequestResponse, RequestListResponse,
 )
@@ -154,7 +154,7 @@ async def handle_request(
 
     req.status = data.status
     req.handled_by = current_user.id
-    req.handled_at = datetime.now(timezone.utc)
+    req.handled_at = utcnow_naive()
 
     await create_audit_log(
         db,

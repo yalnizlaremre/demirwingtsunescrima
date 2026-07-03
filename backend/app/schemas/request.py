@@ -1,13 +1,15 @@
 from pydantic import BaseModel
 from datetime import datetime
 
+from app.utils import NaiveDatetime
+
 
 class RequestCreate(BaseModel):
     request_type: str
     product_id: str | None = None
     size: str | None = None
     branch: str | None = None
-    preferred_date: datetime | None = None
+    preferred_date: NaiveDatetime | None = None
     notes: str | None = None
 
 

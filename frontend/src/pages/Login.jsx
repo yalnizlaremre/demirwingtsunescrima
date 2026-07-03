@@ -17,7 +17,7 @@ export default function Login() {
     try {
       await login(email, password);
       toast.success('Giris basarili!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Giris basarisiz');
     } finally {

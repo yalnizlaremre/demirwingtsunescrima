@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +13,7 @@ from app.models.event import (
 )
 from app.models.audit_log import AuditAction
 from app.services.audit import create_audit_log
+from app.utils import utcnow_naive
 from app.schemas.event import (
     EventCreate, EventUpdate, EventResponse, EventListResponse,
     EventRegistrationCreate, EventRegistrationResponse,
@@ -464,7 +464,7 @@ async def evaluate_seminar(
             detail=f"Su ogrenciler hem gecti hem kaldi listesinde: {list(overlap)}",
         )
 
-    now = datetime.now(timezone.utc)
+    now = utcnow_naive()
     passed_count = 0
     failed_count = 0
 
