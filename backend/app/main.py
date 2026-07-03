@@ -63,11 +63,12 @@ async def _migrate_sqlite(conn):
 async def lifespan(app: FastAPI):
     # Create upload directory
     Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
-    # Create tables (dev only - use alembic in production)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        # Migrate existing tables with missing columns
-        if settings.DATABASE_URL.startswith("sqlite"):
+    # SQLite (dev/tests): keep the old create_all + inline migration for convenience.
+    # PostgreSQL (production): schema is managed by Alembic (see `alembic upgrade head`,
+    # run before the app starts - see docker-compose/entrypoint).
+    if settings.DATABASE_URL.startswith("sqlite"):
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
             await _migrate_sqlite(conn)
     yield
     await engine.dispose()
