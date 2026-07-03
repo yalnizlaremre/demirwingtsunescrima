@@ -1,7 +1,7 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-03
+> Son güncelleme: 2026-07-03 (backup + main merge tamamlandı)
 
 ---
 
@@ -15,10 +15,9 @@
 
 ## Git / Branch Durumu
 
-- **Aktif branch:** `deploy/production-setup` — henüz `main`'e merge edilmedi
-- PR linki: https://github.com/yalnizlaremre/demirwingtsunescrima/pull/new/deploy/production-setup
-- Sunucu bu branch'ten `git pull` ile güncelleniyor (`cd /opt/wteo && git pull origin deploy/production-setup && docker compose up -d --build`)
-- main'e ne zaman merge edileceğine henüz karar verilmedi
+- **`deploy/production-setup` → `main`'e merge edildi** (2026-07-03, merge commit `3d699f3`)
+- Sunucu artık `main`'i takip ediyor: `cd /opt/wteo && git pull origin main && docker compose up -d --build`
+- `deploy/production-setup` branch'i hâlâ duruyor ama artık main'in gerisinde kalmayacak şekilde kullanılmayacak; yeni işler doğrudan main üzerinden (veya yeni feature branch'lerden) ilerleyecek
 
 ## Bugüne Kadar Tamamlananlar
 
@@ -30,12 +29,15 @@
 6. **Süper admin hesabı oluşturuldu** (`emreyalnizlar@gmail.com`) — şifre şifrelenmiş DB'de, gerekirse admin panelden/sıfırlama ile değiştirilebilir
 7. **Genel erişime açık ana sayfa** eklendi (`/` artık herkese açık "Hakkımızda" tanıtım sayfası, dashboard `/dashboard`'a taşındı)
 8. **KRİTİK BUG DÜZELTİLDİ:** Postgres'e geçince ortaya çıkan tz-aware/naive datetime uyumsuzluğu — dashboard istatistikleri, seminer değerlendirme, talep onaylama, **etkinlik/ders oluşturma** 500 hatası veriyordu. `app/utils.py`'de `NaiveDatetime` pydantic tipi + `utcnow_naive()` helper'ı ile çözüldü, regresyon testi eklendi (`test_utils.py`).
+9. **Otomatik yedekleme kuruldu:** Sunucuda her gece 03:00'te cron ile `pg_dump` + `uploads` docker volume yedeği alınıyor (`scripts/backup.sh`, 14 gün retention, `/opt/wteo/backups`). Bilgisayardan `scripts/pull-backup.ps1` ile en güncel yedek manuel çekilebiliyor (S3/off-site servis kullanılmıyor, maliyetsiz çözüm).
+10. **`deploy/production-setup` → `main` merge edildi**, sunucu artık `main`'i takip ediyor.
 
 ## Bilinen Eksikler / Yapılacaklar (Öncelik Sırasıyla)
 
 ### Yüksek Öncelik
-- [ ] **Yedekleme yok** — Postgres verisi ve `uploads/` şu an sadece bu tek sunucuda, hiç yedek alınmıyor. Bir sonraki oturumda yapılacak: günlük `pg_dump` cron + `uploads/` yedeği (belki Hetzner snapshot ya da off-site rsync).
-- [ ] **`deploy/production-setup` main'e merge edilmeli** (ya da bilinçli olarak ayrı tutulacaksa not düşülmeli)
+- [x] ~~Yedekleme yok~~ → Kuruldu (bkz. madde 9 yukarıda)
+- [x] ~~`deploy/production-setup` main'e merge edilmeli~~ → Yapıldı
+- [ ] **Sıradaki iş: Anasayfa/Hakkımızda sayfası özelleştirme + admin panelden içerik yönetimi.** Kullanıcı referans siteler verecek, tasarım/içerik olarak benzetme yapılacak. Admin'den fotoğraf ve yazı gibi içerikler eklenebilecek (muhtemelen yeni bir "site content" modeli/tablosu ve admin CRUD ekranı gerekecek).
 - [ ] Aynı tz-aware/naive datetime hatasının başka gizli noktaları olabilir mi diye tekrar tarama yapılabilir (şimdilik bulunan 4 nokta düzeltildi: dashboard.py x2, events.py, requests.py + ilgili şemalar)
 
 ### Orta Öncelik (docs/prd.md'de de not düşülmüş, henüz yapılmadı)
