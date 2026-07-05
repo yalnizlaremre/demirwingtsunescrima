@@ -1,7 +1,7 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-05 (Subdomain split + public site CMS + üyelik onay akışı — backend ve app-frontend tarafı tamamlandı, yeni public frontend + deployment bekliyor)
+> Son güncelleme: 2026-07-05 (Subdomain split CANLIYA ALINDI — 3 domain de SSL ile çalışıyor: demirwingtsun.com / app. / api.)
 
 ---
 
@@ -41,9 +41,9 @@
 - [x] ~~Alembic migration'a geçiş yok~~ → Kuruldu (bkz. madde 11 yukarıda)
 - [x] ~~Backend: SiteContent modeli + School/User yeni alanlar + public/admin endpoint'ler + register/onay akışı~~ → Yapıldı (2026-07-05, bkz. madde 12 aşağıda)
 - [x] ~~Frontend (app): Bekleyen Üyeler + Site İçeriği admin ekranları + portal karşılama sayfası~~ → Yapıldı (2026-07-05)
-- [x] ~~Yeni public marketing frontend projesi (`frontend-public/`)~~ → İskelet kuruldu (2026-07-05, bkz. madde 13 aşağıda) — **npm ile hiç test edilmedi, sıradaki iş bu**
-- [x] ~~Deployment: Caddyfile 3-block + docker-compose + CORS~~ → Kod tarafı tamamlandı (2026-07-05, bkz. madde 13 aşağıda) — **DNS kaydı ve gerçek deploy henüz yapılmadı**
-- [ ] **SIRADAKİ İŞ:** `npm install` + `npm run dev`/`build` ile hem `frontend/` hem `frontend-public/` gerçek tarayıcıda test edilmeli (bu oturumda ortamda Node.js yoktu, hiç build denenmedi). Sonra DNS (`app`/`api` A kaydı, GoDaddy'de kullanıcı ekleyecek) ve sunucuya deploy.
+- [x] ~~Yeni public marketing frontend projesi (`frontend-public/`)~~ → Yapıldı, local'de build+browser test edildi (2026-07-05)
+- [x] ~~Deployment: Caddyfile 3-block + docker-compose + CORS + DNS~~ → **CANLIYA ALINDI** (2026-07-05) — DNS eklendi, sunucuya deploy edildi, 3 domain de SSL ile doğrulandı (bkz. madde 14 aşağıda)
+- [ ] **SIRADAKİ İŞ (yarın devam):** Prod'da henüz gerçek `SiteContent`/`School`/`User` içeriği yok — `https://app.demirwingtsun.com`'a admin olarak giriş yapıp **Site İçeriği** (Anasayfa/DemirWteo/İletişim metinleri), **Okullar** (Kozyatağı/Tekirdağ kapak görseli+açıklama, `picture/` klasöründeki fotoğraflarla) ve **Kullanıcılar** (Sifu Emre/Sifu Saffet'i `is_featured_instructor` yapıp avatar+bio girme) ekranlarından gerçek içerik girilmeli. O zaman `demirwingtsun.com` placeholder değil gerçek içerikle görünecek.
 - [ ] Aynı tz-aware/naive datetime hatasının başka gizli noktaları olabilir mi diye tekrar tarama yapılabilir (şimdilik bulunan 4 nokta düzeltildi: dashboard.py x2, events.py, requests.py + ilgili şemalar)
 
 ### Orta Öncelik (docs/prd.md'de de not düşülmüş, henüz yapılmadı)
@@ -90,11 +90,16 @@ Karar verilen mimari (plan dosyası: bir önceki oturumda `wild-coalescing-sunda
   - **Düzeltme:** `Home.jsx`'teki portal karşılama metninde Türkçe karakterler eksikti ("Uye", "Giris Yap" vb.) — düzeltildi, projenin geri kalanıyla tutarlı hale getirildi.
 - **Dev sunucular hâlâ arka planda açık** (kullanıcı kendisi de local'de incelemeye devam edebilir): backend :8000, frontend :5173, frontend-public :5174.
 
-### Henüz yapılmamış
-- DNS kayıtları henüz eklenmedi (kullanıcı GoDaddy'de `app`/`api` A kaydı ekleyecek — sıradaki adım)
-- Prod'da yeni migration'lar (`2a9eb32c2c56`, `859ad2d0532c`) henüz uygulanmadı
-- Gerçek sunucuya deploy edilip 3 domain de SSL ile doğrulanmadı
-- `SiteContent` verisi (anasayfa/iletisim metinleri) ve kalan eğitmen/okul içerikleri henüz admin panelden girilmedi (bkz. aşağıdaki not — kısmen local'de seed edildi)
+### CANLIYA ALINDI (aynı gün dördüncü tur, 2026-07-05)
+- Tüm değişiklikler commit'lenip `main`'e push edildi (`3a217bd`).
+- Kullanıcı GoDaddy'de `app` ve `api` için A kaydı ekledi (`188.34.180.17`), DNS aynı gün yayıldı.
+- Sunucuda (`root@188.34.180.17`, `/opt/wteo`): `git pull origin main`, `.env`'e `APP_DOMAIN=app.demirwingtsun.com` + `API_DOMAIN=api.demirwingtsun.com` eklendi, `CORS_ORIGINS`'e `https://app.demirwingtsun.com` eklendi (`.env` yedeği `.env.bak.<timestamp>` olarak alındı).
+- `docker compose up -d --build` ile yeniden build edildi — Postgres migration'ları (`2a9eb32c2c56`, `859ad2d0532c`) `entrypoint.sh` üzerinden otomatik uygulandı.
+- **Doğrulandı:** 3 domain de SSL ile (Caddy otomatik Let's Encrypt) çalışıyor — `https://demirwingtsun.com` (yeni public site, title doğru), `https://app.demirwingtsun.com` (dashboard, title doğru), `https://api.demirwingtsun.com/api/health` → `{"status":"ok"}`. `demirwingtsun.com/api/public/schools` şu an `[]` dönüyor — beklenen, çünkü prod DB'de henüz gerçek School/User/SiteContent verisi yok (local'deki seed sadece dev DB'yi etkilemişti).
+
+### Şimdi yapılması gereken (sıradaki iş)
+- **Admin panelden (`https://app.demirwingtsun.com` → Site İçeriği / Okullar / Kullanıcılar) gerçek içerik girilmeli**: Anasayfa/DemirWteo/İletişim metinleri, okul kapak görselleri, öne çıkan eğitmen fotoğrafları/bio'ları — aksi halde `demirwingtsun.com` placeholder metinlerle görünür.
+- `picture/` klasöründeki fotoğraflar admin panel üzerinden (Medya/Site İçeriği/Okullar/Kullanıcılar upload alanlarından) prod'a da yüklenmeli — local seed prod'u etkilemedi.
 
 ### Not: repo köküne gerçek fotoğraflar bırakıldı (`picture/`)
 Kullanıcı bu oturumda repo köküne `picture/` klasörü altında gerçek okul/eğitmen fotoğrafları bıraktı (Kozyatağı, Tekirdağ şubeleri; Sifu Emre Yalnızlar, Sifu Saffet Demir; `demirwteo-logo.jpeg`; ayrıca henüz kullanılmamış ekstra fotoğraflar: Kozyatağı-SifuSerhat, MarmaraUni-SifuSerhat, Urla-Kamp, Tekirdag-Zabıta, Sifu Saffet.jpeg).
