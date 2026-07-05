@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Schools from './pages/Schools';
 import Students from './pages/Students';
 import PendingStudents from './pages/PendingStudents';
+import PendingUsers from './pages/PendingUsers';
 import Lessons from './pages/Lessons';
 import Events from './pages/Events';
 import Grades from './pages/Grades';
@@ -17,6 +18,7 @@ import Requests from './pages/Requests';
 import Mail from './pages/Mail';
 import Media from './pages/Media';
 import Users from './pages/Users';
+import SiteContent from './pages/SiteContent';
 import Profile from './pages/Profile';
 import MySchool from './pages/MySchool';
 
@@ -63,6 +65,11 @@ export default function App() {
             <PendingStudents />
           </ProtectedRoute>
         } />
+        <Route path="/users/pending" element={
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']}>
+            <PendingUsers />
+          </ProtectedRoute>
+        } />
         <Route path="/lessons" element={
           <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']}>
             <Lessons />
@@ -95,6 +102,11 @@ export default function App() {
         <Route path="/users" element={
           <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']}>
             <Users />
+          </ProtectedRoute>
+        } />
+        <Route path="/site-content" element={
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']}>
+            <SiteContent />
           </ProtectedRoute>
         } />
       </Route>

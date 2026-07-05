@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, School, Users, GraduationCap, BookOpen,
   CalendarDays, Package, MessageSquare, Mail, Menu, X,
-  LogOut, ChevronDown, Shield, Image, User,
+  LogOut, ChevronDown, Shield, Image, User, UserPlus, FileText,
 } from 'lucide-react';
 
 export default function Layout() {
@@ -25,6 +25,7 @@ export default function Layout() {
     { to: '/schools', label: 'Okullar', icon: School, show: isAdmin || isMember || isUser },
     { to: '/students', label: 'Ogrenciler', icon: GraduationCap, show: isAdmin || isManager },
     { to: '/students/pending', label: 'Onay Bekleyenler', icon: Users, show: isAdmin || isManager },
+    { to: '/users/pending', label: 'Bekleyen Uyeler', icon: UserPlus, show: isAdmin || isManager },
     { to: '/lessons', label: 'Dersler', icon: BookOpen, show: isAdmin || isManager },
     { to: '/events', label: 'Etkinlikler', icon: CalendarDays, show: true },
     { to: '/grades', label: 'Dereceler', icon: Shield, show: isAdmin },
@@ -33,6 +34,7 @@ export default function Layout() {
     { to: '/mail', label: 'Mail', icon: Mail, show: isAdmin || isManager },
     { to: '/media', label: 'Medya', icon: Image, show: isAdmin || isManager || isUser || isMember },
     { to: '/users', label: 'Kullanicilar', icon: Users, show: isAdmin },
+    { to: '/site-content', label: 'Site Icerigi', icon: FileText, show: isAdmin },
   ];
 
   const filteredNav = navItems.filter((item) => item.show);

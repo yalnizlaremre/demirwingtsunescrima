@@ -121,6 +121,8 @@ from app.routers import (
 )
 from app.routers import enrollments
 from app.routers import lesson_schedules
+from app.routers import public
+from app.routers import site_content
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
@@ -137,6 +139,8 @@ app.include_router(media.router, prefix="/api/media", tags=["Media"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(enrollments.router, prefix="/api/enrollments", tags=["Enrollments"])
 app.include_router(lesson_schedules.router, prefix="/api/lesson-schedules", tags=["LessonSchedules"])
+app.include_router(public.router, prefix="/api/public", tags=["Public"])
+app.include_router(site_content.router, prefix="/api/site-content", tags=["SiteContent"])
 
 
 @app.get("/api/health")

@@ -25,6 +25,10 @@ class UserUpdate(BaseModel):
     status: str | None = None
     instructor_title: str | None = None
     can_upload_media: bool | None = None
+    bio: str | None = None
+    display_order: int | None = None
+    is_featured_instructor: bool | None = None
+    instagram_url: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -38,6 +42,10 @@ class UserResponse(BaseModel):
     instructor_title: str | None
     can_upload_media: bool
     avatar_url: str | None = None
+    bio: str | None = None
+    display_order: int = 0
+    is_featured_instructor: bool = False
+    instagram_url: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

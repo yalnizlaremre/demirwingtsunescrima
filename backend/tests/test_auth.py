@@ -31,7 +31,7 @@ class TestLogin:
 
 
 class TestRegister:
-    async def test_register_creates_active_member(self, client, db_session):
+    async def test_register_creates_pending_member(self, client, db_session):
         resp = await client.post(
             "/api/auth/register",
             json={"email": "new@test.com", "password": "secret123", "first_name": "A", "last_name": "B"},
@@ -39,13 +39,63 @@ class TestRegister:
         assert resp.status_code == 200
         body = resp.json()
         assert body["role"] == UserRole.MEMBER.value
-        assert body["status"] == UserStatus.ACTIVE.value
+        assert body["status"] == UserStatus.PENDING.value
 
     async def test_register_duplicate_email_rejected(self, client, db_session):
         await make_user(db_session, email="dup@test.com")
         resp = await client.post(
             "/api/auth/register",
             json={"email": "dup@test.com", "password": "secret123", "first_name": "A", "last_name": "B"},
+        )
+        assert resp.status_code == 400
+
+    async def test_registered_user_cannot_login_before_approval(self, client, db_session):
+        await client.post(
+            "/api/auth/register",
+            json={"email": "waiting@test.com", "password": "secret123", "first_name": "A", "last_name": "B"},
+        )
+        resp = await client.post(
+            "/api/auth/login", json={"email": "waiting@test.com", "password": "secret123"}
+        )
+        assert resp.status_code == 403
+
+
+class TestPendingUsersApproval:
+    async def test_manager_lists_pending_users(self, client, db_session):
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        pending = await make_user(db_session, status=UserStatus.PENDING.value)
+        resp = await client.get("/api/users/pending", headers=auth_headers(manager))
+        assert resp.status_code == 200
+        ids = [item["id"] for item in resp.json()["items"]]
+        assert str(pending.id) in ids
+
+    async def test_manager_approves_pending_user(self, client, db_session):
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        pending = await make_user(db_session, status=UserStatus.PENDING.value)
+        resp = await client.post(
+            f"/api/users/{pending.id}/approve", headers=auth_headers(manager)
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == UserStatus.ACTIVE.value
+
+        login = await client.post(
+            "/api/auth/login", json={"email": pending.email, "password": "password123"}
+        )
+        assert login.status_code == 200
+
+    async def test_non_manager_cannot_approve(self, client, db_session):
+        member = await make_user(db_session, role=UserRole.MEMBER.value)
+        pending = await make_user(db_session, status=UserStatus.PENDING.value)
+        resp = await client.post(
+            f"/api/users/{pending.id}/approve", headers=auth_headers(member)
+        )
+        assert resp.status_code == 403
+
+    async def test_approving_already_active_user_rejected(self, client, db_session):
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        active = await make_user(db_session, status=UserStatus.ACTIVE.value)
+        resp = await client.post(
+            f"/api/users/{active.id}/approve", headers=auth_headers(manager)
         )
         assert resp.status_code == 400
 

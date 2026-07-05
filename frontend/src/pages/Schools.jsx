@@ -16,7 +16,7 @@ export default function Schools() {
   const [managerModalOpen, setManagerModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [selectedSchool, setSelectedSchool] = useState(null);
-  const [form, setForm] = useState({ name: '', address: '', description: '', phone: '', email: '' });
+  const [form, setForm] = useState({ name: '', address: '', description: '', phone: '', email: '', cover_image_url: '', long_description: '', youtube_url: '' });
   const [managerUserId, setManagerUserId] = useState('');
   const [managers, setManagers] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
@@ -60,13 +60,22 @@ export default function Schools() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', address: '', description: '', phone: '', email: '' });
+    setForm({ name: '', address: '', description: '', phone: '', email: '', cover_image_url: '', long_description: '', youtube_url: '' });
     setModalOpen(true);
   };
 
   const openEdit = (school) => {
     setEditing(school);
-    setForm({ name: school.name, address: school.address || '', description: school.description || '', phone: school.phone || '', email: school.email || '' });
+    setForm({
+      name: school.name,
+      address: school.address || '',
+      description: school.description || '',
+      phone: school.phone || '',
+      email: school.email || '',
+      cover_image_url: school.cover_image_url || '',
+      long_description: school.long_description || '',
+      youtube_url: school.youtube_url || '',
+    });
     setModalOpen(true);
   };
 
@@ -279,6 +288,21 @@ export default function Schools() {
               <label className="block text-sm font-medium mb-1">E-posta</label>
               <input value={form.email} onChange={(e) => update('email', e.target.value)} className="input-field" />
             </div>
+          </div>
+          <div className="pt-2 border-t border-dark-100">
+            <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Tanitim Sitesi Icerigi</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Kapak Gorseli URL</label>
+            <input value={form.cover_image_url} onChange={(e) => update('cover_image_url', e.target.value)} className="input-field" placeholder="/uploads/... veya https://..." />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Detayli Tanitim Metni</label>
+            <textarea value={form.long_description} onChange={(e) => update('long_description', e.target.value)} className="input-field" rows={4} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">YouTube Tanitim Linki</label>
+            <input value={form.youtube_url} onChange={(e) => update('youtube_url', e.target.value)} className="input-field" placeholder="https://www.youtube.com/watch?v=..." />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>

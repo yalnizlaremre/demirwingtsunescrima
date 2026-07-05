@@ -1,0 +1,40 @@
+{$DOMAIN} www.{$DOMAIN} {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle /uploads/* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		root * /srv/public
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+{$APP_DOMAIN} {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle /uploads/* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		root * /srv/app
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy backend:8000
+}

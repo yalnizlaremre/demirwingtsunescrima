@@ -26,6 +26,26 @@ from app.config import settings
 router = APIRouter()
 
 
+def _user_to_response(user: User) -> UserResponse:
+    return UserResponse(
+        id=str(user.id),
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        phone=user.phone,
+        role=user.role,
+        status=user.status,
+        instructor_title=user.instructor_title,
+        can_upload_media=user.can_upload_media,
+        avatar_url=user.avatar_url,
+        bio=user.bio,
+        display_order=user.display_order,
+        is_featured_instructor=user.is_featured_instructor,
+        instagram_url=user.instagram_url,
+        created_at=user.created_at,
+    )
+
+
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
 async def login(request: Request, data: LoginRequest, db: AsyncSession = Depends(get_db)):
@@ -67,25 +87,13 @@ async def register(request: Request, data: RegisterRequest, db: AsyncSession = D
         last_name=data.last_name,
         phone=data.phone,
         role=UserRole.MEMBER.value,
-        status=UserStatus.ACTIVE.value,
+        status=UserStatus.PENDING.value,
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
-    return UserResponse(
-        id=str(user.id),
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone=user.phone,
-        role=user.role,
-        status=user.status,
-        instructor_title=user.instructor_title,
-        can_upload_media=user.can_upload_media,
-        avatar_url=user.avatar_url,
-        created_at=user.created_at,
-    )
+    return _user_to_response(user)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -112,19 +120,7 @@ async def refresh_token(data: RefreshRequest, db: AsyncSession = Depends(get_db)
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
-    return UserResponse(
-        id=str(current_user.id),
-        email=current_user.email,
-        first_name=current_user.first_name,
-        last_name=current_user.last_name,
-        phone=current_user.phone,
-        role=current_user.role,
-        status=current_user.status,
-        instructor_title=current_user.instructor_title,
-        can_upload_media=current_user.can_upload_media,
-        avatar_url=current_user.avatar_url,
-        created_at=current_user.created_at,
-    )
+    return _user_to_response(current_user)
 
 
 @router.post("/change-password")

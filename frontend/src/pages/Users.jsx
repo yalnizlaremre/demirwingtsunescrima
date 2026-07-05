@@ -18,6 +18,7 @@ export default function Users() {
   const [form, setForm] = useState({
     email: '', password: '', first_name: '', last_name: '', phone: '',
     role: 'USER', instructor_title: '', can_upload_media: false,
+    bio: '', display_order: 0, is_featured_instructor: false, instagram_url: '',
   });
 
   useEffect(() => { fetchUsers(); }, []);
@@ -36,13 +37,22 @@ export default function Users() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ email: '', password: '', first_name: '', last_name: '', phone: '', role: 'USER', instructor_title: '', can_upload_media: false });
+    setForm({
+      email: '', password: '', first_name: '', last_name: '', phone: '',
+      role: 'USER', instructor_title: '', can_upload_media: false,
+      bio: '', display_order: 0, is_featured_instructor: false,
+    });
     setModalOpen(true);
   };
 
   const openEdit = (u) => {
     setEditing(u);
-    setForm({ email: u.email, password: '', first_name: u.first_name, last_name: u.last_name, phone: u.phone || '', role: u.role, instructor_title: u.instructor_title || '', can_upload_media: u.can_upload_media });
+    setForm({
+      email: u.email, password: '', first_name: u.first_name, last_name: u.last_name, phone: u.phone || '',
+      role: u.role, instructor_title: u.instructor_title || '', can_upload_media: u.can_upload_media,
+      bio: u.bio || '', display_order: u.display_order || 0, is_featured_instructor: u.is_featured_instructor || false,
+      instagram_url: u.instagram_url || '',
+    });
     setModalOpen(true);
   };
 
@@ -206,6 +216,25 @@ export default function Users() {
                 <input type="checkbox" checked={form.can_upload_media} onChange={(e) => update('can_upload_media', e.target.checked)} className="w-4 h-4" />
                 <span className="text-sm">Medya yukleme yetkisi</span>
               </label>
+              <div className="pt-2 border-t border-dark-100">
+                <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Tanitim Sitesi (Egitmenler Sayfasi)</p>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.is_featured_instructor} onChange={(e) => update('is_featured_instructor', e.target.checked)} className="w-4 h-4" />
+                <span className="text-sm">Tanitim sitesinde oncikan egitmen olarak goster</span>
+              </label>
+              <div>
+                <label className="block text-sm font-medium mb-1">Kisa Biyografi</label>
+                <textarea value={form.bio} onChange={(e) => update('bio', e.target.value)} className="input-field" rows={3} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Siralama (kucuk sayi once gorunur)</label>
+                <input type="number" value={form.display_order} onChange={(e) => update('display_order', parseInt(e.target.value, 10) || 0)} className="input-field" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Instagram Linki</label>
+                <input value={form.instagram_url} onChange={(e) => update('instagram_url', e.target.value)} className="input-field" placeholder="https://instagram.com/..." />
+              </div>
             </>
           )}
           <div className="flex justify-end gap-3 pt-2">

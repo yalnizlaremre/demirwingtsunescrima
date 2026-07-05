@@ -17,7 +17,7 @@ export default function Register() {
     setLoading(true);
     try {
       await register(form);
-      toast.success('Kayit basarili! Giris yapabilirsiniz.');
+      toast.success('Kayit basarili! Hesabiniz onaylandiktan sonra giris yapabilirsiniz.');
       navigate('/login');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Kayit basarisiz');

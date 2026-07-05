@@ -8,6 +8,9 @@ class SchoolCreate(BaseModel):
     description: str | None = None
     phone: str | None = None
     email: str | None = None
+    cover_image_url: str | None = None
+    long_description: str | None = None
+    youtube_url: str | None = None
 
 
 class SchoolUpdate(BaseModel):
@@ -17,6 +20,9 @@ class SchoolUpdate(BaseModel):
     phone: str | None = None
     email: str | None = None
     is_active: bool | None = None
+    cover_image_url: str | None = None
+    long_description: str | None = None
+    youtube_url: str | None = None
 
 
 class SchoolResponse(BaseModel):
@@ -28,6 +34,9 @@ class SchoolResponse(BaseModel):
     email: str | None
     is_active: bool
     created_at: datetime
+    cover_image_url: str | None = None
+    long_description: str | None = None
+    youtube_url: str | None = None
 
     model_config = {"from_attributes": True}
 

@@ -160,6 +160,9 @@ async def list_schools(
                 email=s.email,
                 is_active=s.is_active,
                 created_at=s.created_at,
+                cover_image_url=s.cover_image_url,
+                long_description=s.long_description,
+                youtube_url=s.youtube_url,
             )
             for s in schools
         ],
@@ -179,6 +182,9 @@ async def create_school(
         description=data.description,
         phone=data.phone,
         email=data.email,
+        cover_image_url=data.cover_image_url,
+        long_description=data.long_description,
+        youtube_url=data.youtube_url,
     )
     db.add(school)
     await db.commit()
@@ -193,6 +199,9 @@ async def create_school(
         email=school.email,
         is_active=school.is_active,
         created_at=school.created_at,
+        cover_image_url=school.cover_image_url,
+        long_description=school.long_description,
+        youtube_url=school.youtube_url,
     )
 
 
@@ -216,6 +225,9 @@ async def get_school(
         email=school.email,
         is_active=school.is_active,
         created_at=school.created_at,
+        cover_image_url=school.cover_image_url,
+        long_description=school.long_description,
+        youtube_url=school.youtube_url,
     )
 
 
@@ -246,6 +258,9 @@ async def update_school(
         email=school.email,
         is_active=school.is_active,
         created_at=school.created_at,
+        cover_image_url=school.cover_image_url,
+        long_description=school.long_description,
+        youtube_url=school.youtube_url,
     )
 
 

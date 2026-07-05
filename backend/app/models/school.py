@@ -14,6 +14,9 @@ class School(Base, UUIDMixin, TimestampMixin):
     phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    cover_image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    long_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    youtube_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     managers = relationship("SchoolManager", back_populates="school", lazy="selectin")
     students = relationship("Student", back_populates="school", lazy="selectin")

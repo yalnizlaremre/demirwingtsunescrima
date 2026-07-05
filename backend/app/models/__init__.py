@@ -12,6 +12,7 @@ from app.models.request import Request
 from app.models.audit_log import AuditLog
 from app.models.email_log import EmailLog
 from app.models.media import Media
+from app.models.site_content import SiteContent
 
 __all__ = [
     "Base",
@@ -35,4 +36,5 @@ __all__ = [
     "AuditLog",
     "EmailLog",
     "Media",
+    "SiteContent",
 ]

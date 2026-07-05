@@ -3,11 +3,31 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.auth import get_current_user, require_admin_or_above, get_password_hash
+from app.auth import get_current_user, require_admin_or_above, require_manager_or_above, get_password_hash
 from app.models.user import User, UserRole, UserStatus, InstructorTitle
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserListResponse
 
 router = APIRouter()
+
+
+def _user_to_response(user: User) -> UserResponse:
+    return UserResponse(
+        id=str(user.id),
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        phone=user.phone,
+        role=user.role,
+        status=user.status,
+        instructor_title=user.instructor_title,
+        can_upload_media=user.can_upload_media,
+        avatar_url=user.avatar_url,
+        bio=user.bio,
+        display_order=user.display_order,
+        is_featured_instructor=user.is_featured_instructor,
+        instagram_url=user.instagram_url,
+        created_at=user.created_at,
+    )
 
 
 @router.get("/", response_model=UserListResponse)
@@ -43,23 +63,54 @@ async def list_users(
     users = result.scalars().all()
 
     return UserListResponse(
-        items=[
-            UserResponse(
-                id=str(u.id),
-                email=u.email,
-                first_name=u.first_name,
-                last_name=u.last_name,
-                phone=u.phone,
-                role=u.role,
-                status=u.status,
-                instructor_title=u.instructor_title,
-                can_upload_media=u.can_upload_media,
-                created_at=u.created_at,
-            )
-            for u in users
-        ],
+        items=[_user_to_response(u) for u in users],
         total=total,
     )
+
+
+@router.get("/pending", response_model=UserListResponse)
+async def list_pending_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    current_user: User = Depends(require_manager_or_above),
+    db: AsyncSession = Depends(get_db),
+):
+    """Tanitim sitesinden 'Kayit Ol' ile gelen, henuz onaylanmamis kullanicilar."""
+    query = select(User).where(User.status == UserStatus.PENDING.value)
+    count_query = select(func.count(User.id)).where(User.status == UserStatus.PENDING.value)
+
+    total_result = await db.execute(count_query)
+    total = total_result.scalar()
+
+    result = await db.execute(
+        query.order_by(User.created_at.desc()).offset(skip).limit(limit)
+    )
+    users = result.scalars().all()
+
+    return UserListResponse(
+        items=[_user_to_response(u) for u in users],
+        total=total,
+    )
+
+
+@router.post("/{user_id}/approve", response_model=UserResponse)
+async def approve_user(
+    user_id: str,
+    current_user: User = Depends(require_manager_or_above),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if user.status != UserStatus.PENDING.value:
+        raise HTTPException(status_code=400, detail="Kullanıcı onay bekleyen durumda değil")
+
+    user.status = UserStatus.ACTIVE.value
+    await db.commit()
+    await db.refresh(user)
+
+    return _user_to_response(user)
 
 
 @router.post("/", response_model=UserResponse)
@@ -87,18 +138,7 @@ async def create_user(
     await db.commit()
     await db.refresh(user)
 
-    return UserResponse(
-        id=str(user.id),
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone=user.phone,
-        role=user.role,
-        status=user.status,
-        instructor_title=user.instructor_title,
-        can_upload_media=user.can_upload_media,
-        created_at=user.created_at,
-    )
+    return _user_to_response(user)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -112,18 +152,7 @@ async def get_user(
     if not user:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
-    return UserResponse(
-        id=str(user.id),
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone=user.phone,
-        role=user.role,
-        status=user.status,
-        instructor_title=user.instructor_title,
-        can_upload_media=user.can_upload_media,
-        created_at=user.created_at,
-    )
+    return _user_to_response(user)
 
 
 @router.put("/{user_id}", response_model=UserResponse)
@@ -152,22 +181,19 @@ async def update_user(
         user.instructor_title = data.instructor_title
     if data.can_upload_media is not None:
         user.can_upload_media = data.can_upload_media
+    if data.bio is not None:
+        user.bio = data.bio
+    if data.display_order is not None:
+        user.display_order = data.display_order
+    if data.is_featured_instructor is not None:
+        user.is_featured_instructor = data.is_featured_instructor
+    if data.instagram_url is not None:
+        user.instagram_url = data.instagram_url
 
     await db.commit()
     await db.refresh(user)
 
-    return UserResponse(
-        id=str(user.id),
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone=user.phone,
-        role=user.role,
-        status=user.status,
-        instructor_title=user.instructor_title,
-        can_upload_media=user.can_upload_media,
-        created_at=user.created_at,
-    )
+    return _user_to_response(user)
 
 
 @router.delete("/{user_id}")

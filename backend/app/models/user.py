@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import String, Boolean
+from sqlalchemy import String, Boolean, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin, UUIDMixin
 
@@ -37,6 +37,10 @@ class User(Base, UUIDMixin, TimestampMixin):
     instructor_title: Mapped[str | None] = mapped_column(String(20), nullable=True)
     can_upload_media: Mapped[bool] = mapped_column(Boolean, default=False)
     avatar_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_featured_instructor: Mapped[bool] = mapped_column(Boolean, default=False)
+    instagram_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # Relationships
     managed_schools = relationship("SchoolManager", back_populates="manager", lazy="selectin")

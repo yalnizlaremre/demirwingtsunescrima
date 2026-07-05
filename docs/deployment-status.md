@@ -1,7 +1,7 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-03 (Alembic migration kurulumu + yeni sayfa/subdomain planı)
+> Son güncelleme: 2026-07-05 (Subdomain split + public site CMS + üyelik onay akışı — backend ve app-frontend tarafı tamamlandı, yeni public frontend + deployment bekliyor)
 
 ---
 
@@ -39,7 +39,11 @@
 - [x] ~~Yedekleme yok~~ → Kuruldu (bkz. madde 9 yukarıda)
 - [x] ~~`deploy/production-setup` main'e merge edilmeli~~ → Yapıldı
 - [x] ~~Alembic migration'a geçiş yok~~ → Kuruldu (bkz. madde 11 yukarıda)
-- [ ] **SIRADAKİ İŞ — büyük özellik, plan aşağıda:** Anasayfa yerine çoklu public sayfa yapısı (Anasayfa, Okullar, DemirWteo, Eğitmenler, İletişim) + admin panelden içerik yönetimi + subdomain ile mimari ayrım. Kullanıcı yarın referans siteler paylaşacak, tasarım/içerik o örneklere göre şekillenecek.
+- [x] ~~Backend: SiteContent modeli + School/User yeni alanlar + public/admin endpoint'ler + register/onay akışı~~ → Yapıldı (2026-07-05, bkz. madde 12 aşağıda)
+- [x] ~~Frontend (app): Bekleyen Üyeler + Site İçeriği admin ekranları + portal karşılama sayfası~~ → Yapıldı (2026-07-05)
+- [x] ~~Yeni public marketing frontend projesi (`frontend-public/`)~~ → İskelet kuruldu (2026-07-05, bkz. madde 13 aşağıda) — **npm ile hiç test edilmedi, sıradaki iş bu**
+- [x] ~~Deployment: Caddyfile 3-block + docker-compose + CORS~~ → Kod tarafı tamamlandı (2026-07-05, bkz. madde 13 aşağıda) — **DNS kaydı ve gerçek deploy henüz yapılmadı**
+- [ ] **SIRADAKİ İŞ:** `npm install` + `npm run dev`/`build` ile hem `frontend/` hem `frontend-public/` gerçek tarayıcıda test edilmeli (bu oturumda ortamda Node.js yoktu, hiç build denenmedi). Sonra DNS (`app`/`api` A kaydı, GoDaddy'de kullanıcı ekleyecek) ve sunucuya deploy.
 - [ ] Aynı tz-aware/naive datetime hatasının başka gizli noktaları olabilir mi diye tekrar tarama yapılabilir (şimdilik bulunan 4 nokta düzeltildi: dashboard.py x2, events.py, requests.py + ilgili şemalar)
 
 ### Orta Öncelik (docs/prd.md'de de not düşülmüş, henüz yapılmadı)
@@ -50,30 +54,57 @@
 - [ ] `GradeRequirement` tablosu kullanılmıyor (hardcoded `grade_hours.py` üzerinden hesaplanıyor)
 - [ ] Kapasite kontrolü, ürün stok takibi, audit log görüntüleme arayüzü gibi PRD'de listelenen eksik özellikler
 
-## YARIN DEVAM: Çoklu Sayfa + Subdomain Planı
+## Çoklu Sayfa + Subdomain Planı — İlerleme Durumu (2026-07-05)
 
-Kullanıcı yarın referans siteler paylaşacak (tasarım/içerik benzetmesi için). Karar verilen mimari:
+Karar verilen mimari (plan dosyası: bir önceki oturumda `wild-coalescing-sundae.md` olarak onaylandı):
 
-**Sayfalar:** Anasayfa, Okullar, DemirWteo, Eğitmenler, İletişim — hepsi admin panelinden (dashboard tarafı) yönetilecek.
+**Sayfalar:** Anasayfa, Okullar, DemirWteo, Eğitmenler, İletişim — hepsi admin panelinden (dashboard tarafı) yönetiliyor.
 
-**Mimari — subdomain ayrımı (kullanıcı bunu tercih etti, yeni domain almadan):**
-- `demirwingtsun.com` (+ `www`) → **yeni, ayrı bir frontend projesi** (public marketing site, 5 sayfa)
-- `app.demirwingtsun.com` → mevcut dashboard uygulaması (Home.jsx'teki public içerik kaldırılacak, login sonrası akış aynen kalıyor)
-- `api.demirwingtsun.com` → backend, iki frontend de buraya istek atacak (CORS'a yeni origin'ler eklenecek)
-- DNS: GoDaddy'de `app` ve `api` için A kaydı eklenecek (aynı IP, ücretsiz — yeni domain değil)
-- Caddyfile 3 site bloğuna çıkarılacak, docker-compose güncellenecek (Let's Encrypt sertifikaları Caddy otomatik yönetir)
+**Mimari — subdomain ayrımı:**
+- `demirwingtsun.com` (+ `www`) → **yeni, ayrı bir frontend projesi** (public marketing site, 5 sayfa) — **henüz oluşturulmadı**
+- `app.demirwingtsun.com` → mevcut dashboard uygulaması — `Home.jsx` artık hafif bir "portal karşılama" ekranı (Giriş Yap / Kayıt Ol butonları), ağır tanıtım içeriği kaldırıldı
+- `api.demirwingtsun.com` → backend, iki frontend de buraya istek atacak — **CORS_ORIGINS'e yeni origin'ler henüz eklenmedi**
 
-**Veri modeli önerisi (kod tabanı incelemesinden çıkan sonuç):**
-- Anasayfa / DemirWteo / İletişim → genel bir `SiteContent` tablosu (slug + başlık + metin + görsel, admin'de tek ekranda tab'lı düzenleme)
-- Okullar → mevcut `School` modeline `cover_image_url`, `long_description` gibi yeni alanlar (School zaten var, çoklu okul/şube destekleniyor) — **artık Alembic sayesinde bu tür alan eklemeleri güvenli**
-- Eğitmenler → `User` modeline `bio`, `display_order`, `is_featured_instructor` gibi alanlar (fotoğraf için `avatar_url` zaten var, `instructor_title` enum'u da mevcut: SIFU/SIHING)
-- Görsel yükleme: mevcut `media.py` upload altyapısı ve `/uploads` static serving doğrudan reuse edilebilir
+### Tamamlanan (bu oturumda)
+- **Backend veri modeli:** `SiteContent` modeli (slug/title/body/image_url/youtube_url) eklendi; `School`'a `cover_image_url`/`long_description`/`youtube_url`, `User`'a `bio`/`display_order`/`is_featured_instructor` eklendi. Alembic migration (`2a9eb32c2c56_site_content_and_public_fields.py`) üretildi ve local'de uygulandı — **prod'a henüz uygulanmadı** (deploy sırasında `alembic upgrade head` otomatik çalışacak, entrypoint zaten bunu yapıyor).
+- **Backend public router** (`app/routers/public.py`, `/api/public/...`): `GET /schools`, `GET /schools/{id}`, `GET /instructors` (sadece `is_featured_instructor=true`), `GET /content`, `GET /content/{slug}` — hepsi auth'suz.
+- **Backend admin CRUD** (`app/routers/site_content.py`, `/api/site-content/...`): SiteContent create/update/delete, `require_admin_or_above` yetkili. School/User güncellemeleri mevcut `/api/schools`, `/api/users` PUT endpoint'lerine yeni alanlar eklenerek yapıldı (yeni endpoint gerekmedi).
+- **Üyelik onay akışı:** `POST /api/auth/register` artık `status=PENDING` ile başlıyor (önceden auto-ACTIVE'di). Yeni `GET /api/users/pending` + `POST /api/users/{id}/approve` endpoint'leri (`require_manager_or_above`) — dikkat: bu, `/api/students/pending`+`approve` (Student kaydı üzerinden) ve `/api/enrollments` (okul kayıt talebi) akışlarından **ayrı**, üçüncü bir onay mekanizması.
+- **Avatar upload:** Yeni endpoint gerekmedi — mevcut `POST /api/students/my-profile/avatar` zaten Student kaydına bakmıyor, herhangi bir login olmuş `User` için çalışıyor.
+- **Backend testleri:** 12 yeni test eklendi (register→PENDING, onay akışı, public endpoint'ler, site-content CRUD) — toplam **75/75 test geçiyor**.
+- **Frontend (app):** Yeni "Bekleyen Üyeler" sayfası (`PendingUsers.jsx`, `/users/pending`), yeni "Site İçeriği" admin sayfası (`SiteContent.jsx`, `/site-content` — SiteContent CRUD, slug önerileri: anasayfa/demirwteo/iletisim), Schools.jsx ve Users.jsx düzenleme formlarına yeni alanlar eklendi, Register.jsx'te onay bekleme mesajı güncellendi.
+- **Not:** Bu oturumda ortamda Node.js kurulu olmadığından frontend değişiklikleri `npm run build` ile doğrulanamadı — sadece elle kod incelemesi yapıldı. Bir sonraki oturumda önce `npm run build`/`npm run dev` ile gerçek tarayıcıda test edilmeli.
 
-**Henüz karar verilmemiş/yapılmamış:**
-- Yeni public frontend projesinin iskeleti henüz oluşturulmadı
-- Backend'de public (auth'suz) GET endpoint'leri (okullar, öne çıkan eğitmenler, site içeriği) henüz yazılmadı
-- CORS_ORIGINS'e yeni origin'ler henüz eklenmedi
-- DNS kayıtları henüz eklenmedi, Caddyfile henüz güncellenmedi
+### Tamamlanan (devamı — aynı gün ikinci tur, 2026-07-05)
+- Kullanıcı iki referans site paylaştı (balabanhybridtraining.com/tr, makinatrainingclub.com) — analiz edildi, `User`'a `instagram_url` alanı eklendi (migration `859ad2d0532c`), eğitmen kartlarında Instagram linki gösterilecek. İletişim sayfasında form/WhatsApp yok — kullanıcı tercihi: sadece Instagram DM.
+- **`frontend-public/` projesi kuruldu:** Vite+React+Tailwind, mevcut `frontend/` ile aynı stack/renk paleti (dark tema, primary kırmızı). 5 sayfa: `Anasayfa.jsx`, `Okullar.jsx`, `DemirWteo.jsx`, `Egitmenler.jsx`, `Iletisim.jsx` — hepsi `/api/public/...` endpoint'lerinden veri çekiyor. `Nav.jsx`'teki "Giriş Yap" butonu `VITE_APP_URL` (varsayılan `https://app.demirwingtsun.com`) adresine yönlendiriyor. **Not:** Bu projede `npm install` hiç çalıştırılmadı, ortamda Node.js yoktu — sadece elle kod incelemesi yapıldı, bir sonraki oturumda mutlaka gerçek ortamda denenmeli.
+- **Deployment kodu:** Repo köküne `Caddyfile` (3 site bloğu: `{$DOMAIN} www.{$DOMAIN}` → `/srv/public`, `{$APP_DOMAIN}` → `/srv/app`, `{$API_DOMAIN}` → doğrudan backend proxy) ve `docker/Caddy.Dockerfile` (iki ayrı Node build stage'i — `frontend/` ve `frontend-public/` — tek Caddy image'ına kopyalanıyor) eklendi. Eski `frontend/Dockerfile` ve `frontend/Caddyfile` silindi (yerini bunlar aldı). `docker-compose.yml`'deki `caddy` servisi artık repo kökünü build context olarak kullanıyor ve `APP_DOMAIN`/`API_DOMAIN` env değişkenlerini alıyor. `.env.production.example`'a `APP_DOMAIN=app.demirwingtsun.com`, `API_DOMAIN=api.demirwingtsun.com` eklendi, `CORS_ORIGINS`'e `https://app.demirwingtsun.com` eklendi.
+- **Mimari notu:** Her subdomain kendi `/api` ve `/uploads` yolunu doğrudan backend'e proxy'liyor (aynı-origin), yani tarayıcıdan CORS'a gerek kalmadan çalışıyor — `api.demirwingtsun.com` şu an asıl olarak ileride (mobil app vb.) doğrudan API erişimi için hazır duruyor, iki web frontend'i için şart değil.
+
+### Local test tamamlandı (aynı gün üçüncü tur, 2026-07-05)
+- Node.js winget ile kuruldu (`OpenJS.NodeJS.LTS`, v24.18.0), hem `frontend/` hem `frontend-public/` için `npm install` + `npm run build` hatasız tamamlandı.
+- Backend (`uvicorn`, port 8000), `frontend` (port 5173), `frontend-public` (port 5174) local'de ayağa kaldırılıp Chrome üzerinden gerçek tarayıcıda test edildi:
+  - `frontend-public` 5 sayfa da (Anasayfa/Okullar/DemirWteo/Eğitmenler/İletişim) doğru render oluyor, gerçek okul/eğitmen fotoğrafları görünüyor, konsol hatası yok.
+  - Uçtan uca üyelik onay akışı doğrulandı: kayıt ol → PENDING → login 403 ("Hesabınız henüz aktif değil...") → admin "Bekleyen Üyeler"den onayladı → kullanıcı login olabildi.
+  - "Site İçeriği" admin sayfası (demirwteo kaydını gösteriyor, Anasayfa/İletişim için "ekle" kısayolları) çalışıyor.
+  - **Düzeltme:** `Home.jsx`'teki portal karşılama metninde Türkçe karakterler eksikti ("Uye", "Giris Yap" vb.) — düzeltildi, projenin geri kalanıyla tutarlı hale getirildi.
+- **Dev sunucular hâlâ arka planda açık** (kullanıcı kendisi de local'de incelemeye devam edebilir): backend :8000, frontend :5173, frontend-public :5174.
+
+### Henüz yapılmamış
+- DNS kayıtları henüz eklenmedi (kullanıcı GoDaddy'de `app`/`api` A kaydı ekleyecek — sıradaki adım)
+- Prod'da yeni migration'lar (`2a9eb32c2c56`, `859ad2d0532c`) henüz uygulanmadı
+- Gerçek sunucuya deploy edilip 3 domain de SSL ile doğrulanmadı
+- `SiteContent` verisi (anasayfa/iletisim metinleri) ve kalan eğitmen/okul içerikleri henüz admin panelden girilmedi (bkz. aşağıdaki not — kısmen local'de seed edildi)
+
+### Not: repo köküne gerçek fotoğraflar bırakıldı (`picture/`)
+Kullanıcı bu oturumda repo köküne `picture/` klasörü altında gerçek okul/eğitmen fotoğrafları bıraktı (Kozyatağı, Tekirdağ şubeleri; Sifu Emre Yalnızlar, Sifu Saffet Demir; `demirwteo-logo.jpeg`; ayrıca henüz kullanılmamış ekstra fotoğraflar: Kozyatağı-SifuSerhat, MarmaraUni-SifuSerhat, Urla-Kamp, Tekirdag-Zabıta, Sifu Saffet.jpeg).
+
+Bunları **sadece local dev DB'ye** (SQLite, `backend/wteo.db`) bağlamak için `backend/seed_public_content.py` scripti yazıldı ve çalıştırıldı (`python seed_public_content.py`) — fotoğrafları `backend/uploads/`'a kopyalayıp şu kayıtları oluşturdu:
+- School: Kozyatağı (`cover_image_url`), Tekirdağ (`cover_image_url`)
+- User: Emre Yalnızlar (`emreyalnizlar@gmail.com`, SUPER_ADMIN, SIFU, `is_featured_instructor=true`, avatar), Saffet Demir (`saffet.demir@wteo.local`, MANAGER, SIFU, `is_featured_instructor=true`, avatar) — **local test şifresi `changeme123`, prod'daki gerçek `emreyalnizlar@gmail.com` hesabıyla karıştırılmamalı**
+- SiteContent: `demirwteo` slug'ı, logo görseli ile
+
+Bio/adres/açıklama gibi metin alanları **kasıtlı olarak boş bırakıldı** (uydurma içerik yazılmadı) — bunlar admin panelden (Site İçeriği / Okullar / Kullanıcılar) gerçek metinle doldurulmalı. **Bu sadece local'i etkiledi, prod'a hiçbir şey yansımadı** — prod'da aynı içerik gerçek admin hesabıyla panel üzerinden ayrıca girilmesi gerekiyor (prod'un kendi ayrı veritabanı ve uploads volume'u var).
 
 ## Hızlı Komutlar (Hatırlatma)
 
