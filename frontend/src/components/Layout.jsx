@@ -58,7 +58,7 @@ export default function Layout() {
         <button onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
-        <h1 className="text-lg font-bold">WT&E</h1>
+        <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-8 w-auto" />
         <div className="w-8" />
       </div>
 
@@ -73,7 +73,7 @@ export default function Layout() {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
         <div className="p-5 border-b border-dark-700">
-          <h1 className="text-xl font-bold text-primary-400">Wing Tsun & Escrima</h1>
+          <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-12 w-auto" />
           <p className="text-dark-400 text-xs mt-1">Okul Yonetim Sistemi</p>
         </div>
 
