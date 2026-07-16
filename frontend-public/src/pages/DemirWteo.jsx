@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Shield } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
@@ -20,7 +19,7 @@ export default function DemirWteo() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
       <div className="text-center mb-10">
-        <Shield className="mx-auto mb-4 text-primary-500" size={40} />
+        <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-16 w-auto mx-auto mb-4" />
         <h1 className="text-3xl md:text-4xl font-bold">{content?.title || 'DemirWteo'}</h1>
       </div>
 

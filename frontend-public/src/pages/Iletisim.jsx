@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Mail } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -18,7 +17,7 @@ export default function Iletisim() {
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-16 text-center">
-      <Mail className="mx-auto mb-4 text-primary-500" size={40} />
+      <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-16 w-auto mx-auto mb-4" />
       <h1 className="text-3xl md:text-4xl font-bold mb-6">{content?.title || 'İletişim'}</h1>
       <p className="text-dark-300 leading-relaxed whitespace-pre-line mb-8">
         {content?.body || 'İletişim bilgileri için bizi Instagram üzerinden takip edebilir, doğrudan mesaj atabilirsiniz.'}

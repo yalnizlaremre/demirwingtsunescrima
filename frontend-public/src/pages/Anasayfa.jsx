@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight, School, Users } from 'lucide-react';
+import { ArrowRight, School, Users } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
@@ -22,9 +22,7 @@ export default function Anasayfa() {
     <div>
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 py-20 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-600 mb-6">
-          <Shield size={32} className="text-white" />
-        </div>
+        <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-24 w-auto mx-auto mb-6" />
         <h1 className="text-4xl md:text-5xl font-bold mb-6">
           {content?.title || 'Wing Tsun & Escrima Organizasyonu'}
         </h1>
