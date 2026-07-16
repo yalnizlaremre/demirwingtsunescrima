@@ -52,21 +52,27 @@ class TestSiteContentAdmin:
 
         public_resp = await client.get("/api/public/content/anasayfa")
         assert public_resp.status_code == 200
-        assert public_resp.json()["title"] == "Hoş Geldiniz"
+        assert public_resp.json()["items"][0]["title"] == "Hoş Geldiniz"
 
-    async def test_duplicate_slug_rejected(self, client, db_session):
+    async def test_duplicate_slug_allowed_and_ordered(self, client, db_session):
         admin = await make_user(db_session, role=UserRole.ADMIN.value)
-        await client.post(
+        first = await client.post(
             "/api/site-content/",
             json={"slug": "iletisim", "title": "T1"},
             headers=auth_headers(admin),
         )
-        resp = await client.post(
+        second = await client.post(
             "/api/site-content/",
             json={"slug": "iletisim", "title": "T2"},
             headers=auth_headers(admin),
         )
-        assert resp.status_code == 400
+        assert first.status_code == 200
+        assert second.status_code == 200
+
+        public_resp = await client.get("/api/public/content/iletisim")
+        assert public_resp.status_code == 200
+        titles = [item["title"] for item in public_resp.json()["items"]]
+        assert titles == ["T1", "T2"]
 
     async def test_non_admin_cannot_create_content(self, client, db_session):
         manager = await make_user(db_session, role=UserRole.MANAGER.value)
@@ -77,6 +83,7 @@ class TestSiteContentAdmin:
         )
         assert resp.status_code == 403
 
-    async def test_unknown_slug_404(self, client, db_session):
+    async def test_unknown_slug_returns_empty_list(self, client, db_session):
         resp = await client.get("/api/public/content/does-not-exist")
-        assert resp.status_code == 404
+        assert resp.status_code == 200
+        assert resp.json()["items"] == []

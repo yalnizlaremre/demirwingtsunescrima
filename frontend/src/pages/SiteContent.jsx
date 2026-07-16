@@ -78,9 +78,6 @@ export default function SiteContent() {
 
   const update = (f, v) => setForm((p) => ({ ...p, [f]: v }));
 
-  const existingSlugs = new Set(items.map((i) => i.slug));
-  const missingSuggestions = SUGGESTED_SLUGS.filter((s) => !existingSlugs.has(s.slug));
-
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -89,15 +86,13 @@ export default function SiteContent() {
         <button onClick={() => openCreate()} className="btn-primary"><Plus size={18} /> Yeni Icerik</button>
       </PageHeader>
 
-      {missingSuggestions.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          {missingSuggestions.map((s) => (
-            <button key={s.slug} onClick={() => openCreate(s.slug)} className="btn-secondary btn-sm">
-              <Plus size={14} /> {s.label} icerigi ekle
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {SUGGESTED_SLUGS.map((s) => (
+          <button key={s.slug} onClick={() => openCreate(s.slug)} className="btn-secondary btn-sm">
+            <Plus size={14} /> {s.label} icerigi ekle
+          </button>
+        ))}
+      </div>
 
       {items.length === 0 ? (
         <EmptyState message="Henuz site icerigi eklenmemis" icon={FileText} />
@@ -124,7 +119,7 @@ export default function SiteContent() {
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Icerik Duzenle' : 'Yeni Icerik'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Slug (benzersiz anahtar) *</label>
+            <label className="block text-sm font-medium mb-1">Slug (sayfa anahtari) *</label>
             <input
               value={form.slug}
               onChange={(e) => update('slug', e.target.value)}
@@ -133,6 +128,7 @@ export default function SiteContent() {
               required
               disabled={!!editing}
             />
+            <p className="text-xs text-dark-400 mt-1">Ayni slug'a birden fazla icerik eklenebilir; hepsi sayfada sirayla gosterilir.</p>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Baslik</label>

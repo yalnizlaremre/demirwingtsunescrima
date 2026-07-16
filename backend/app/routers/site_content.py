@@ -32,10 +32,6 @@ async def create_site_content(
     current_user: User = Depends(require_admin_or_above),
     db: AsyncSession = Depends(get_db),
 ):
-    existing = await db.execute(select(SiteContent).where(SiteContent.slug == data.slug))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Bu slug zaten kullanılıyor")
-
     content = SiteContent(**data.model_dump())
     db.add(content)
     await db.commit()

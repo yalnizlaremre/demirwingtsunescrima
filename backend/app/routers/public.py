@@ -54,10 +54,10 @@ async def public_list_content(db: AsyncSession = Depends(get_db)):
     return SiteContentListResponse(items=[SiteContentResponse.model_validate(c) for c in items])
 
 
-@router.get("/content/{slug}", response_model=SiteContentResponse)
+@router.get("/content/{slug}", response_model=SiteContentListResponse)
 async def public_get_content(slug: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(SiteContent).where(SiteContent.slug == slug))
-    content = result.scalar_one_or_none()
-    if not content:
-        raise HTTPException(status_code=404, detail="İçerik bulunamadı")
-    return SiteContentResponse.model_validate(content)
+    result = await db.execute(
+        select(SiteContent).where(SiteContent.slug == slug).order_by(SiteContent.created_at.asc())
+    )
+    items = result.scalars().all()
+    return SiteContentListResponse(items=[SiteContentResponse.model_validate(c) for c in items])

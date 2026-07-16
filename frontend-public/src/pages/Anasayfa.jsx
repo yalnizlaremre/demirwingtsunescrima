@@ -6,17 +6,19 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 
 export default function Anasayfa() {
-  const [content, setContent] = useState(null);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get('/content/anasayfa')
-      .then((res) => setContent(res.data))
-      .catch(() => setContent(null))
+      .then((res) => setItems(res.data.items))
+      .catch(() => setItems([]))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <LoadingSpinner />;
+
+  const [hero, ...extra] = items;
 
   return (
     <div>
@@ -24,10 +26,10 @@ export default function Anasayfa() {
       <section className="max-w-6xl mx-auto px-6 py-20 text-center">
         <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-24 w-auto mx-auto mb-6" />
         <h1 className="text-4xl md:text-5xl font-bold mb-6">
-          {content?.title || 'Wing Tsun & Escrima Organizasyonu'}
+          {hero?.title || 'Wing Tsun & Escrima Organizasyonu'}
         </h1>
         <p className="text-dark-400 text-lg max-w-2xl mx-auto mb-10 whitespace-pre-line">
-          {content?.body ||
+          {hero?.body ||
             'Türkiye ve çevresindeki okullarımızı tek çatıda toplayan Wing Tsun ve Escrima organizasyonu.'}
         </p>
         <div className="flex items-center justify-center gap-4">
@@ -40,17 +42,29 @@ export default function Anasayfa() {
         </div>
       </section>
 
-      {content?.image_url && (
+      {hero?.image_url && (
         <section className="max-w-4xl mx-auto px-6 pb-16">
-          <img src={content.image_url} alt={content.title || ''} className="w-full rounded-xl border border-dark-800" />
+          <img src={hero.image_url} alt={hero.title || ''} className="w-full rounded-xl border border-dark-800" />
         </section>
       )}
 
-      {content?.youtube_url && (
+      {hero?.youtube_url && (
         <section className="max-w-4xl mx-auto px-6 pb-16">
-          <YouTubeEmbed url={content.youtube_url} title={content.title} />
+          <YouTubeEmbed url={hero.youtube_url} title={hero.title} />
         </section>
       )}
+
+      {/* Ek icerik bloklari */}
+      {extra.map((block) => (
+        <section key={block.id} className="max-w-4xl mx-auto px-6 pb-16">
+          {block.title && <h2 className="text-2xl font-bold mb-4">{block.title}</h2>}
+          {block.body && <p className="text-dark-300 leading-relaxed whitespace-pre-line mb-6">{block.body}</p>}
+          {block.image_url && (
+            <img src={block.image_url} alt={block.title || ''} className="w-full rounded-xl border border-dark-800 mb-6" />
+          )}
+          {block.youtube_url && <YouTubeEmbed url={block.youtube_url} title={block.title} />}
+        </section>
+      ))}
 
       {/* Quick links */}
       <section className="max-w-6xl mx-auto px-6 py-16 border-t border-dark-800">
