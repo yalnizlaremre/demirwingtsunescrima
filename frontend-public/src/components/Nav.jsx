@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Shield, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { APP_URL } from '../config';
 
 const LINKS = [
@@ -18,10 +18,8 @@ export default function Nav() {
     <header className="border-b border-dark-800 sticky top-0 bg-dark-900/95 backdrop-blur z-40">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center shrink-0">
-            <Shield size={20} className="text-white" />
-          </div>
-          <span className="font-bold text-lg">Wing Tsun & Escrima</span>
+          <img src="/logo.png" alt="Demir Wing Tsun Escrima System" className="h-12 w-auto" />
+          <span className="font-bold text-lg hidden sm:inline">Wing Tsun & Escrima</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
