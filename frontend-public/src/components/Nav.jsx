@@ -18,8 +18,7 @@ export default function Nav() {
     <header className="border-b border-dark-800 sticky top-0 bg-dark-900/95 backdrop-blur z-40">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <img src="/logo.png" alt="Demir Wing Tsun Escrima System" className="h-12 w-auto" />
-          <span className="font-bold text-lg hidden sm:inline">Wing Tsun & Escrima</span>
+          <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-14 w-auto" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
