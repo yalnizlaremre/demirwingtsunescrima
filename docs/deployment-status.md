@@ -1,7 +1,7 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-17 (Site İçeriği: tek slug'a çoklu içerik desteği **CANLIYA ALINDI** — push + sunucuda `docker compose up -d --build`, `/api/health` ve `/api/public/content/iletisim` doğrulandı)
+> Son güncelleme: 2026-07-17 (Site İçeriği: tek slug'a çoklu içerik + görsel yükleme/YouTube önizleme **CANLIYA ALINDI**, uçtan uca tarayıcıda test edildi)
 
 ## TAMAMLANDI (2026-07-16/17 oturumu)
 
@@ -18,9 +18,14 @@ Prod'da (`app.demirwingtsun.com/site-content`) bir slug'a (örn. `iletisim`) ilk
 - Doğrulandı: `docker compose ps` tüm container'lar `Up`/`healthy`, `alembic upgrade head` hatasız uygulandı, `https://api.demirwingtsun.com/api/health` → `{"status":"ok"}`, `https://demirwingtsun.com/api/public/content/iletisim` artık `{"items":[...]}` listesi dönüyor
 - Aynı deploy'a sidebar/login/register logo değişikliği de dahil oldu (`frontend/public/logo.png`, `favicon.png`)
 
-**Kalan (opsiyonel, kullanıcı doğrulaması):**
-- `https://app.demirwingtsun.com/site-content`'e admin olarak girip "İletişim içeriği ekle" butonunun göründüğünü ve ikinci bir kayıt eklenebildiğini elle kontrol et
-- Public site'ta (`https://demirwingtsun.com`) eklenen ikinci bloğun sayfada göründüğünü gözle doğrula
+**İkinci tur (aynı oturum, 2026-07-17): Site İçeriği formuna görsel yükleme + YouTube önizleme**
+Kullanıcı devamında görsel URL'sini elle yazmak yerine dosya seçici, YouTube linki için de basit bir doğrulama/önizleme istedi.
+- `SiteContent.jsx`: "Dosya Seç" butonu eklendi, mevcut `POST /media/upload` ucuna yükleyip dönen `file_url`'i otomatik `image_url`'e yazıyor; küçük önizleme + kaldır (X) butonu var. Manuel URL yapıştırma da hâlâ mümkün.
+- YouTube linki artık her formatta (izle/kısa/embed/shorts) tanınıyor; yapıştırılır yapıştırılmaz küçük video kapak resmiyle "Video tanındı" ya da tanınamazsa kırmızı uyarı gösteriyor.
+- İçerik kartlarındaki ham URL metinleri gerçek küçük resimlere çevrildi.
+- Chrome üzerinden uçtan uca test edildi: local dev'de (`localhost:5173`) admin girişi yapıldı, dosya yükleme + YouTube linki ile gerçek bir "iletisim" kaydı oluşturuldu, kartta doğru göründü, sonra silindi (test verisi kalmadı).
+- Commit (`37cfaf9`) → push → sunucuda `docker compose up -d --build` → `docker compose ps` tüm container `Up`, `/api/health` `{"status":"ok"}` — **canlıya alındı, doğrulandı**.
+- Kalan iş yok, bu iş tamamlandı.
 
 ---
 
