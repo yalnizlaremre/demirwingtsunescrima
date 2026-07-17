@@ -1,7 +1,16 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-17 (Medya yükleme yetki açığı düzeltildi ve **CANLIYA ALINDI**: MEMBER rolü artık hiçbir şey yükleyemiyor — bkz. "Yetki açığı düzeltmesi" bölümü aşağıda)
+> Son güncelleme: 2026-07-17 — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `5a84186`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
+
+## Bu oturumda yapılanlar (2026-07-16/17, sırasıyla)
+1. Site İçeriği: aynı slug'a birden fazla içerik ekleme kısıtı kaldırıldı (backend + public site + admin panel) — canlıya alındı.
+2. Site İçeriği formuna gerçek dosya seçici (görsel yükleme) ve YouTube linki için canlı önizleme eklendi — canlıya alındı, Chrome'da uçtan uca test edildi.
+3. Medya/avatar yükleme yetkilerinde bulunan güvenlik açığı düzeltildi: `MEMBER` rolü artık hiçbir şey yükleyemiyor (öncesinde backend'den doğrudan istekle yükleyebiliyordu) — canlıya alındı, regresyon testleri eklendi (82/82 test geçiyor).
+
+Detaylar için aşağıdaki "Yetki açığı düzeltmesi" ve "TAMAMLANDI (2026-07-16/17 oturumu)" bölümlerine bak.
+
+**Not:** Local dev sunucular (backend :8000, frontend :5173) bu oturumda arka planda açık bırakıldı, sonraki oturumda hâlâ ayakta olmayabilir — gerekirse yeniden başlatılmalı.
 
 ## Yetki açığı düzeltmesi (2026-07-17, aynı oturumun üçüncü turu)
 
