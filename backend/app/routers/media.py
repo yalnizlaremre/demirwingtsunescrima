@@ -27,7 +27,7 @@ async def upload_media(
     db: AsyncSession = Depends(get_db),
 ):
     # Check permission
-    if current_user.role == UserRole.USER.value:
+    if current_user.role in (UserRole.USER.value, UserRole.MEMBER.value):
         raise HTTPException(status_code=403, detail="Dosya yükleme yetkiniz yok")
     if current_user.role == UserRole.MANAGER.value and not current_user.can_upload_media:
         raise HTTPException(status_code=403, detail="Dosya yükleme yetkiniz yok")
@@ -93,7 +93,7 @@ async def import_youtube(
     db: AsyncSession = Depends(get_db),
 ):
     """YouTube video linki ekle (dosya yuklemeden)."""
-    if current_user.role == UserRole.USER.value:
+    if current_user.role in (UserRole.USER.value, UserRole.MEMBER.value):
         raise HTTPException(status_code=403, detail="YouTube import yetkiniz yok")
     if current_user.role == UserRole.MANAGER.value and not current_user.can_upload_media:
         raise HTTPException(status_code=403, detail="Medya yukleme yetkiniz yok")

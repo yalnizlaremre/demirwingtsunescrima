@@ -68,6 +68,9 @@ async def upload_avatar(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if current_user.role == UserRole.MEMBER.value:
+        raise HTTPException(status_code=403, detail="Profil fotografi yukleme yetkiniz yok")
+
     content_type = file.content_type or ""
     if content_type not in ALLOWED_AVATAR_TYPES:
         raise HTTPException(status_code=400, detail="Sadece JPEG, PNG veya WebP yukleyebilirsiniz")

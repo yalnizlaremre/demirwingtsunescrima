@@ -122,21 +122,23 @@ export default function Profile() {
                   </span>
                 )}
               </div>
-              <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                {uploading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
-                ) : (
-                  <Camera size={24} className="text-white" />
-                )}
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-              </label>
+              {user?.role !== 'MEMBER' && (
+                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                  {uploading ? (
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Camera size={24} className="text-white" />
+                  )}
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                </label>
+              )}
             </div>
 
             {/* Bilgiler */}
