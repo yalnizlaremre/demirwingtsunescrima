@@ -1,7 +1,15 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-17 (Site İçeriği: tek slug'a çoklu içerik + görsel yükleme/YouTube önizleme **CANLIYA ALINDI**, uçtan uca tarayıcıda test edildi)
+> Son güncelleme: 2026-07-17 (Medya yükleme yetki açığı düzeltildi ve **CANLIYA ALINDI**: MEMBER rolü artık hiçbir şey yükleyemiyor — bkz. "Yetki açığı düzeltmesi" bölümü aşağıda)
+
+## Yetki açığı düzeltmesi (2026-07-17, aynı oturumun üçüncü turu)
+
+Kullanıcı "super admin ve adminler dışında kimse resim/video yükleyebiliyor mu" diye sordu. İnceleme sonucu bulunan: `backend/app/routers/media.py`'deki dosya yükleme (`POST /media/upload`) ve YouTube import (`POST /media/youtube`) uçlarındaki rol kontrolü sadece tam olarak `USER` rolünü engelliyordu; sistemdeki en düşük/varsayılan rol olan `MEMBER` (her yeni kayıt olan kullanıcının başlangıç rolü, bir okula öğrenci kaydı onaylanana kadar bu rolde kalıyor) kontrolsüz kalıyordu. Arayüzde buton gizliydi ama backend'e doğrudan istek atan bir MEMBER dosya/YouTube linki yükleyebiliyordu. Profil fotoğrafı ucu (`/students/my-profile/avatar`) ise hiç rol kontrolü yapmıyordu — herkes (MEMBER dahil) yükleyebiliyordu.
+
+Kullanıcıyla karar verilen nihai kural: **MEMBER hiçbir şey yükleyemez** (ne medya ne profil fotoğrafı), **USER sadece profil fotoğrafı yükleyebilir** (mevcut davranış), **MANAGER/ADMIN/SUPER_ADMIN değişmedi**.
+
+Yapılan: `media.py`'deki iki kontrol de `MEMBER`'ı kapsayacak şekilde genişletildi, `students.py`'deki avatar ucuna `MEMBER` engeli eklendi, `Profile.jsx`'te MEMBER rolündeyken kamera/yükleme ikonu arayüzden gizlendi. Regresyon için `backend/tests/test_media_permissions.py` eklendi (7 yeni test), toplam **82/82 test geçiyor**. Commit `cf5c826`, push + `docker compose up -d --build` ile deploy edildi, `/api/health` doğrulandı. **Tamamlandı, kalan iş yok.**
 
 ## TAMAMLANDI (2026-07-16/17 oturumu)
 
