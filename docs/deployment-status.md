@@ -1,9 +1,9 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-16 (Site İçeriği: tek slug'a çoklu içerik desteği eklendi, local'de commit'lendi — **prod'a henüz deploy edilmedi**)
+> Son güncelleme: 2026-07-17 (Site İçeriği: tek slug'a çoklu içerik desteği **CANLIYA ALINDI** — push + sunucuda `docker compose up -d --build`, `/api/health` ve `/api/public/content/iletisim` doğrulandı)
 
-## SIRADAKİ İŞ (2026-07-16 oturumu, ~4 saat sonra devam edilecek)
+## TAMAMLANDI (2026-07-16/17 oturumu)
 
 Prod'da (`app.demirwingtsun.com/site-content`) bir slug'a (örn. `iletisim`) ilk içerik eklendiğinde "X içeriği ekle" kısayol butonu kayboluyordu — yani admin panelinden bir slug'a **sadece tek içerik** eklenebiliyordu, halbuki public site birden fazla bloğu art arda gösterebilecek şekilde tasarlanmıştı. Kullanıcı (canlı admin panelden ekran görüntüsü: `screenshots/icerik-create.png`) bunu fark edip "kısıt olmasın, public site ile aynı olsun" dedi.
 
@@ -14,14 +14,13 @@ Prod'da (`app.demirwingtsun.com/site-content`) bir slug'a (örn. `iletisim`) ilk
 - `frontend-public`: Anasayfa/DemirWteo/Iletisim sayfaları artık `items` dizisini işliyor — ilk kayıt "ana blok", geri kalanı sayfada alt alta ek blok olarak render ediliyor
 - `frontend` admin panel (`SiteContent.jsx`): "X içeriği ekle" kısayol butonları artık slug'da içerik olsa da kaybolmuyor, her zaman görünüyor; slug etiketindeki yanıltıcı "(benzersiz anahtar)" ifadesi kaldırılıp yerine "aynı slug'a birden fazla içerik eklenebilir" açıklaması eklendi
 - Backend testleri güncellendi (`test_duplicate_slug_rejected` → `test_duplicate_slug_allowed_and_ordered`), **75/75 test geçiyor**
-- Değişiklikler local'de commit'lendi, **henüz `origin/main`'e push edilmedi ve prod'a deploy edilmedi**
+- `main`'e push edildi (`627c1bc..db24f61`), sunucuda `git pull` + `docker compose up -d --build` ile deploy edildi (2026-07-17)
+- Doğrulandı: `docker compose ps` tüm container'lar `Up`/`healthy`, `alembic upgrade head` hatasız uygulandı, `https://api.demirwingtsun.com/api/health` → `{"status":"ok"}`, `https://demirwingtsun.com/api/public/content/iletisim` artık `{"items":[...]}` listesi dönüyor
+- Aynı deploy'a sidebar/login/register logo değişikliği de dahil oldu (`frontend/public/logo.png`, `favicon.png`)
 
-**Kalanlar (bir sonraki oturumda):**
-1. `git push origin main`
-2. Sunucuda deploy: `ssh root@188.34.180.17`, `cd /opt/wteo && git pull origin main && docker compose up -d --build` (migration `aad8091cba1c` entrypoint üzerinden otomatik uygulanacak)
-3. Prod'da `https://app.demirwingtsun.com/site-content` üzerinden doğrulama: "İletişim içeriği ekle" gibi butonların artık her zaman göründüğünü ve aynı slug'a ikinci bir içerik eklenebildiğini kontrol et
-4. Public site'ta (`https://demirwingtsun.com`) ek bloğun gerçekten sayfada göründüğünü doğrula
-5. Aynı oturumda ayrıca commit'lenen ayrı bir değişiklik: sidebar/login/register'daki jenerik ikon yerine gerçek logo (`frontend/public/logo.png`, `favicon.png`) — bunun da deploy'a dahil olduğunu unutma
+**Kalan (opsiyonel, kullanıcı doğrulaması):**
+- `https://app.demirwingtsun.com/site-content`'e admin olarak girip "İletişim içeriği ekle" butonunun göründüğünü ve ikinci bir kayıt eklenebildiğini elle kontrol et
+- Public site'ta (`https://demirwingtsun.com`) eklenen ikinci bloğun sayfada göründüğünü gözle doğrula
 
 ---
 
