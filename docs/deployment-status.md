@@ -1,9 +1,29 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-17 — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `5a84186`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
+> Son güncelleme: 2026-07-21 — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `bb457f5`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
 
-## Bu oturumda yapılanlar (2026-07-16/17, sırasıyla)
+## Bu oturumda yapılanlar (2026-07-21)
+
+Kullanıcı canlıda gezerken 5 eksik/kırık nokta bildirdi, hepsi planlanıp aynı oturumda tamamlandı, test edildi ve canlıya alındı:
+
+1. **Üye portalı karşılama sayfası** (`app.demirwingtsun.com/`, giriş öncesi): jenerik "Shield" ikonu yerine gerçek logo, başlık "Demir Wing Tsun Akademi Üye Portalı" oldu, giriş yapmış kullanıcı için buton "Panele Devam Et" oldu.
+2. **Öğrenciler sayfası:** artık bir öğrenciyi seçip düzenlemek mümkün (doğum tarihi, acil durum kişisi/telefon, notlar — herkes; okul ataması sadece admin/super admin). Yeni backend ucu: `PUT /api/students/{id}` (önceden var olan ama hiç bağlanmamış `StudentUpdate` şeması kullanıldı). Ayrıca mobilde Okul kolonunu gizleyen bir CSS class'ı kaldırıldı (kullanıcının "okulunu göremiyorum" şikayetinin gerçek sebebi buymuş).
+3. **Kullanıcılar sayfası:** admin/super admin artık bir öğrenciyi (rol=USER) doğrudan okula atayabiliyor — arka planda `PUT /students/{id}` ucunu kullanıyor (tek yetki noktası, tekrar yok).
+4. **Dereceler sayfası:** tüm öğrenciler artık görünür bir tabloda (Ad/Okul/WT-Esc derece+saat), satırdan WT/Esc butonlarıyla direkt derece değiştirme modalı açılıyor.
+5. **Eğitmen (MANAGER) derece değişikliği onay akışı:** MANAGER rolü artık Dereceler sayfasına erişebiliyor (kendi okulundaki öğrenciler, backend zaten scope'luyor), bir derece değişikliği **talep** edebiliyor (`POST /grades/change-requests`, PENDING) ama admin/super admin onaylamadan (`.../approve`) derece değişmiyor; reddedilirse (`.../reject`) hiçbir şey değişmiyor. Yeni tablo: `grade_change_requests` + migration `b67918eb8dfe`. Enrollment/Request pattern'iyle aynı yapı (audit log, `handled_by`/`handled_at`).
+
+**Yan bulgu (kullanıcının "sanırım bağlı değil" şüphesinin gerçek sebebi):** `Grades.jsx`'teki öğrenci dropdown'ı `/students/?limit=200` çağırıyordu, ama backend `limit` üst sınırı 100 — istek sessizce 422 dönüyordu (`.catch(() => {})` ile yutuluyordu). `limit=100`'e düşürülerek düzeltildi.
+
+**Test:** 15 yeni backend testi (`test_students_update.py`, `test_grade_change_requests.py`), toplam **97/97 test geçiyor**. Chrome'da uçtan uca doğrulandı: local'de geçici test kullanıcıları/öğrencileri oluşturulup 5 özellik de gerçek tarayıcıda denendi (manager scope kontrolü, admin direkt değişiklik, manager talep→admin onay/red), sonra hepsi temizlendi — local DB'de kalıcı iz yok.
+
+**Deploy:** commit `bb457f5` → push → sunucuda `git pull` + `docker compose up -d --build`, alembic migration `b67918eb8dfe` otomatik uygulandı, `docker compose ps` tüm container `Up`, `/api/health` ve `app.demirwingtsun.com` doğrulandı.
+
+**Not:** Bu oturumda local dev sunucular (backend :8000, frontend :5173) arka planda açık bırakıldı, sonraki oturumda hâlâ ayakta olmayabilir.
+
+---
+
+## Önceki oturum (2026-07-16/17, sırasıyla)
 1. Site İçeriği: aynı slug'a birden fazla içerik ekleme kısıtı kaldırıldı (backend + public site + admin panel) — canlıya alındı.
 2. Site İçeriği formuna gerçek dosya seçici (görsel yükleme) ve YouTube linki için canlı önizleme eklendi — canlıya alındı, Chrome'da uçtan uca test edildi.
 3. Medya/avatar yükleme yetkilerinde bulunan güvenlik açığı düzeltildi: `MEMBER` rolü artık hiçbir şey yükleyemiyor (öncesinde backend'den doğrudan istekle yükleyebiliyordu) — canlıya alındı, regresyon testleri eklendi (82/82 test geçiyor).
