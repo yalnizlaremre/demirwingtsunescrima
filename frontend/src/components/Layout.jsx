@@ -28,7 +28,7 @@ export default function Layout() {
     { to: '/users/pending', label: 'Bekleyen Uyeler', icon: UserPlus, show: isAdmin || isManager },
     { to: '/lessons', label: 'Dersler', icon: BookOpen, show: isAdmin || isManager },
     { to: '/events', label: 'Etkinlikler', icon: CalendarDays, show: true },
-    { to: '/grades', label: 'Dereceler', icon: Shield, show: isAdmin },
+    { to: '/grades', label: 'Dereceler', icon: Shield, show: isAdmin || isManager },
     { to: '/products', label: 'Urunler', icon: Package, show: true },
     { to: '/requests', label: 'Talepler', icon: MessageSquare, show: !isMember },
     { to: '/mail', label: 'Mail', icon: Mail, show: isAdmin || isManager },

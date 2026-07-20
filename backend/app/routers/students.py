@@ -24,6 +24,7 @@ from app.schemas.student import (
     BranchProgressDetail,
     UserProfileUpdate,
     StudentApplyRequest,
+    StudentUpdate,
 )
 from app.services.grade_hours import get_hours_for_grade, check_exam_eligibility
 
@@ -332,6 +333,91 @@ async def get_student(
     if not student:
         raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
 
+    return _student_to_response(student)
+
+
+@router.put("/{student_id}", response_model=StudentResponse)
+async def update_student(
+    student_id: str,
+    data: StudentUpdate,
+    current_user: User = Depends(require_manager_or_above),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Ogrenci bilgilerini gunceller (dogum tarihi, acil durum iletisimi, notlar).
+    Okul atamasi (school_id) yalnizca ADMIN/SUPER_ADMIN tarafindan yapilabilir.
+    MANAGER yalnizca kendi okulundaki ogrencileri, okul alani haric duzenleyebilir.
+    """
+    result = await db.execute(
+        select(Student).options(selectinload(Student.user)).where(Student.id == student_id)
+    )
+    student = result.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        school_ids = [row[0] for row in manager_schools.all()]
+        if student.school_id not in school_ids:
+            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
+
+    old_school_id = student.school_id
+    changed_fields = []
+
+    if data.school_id is not None and data.school_id != student.school_id:
+        if current_user.role not in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
+            raise HTTPException(status_code=403, detail="Okul ataması yalnızca admin tarafından yapılabilir")
+
+        from app.models.school import School
+
+        school_result = await db.execute(
+            select(School).where(School.id == data.school_id)
+        )
+        if not school_result.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="Okul bulunamadi")
+
+        student.school_id = data.school_id
+        changed_fields.append("school_id")
+
+    if data.date_of_birth is not None:
+        student.date_of_birth = data.date_of_birth
+        changed_fields.append("date_of_birth")
+    if data.emergency_contact is not None:
+        student.emergency_contact = data.emergency_contact
+        changed_fields.append("emergency_contact")
+    if data.emergency_phone is not None:
+        student.emergency_phone = data.emergency_phone
+        changed_fields.append("emergency_phone")
+    if data.notes is not None:
+        student.notes = data.notes
+        changed_fields.append("notes")
+
+    if changed_fields:
+        await create_audit_log(
+            db,
+            action=AuditAction.STUDENT_UPDATED,
+            entity_type="Student",
+            entity_id=student.id,
+            performed_by=current_user.id,
+            details=f"Ogrenci bilgileri guncellendi: {', '.join(changed_fields)}",
+            old_value=str(old_school_id) if "school_id" in changed_fields else None,
+            new_value=str(student.school_id) if "school_id" in changed_fields else None,
+        )
+
+    await db.commit()
+
+    result = await db.execute(
+        select(Student)
+        .options(
+            selectinload(Student.user),
+            selectinload(Student.school),
+            selectinload(Student.progress),
+        )
+        .where(Student.id == student.id)
+    )
+    student = result.scalar_one()
     return _student_to_response(student)
 
 

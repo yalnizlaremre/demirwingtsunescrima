@@ -46,6 +46,9 @@ class UserResponse(BaseModel):
     display_order: int = 0
     is_featured_instructor: bool = False
     instagram_url: str | None = None
+    student_id: str | None = None
+    school_id: str | None = None
+    school_name: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

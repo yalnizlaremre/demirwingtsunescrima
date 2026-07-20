@@ -83,7 +83,7 @@ export default function App() {
         } />
         <Route path="/events" element={<Events />} />
         <Route path="/grades" element={
-          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']}>
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']}>
             <Grades />
           </ProtectedRoute>
         } />

@@ -1,16 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.auth import get_current_user, require_admin_or_above, require_manager_or_above, get_password_hash
 from app.models.user import User, UserRole, UserStatus, InstructorTitle
+from app.models.student import Student
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserListResponse
 
 router = APIRouter()
 
 
-def _user_to_response(user: User) -> UserResponse:
+def _user_to_response(user: User, student: Student | None = None) -> UserResponse:
     return UserResponse(
         id=str(user.id),
         email=user.email,
@@ -26,8 +28,20 @@ def _user_to_response(user: User) -> UserResponse:
         display_order=user.display_order,
         is_featured_instructor=user.is_featured_instructor,
         instagram_url=user.instagram_url,
+        student_id=str(student.id) if student else None,
+        school_id=str(student.school_id) if student else None,
+        school_name=student.school.name if student and student.school else None,
         created_at=user.created_at,
     )
+
+
+async def _load_students_by_user_id(db: AsyncSession, user_ids: list[str]) -> dict[str, Student]:
+    if not user_ids:
+        return {}
+    result = await db.execute(
+        select(Student).options(selectinload(Student.school)).where(Student.user_id.in_(user_ids))
+    )
+    return {str(s.user_id): s for s in result.scalars().all()}
 
 
 @router.get("/", response_model=UserListResponse)
@@ -61,9 +75,10 @@ async def list_users(
         query.order_by(User.created_at.desc()).offset(skip).limit(limit)
     )
     users = result.scalars().all()
+    students_by_user = await _load_students_by_user_id(db, [u.id for u in users])
 
     return UserListResponse(
-        items=[_user_to_response(u) for u in users],
+        items=[_user_to_response(u, students_by_user.get(str(u.id))) for u in users],
         total=total,
     )
 
@@ -152,7 +167,8 @@ async def get_user(
     if not user:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
-    return _user_to_response(user)
+    students_by_user = await _load_students_by_user_id(db, [user.id])
+    return _user_to_response(user, students_by_user.get(str(user.id)))
 
 
 @router.put("/{user_id}", response_model=UserResponse)

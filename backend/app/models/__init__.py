@@ -9,6 +9,7 @@ from app.models.attendance import Attendance
 from app.models.event import Event, EventSchool, EventRegistration, SeminarEvaluation
 from app.models.product import ProductCategory, Product
 from app.models.request import Request
+from app.models.grade_change_request import GradeChangeRequest
 from app.models.audit_log import AuditLog
 from app.models.email_log import EmailLog
 from app.models.media import Media
@@ -33,6 +34,7 @@ __all__ = [
     "ProductCategory",
     "Product",
     "Request",
+    "GradeChangeRequest",
     "AuditLog",
     "EmailLog",
     "Media",
