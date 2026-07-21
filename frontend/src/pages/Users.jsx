@@ -20,7 +20,7 @@ export default function Users() {
     email: '', password: '', first_name: '', last_name: '', phone: '',
     role: 'USER', instructor_title: '', can_upload_media: false,
     bio: '', display_order: 0, is_featured_instructor: false, instagram_url: '',
-    student_id: '', school_id: '',
+    student_id: '', school_id: '', new_student_school_id: '',
   });
 
   useEffect(() => {
@@ -57,6 +57,7 @@ export default function Users() {
       role: u.role, instructor_title: u.instructor_title || '', can_upload_media: u.can_upload_media,
       bio: u.bio || '', display_order: u.display_order || 0, is_featured_instructor: u.is_featured_instructor || false,
       instagram_url: u.instagram_url || '', student_id: u.student_id || '', school_id: u.school_id || '',
+      new_student_school_id: '',
     });
     setModalOpen(true);
   };
@@ -70,10 +71,14 @@ export default function Users() {
         delete payload.password;
         delete payload.student_id;
         delete payload.school_id;
+        delete payload.new_student_school_id;
         if (!payload.instructor_title) payload.instructor_title = null;
         await api.put(`/users/${editing.id}`, payload);
         if (form.role === 'USER' && editing.student_id && form.school_id && form.school_id !== editing.school_id) {
           await api.put(`/students/${editing.student_id}`, { school_id: form.school_id });
+        }
+        if (form.role === 'USER' && !editing.student_id && form.new_student_school_id) {
+          await api.post('/students/', { user_id: editing.id, school_id: form.new_student_school_id });
         }
         toast.success('Kullanici guncellendi');
       } else {
@@ -221,7 +226,14 @@ export default function Users() {
             </div>
           )}
           {editing && form.role === 'USER' && !editing.student_id && (
-            <p className="text-xs text-dark-400">Bu kullanicinin bir ogrenci kaydi yok, okul atanamaz.</p>
+            <div>
+              <label className="block text-sm font-medium mb-1">Okula Ogrenci Olarak Kaydet</label>
+              <select value={form.new_student_school_id} onChange={(e) => update('new_student_school_id', e.target.value)} className="select-field">
+                <option value="">Simdilik atama...</option>
+                {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <p className="text-xs text-dark-400 mt-1">Bir okul secip Guncelle'ye bastiginizda bu kullanici icin ogrenci kaydi olusturulur.</p>
+            </div>
           )}
           {form.role === 'MANAGER' && (
             <>

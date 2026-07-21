@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.auth import get_current_user, require_manager_or_above
+from app.auth import get_current_user, require_manager_or_above, require_admin_or_above
 from app.config import settings
 from app.models.user import User, UserRole, UserStatus
 from app.models.student import Student, StudentProgress, Branch
@@ -24,6 +24,7 @@ from app.schemas.student import (
     BranchProgressDetail,
     UserProfileUpdate,
     StudentApplyRequest,
+    StudentCreate,
     StudentUpdate,
 )
 from app.services.grade_hours import get_hours_for_grade, check_exam_eligibility
@@ -219,6 +220,84 @@ async def apply_to_school(
 
     await db.commit()
     await db.refresh(student)
+
+    result = await db.execute(
+        select(Student)
+        .options(
+            selectinload(Student.user),
+            selectinload(Student.school),
+            selectinload(Student.progress),
+        )
+        .where(Student.id == student.id)
+    )
+    student = result.scalar_one()
+    return _student_to_response(student)
+
+
+@router.post("/", response_model=StudentResponse)
+async def create_student(
+    data: StudentCreate,
+    current_user: User = Depends(require_admin_or_above),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Admin/super admin'in var olan bir kullaniciyi (henuz ogrenci olmayan) secip
+    dogrudan bir okula ogrenci olarak atamasi. Kullanicinin kendi basvurusuna
+    (POST /apply) ya da enrollment onayina gerek kalmadan tek adimda tamamlanir.
+    """
+    from app.models.school import School
+
+    user_result = await db.execute(select(User).where(User.id == data.user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanici bulunamadi")
+
+    existing_student = await db.execute(
+        select(Student).where(Student.user_id == data.user_id)
+    )
+    if existing_student.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Bu kullanicinin zaten bir ogrenci kaydi var")
+
+    school_result = await db.execute(select(School).where(School.id == data.school_id))
+    if not school_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Okul bulunamadi")
+
+    student = Student(
+        user_id=data.user_id,
+        school_id=data.school_id,
+        date_of_birth=data.date_of_birth,
+        emergency_contact=data.emergency_contact,
+        emergency_phone=data.emergency_phone,
+        notes=data.notes,
+    )
+    db.add(student)
+    await db.flush()
+
+    for branch in Branch:
+        initial_hours = get_hours_for_grade(1)
+        db.add(StudentProgress(
+            student_id=student.id,
+            branch=branch.value,
+            current_grade=1,
+            completed_hours=0,
+            remaining_hours=initial_hours["required"],
+        ))
+
+    if user.role == UserRole.MEMBER.value:
+        user.role = UserRole.USER.value
+    if user.status == UserStatus.PENDING.value:
+        user.status = UserStatus.ACTIVE.value
+
+    await create_audit_log(
+        db,
+        action=AuditAction.STUDENT_APPROVED,
+        entity_type="Student",
+        entity_id=student.id,
+        performed_by=current_user.id,
+        details=f"Ogrenci admin tarafindan olusturuldu: {user.full_name}, okul_id={data.school_id}",
+    )
+
+    await db.commit()
 
     result = await db.execute(
         select(Student)
