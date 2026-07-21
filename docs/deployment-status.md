@@ -1,9 +1,26 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-21 (ikinci tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `d7597de`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
+> Son güncelleme: 2026-07-21 (üçüncü tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `90c3c1c`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
 
-## Bu oturumda yapılanlar (2026-07-21, ikinci tur): Kullanıcıyı doğrudan öğrenci yapıp okula atama
+## Bu oturumda yapılanlar (2026-07-21, üçüncü tur): İkinci turdaki özellik gerçekte çalışmıyordu — düzeltildi
+
+Kullanıcı ikinci turda canlıya alınan "kullanıcıyı okula öğrenci olarak ata" özelliğini denedi ve hâlâ çalışmadığını bildirdi ("istekte bulunmasa da atayabileyim" — yani MEMBER rolündeki, hiç başvurmamış kullanıcılar için de).
+
+**Kök neden:** Özellik, sadece Kullanıcılar sayfasındaki Rol dropdown'ında "Öğrenci" (USER) seçiliyken görünüyordu. Ama Rol dropdown'ında hiç `MEMBER` seçeneği yoktu (sadece USER/MANAGER/ADMIN/SUPER_ADMIN) — bu yüzden MEMBER rolündeki (henüz hiç okula başvurmamış) bir kullanıcıyı düzenlemeye açtığında dropdown boş/eşleşmez görünüyordu, admin bunu "Öğrenci"ye çevirmesi gerektiğini fark edemiyordu, dolayısıyla okul atama alanı hiç ortaya çıkmıyordu. Yani özellik backend'de doğru çalışıyordu (bir önceki turda API üzerinden doğrulanmıştı) ama **UI'da MEMBER kullanıcılar için pratikte erişilemezdi** — tam da kullanıcının şikayet ettiği senaryo.
+
+**Düzeltme (`frontend/src/pages/Users.jsx`):**
+- Okul atama alanı artık Rol dropdown'ındaki seçime değil, kullanıcının düzenleme anındaki gerçek rolüne (`editing.role`) bakıyor: MANAGER/ADMIN/SUPER_ADMIN dışındaki (MEMBER dahil) her kullanıcı için görünüyor, Rol dropdown'una hiç dokunmaya gerek kalmadan.
+- Rol dropdown'una ve rozetine "Üye" (MEMBER) seçeneği eklendi — düzenleme ekranı artık MEMBER kullanıcının gerçek rolünü doğru gösteriyor (öncesinde eşleşen seçenek olmadığından görsel olarak bozuktu).
+- Backend zaten (ikinci turdan) MEMBER→USER yükseltmesini `POST /students/` içinde otomatik yapıyor, bu tarafta değişiklik gerekmedi.
+- API üzerinden yeniden uçtan uca doğrulandı: MEMBER rolündeki bir kullanıcı, Rol dropdown'una hiç dokunulmadan sadece okul seçilip "Güncelle"ye basılarak öğrenciye çevrildi ve okula atandı — sonra temizlendi.
+- Commit `90c3c1c` → push → sunucuda `git pull` + `docker compose up -d --build`, `docker compose ps` tüm container `Up`, `/api/health` ve `app.demirwingtsun.com` doğrulandı.
+
+**Ders:** Bir sonraki "özellik X çalışmıyor" şikayetinde önce UI'daki gösterim koşullarını (özellikle dropdown/select'lerin olası tüm değerleri kapsayıp kapsamadığını) kontrol et — backend doğru çalışsa bile UI bir durumu hiç göstermeyebilir.
+
+---
+
+## Önceki oturum (2026-07-21, ikinci tur): Kullanıcıyı doğrudan öğrenci yapıp okula atama
 
 Kullanıcı, Kullanıcılar sayfasından öğrenci kaydı olmayan bir kullanıcıyı (örn. MEMBER rolündeki, henüz hiçbir okula başvurmamış biri) doğrudan öğrenci yapıp bir okula atayabilmek istedi. Önceden bunun bir yolu yoktu — sadece kullanıcının kendi başlattığı iki akış vardı (`/apply`, enrollment talebi), admin'in inisiyatifiyle başlayan bir yol yoktu.
 
