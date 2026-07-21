@@ -25,6 +25,15 @@ class SchoolUpdate(BaseModel):
     youtube_url: str | None = None
 
 
+class SchoolMediaItem(BaseModel):
+    id: str
+    file_url: str
+    title: str | None = None
+    file_size: int
+
+    model_config = {"from_attributes": True}
+
+
 class SchoolResponse(BaseModel):
     id: str
     name: str
@@ -37,6 +46,7 @@ class SchoolResponse(BaseModel):
     cover_image_url: str | None = None
     long_description: str | None = None
     youtube_url: str | None = None
+    media: list[SchoolMediaItem] = []
 
     model_config = {"from_attributes": True}
 

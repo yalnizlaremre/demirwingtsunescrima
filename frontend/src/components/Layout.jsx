@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 export default function Layout() {
-  const { user, logout, isAdmin, isManager, isUser, isMember, isSuperAdmin } = useAuth();
+  const { user, logout, isAdmin, isManager, isUser, isMember, isSuperAdmin, hasPermission } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export default function Layout() {
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, show: true },
     { to: '/profile', label: 'Profilim', icon: User, show: true },
     { to: '/my-school', label: 'Okulum', icon: School, show: isUser },
-    { to: '/schools', label: 'Okullar', icon: School, show: isAdmin || isMember || isUser },
+    { to: '/schools', label: 'Okullar', icon: School, show: isAdmin || isMember || isUser || hasPermission('manage_schools') },
     { to: '/students', label: 'Ogrenciler', icon: GraduationCap, show: isAdmin || isManager },
     { to: '/students/pending', label: 'Onay Bekleyenler', icon: Users, show: isAdmin || isManager },
     { to: '/users/pending', label: 'Bekleyen Uyeler', icon: UserPlus, show: isAdmin || isManager },
@@ -33,8 +33,8 @@ export default function Layout() {
     { to: '/requests', label: 'Talepler', icon: MessageSquare, show: !isMember },
     { to: '/mail', label: 'Mail', icon: Mail, show: isAdmin || isManager },
     { to: '/media', label: 'Medya', icon: Image, show: isAdmin || isManager || isUser || isMember },
-    { to: '/users', label: 'Kullanicilar', icon: Users, show: isAdmin },
-    { to: '/site-content', label: 'Site Icerigi', icon: FileText, show: isAdmin },
+    { to: '/users', label: 'Kullanicilar', icon: Users, show: isAdmin || hasPermission('manage_users') },
+    { to: '/site-content', label: 'Site Icerigi', icon: FileText, show: isAdmin || hasPermission('manage_site_content') },
   ];
 
   const filteredNav = navItems.filter((item) => item.show);

@@ -173,3 +173,20 @@ class TestRoleGuard:
     async def test_unauthenticated_request_rejected(self, client, db_session):
         resp = await client.get("/api/auth/me")
         assert resp.status_code == 401
+
+
+class TestMeExtraPermissions:
+    async def test_me_returns_extra_permissions(self, client, db_session):
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        manager.extra_permissions = ["manage_schools", "manage_events"]
+        await db_session.commit()
+
+        resp = await client.get("/api/auth/me", headers=auth_headers(manager))
+        assert resp.status_code == 200
+        assert resp.json()["extra_permissions"] == ["manage_schools", "manage_events"]
+
+    async def test_me_extra_permissions_defaults_empty(self, client, db_session):
+        user = await make_user(db_session, role=UserRole.USER.value)
+        resp = await client.get("/api/auth/me", headers=auth_headers(user))
+        assert resp.status_code == 200
+        assert resp.json()["extra_permissions"] == []

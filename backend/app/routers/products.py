@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.auth import get_current_user, require_admin_or_above
+from app.auth import get_current_user, require_manage_products
 from app.models.user import User
 from app.models.product import Product, ProductCategory
 from app.schemas.product import (
@@ -37,7 +37,7 @@ async def list_categories(
 @router.post("/categories", response_model=ProductCategoryResponse)
 async def create_category(
     data: ProductCategoryCreate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_products),
     db: AsyncSession = Depends(get_db),
 ):
     cat = ProductCategory(name=data.name, description=data.description)
@@ -108,7 +108,7 @@ async def list_products(
 @router.post("/", response_model=ProductResponse)
 async def create_product(
     data: ProductCreate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_products),
     db: AsyncSession = Depends(get_db),
 ):
     product = Product(
@@ -140,7 +140,7 @@ async def create_product(
 async def update_product(
     product_id: str,
     data: ProductUpdate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_products),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Product).where(Product.id == product_id))
@@ -171,7 +171,7 @@ async def update_product(
 @router.delete("/{product_id}")
 async def delete_product(
     product_id: str,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_products),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Product).where(Product.id == product_id))

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.auth import get_current_user, require_admin_or_above, require_manager_or_above
+from app.auth import get_current_user, require_manage_grades, require_manager_or_above
 from app.models.user import User, UserRole
 from app.models.student import Student, StudentProgress, Branch
 from app.models.school import SchoolManager
@@ -76,7 +76,7 @@ async def list_grade_requirements(
 @router.post("/requirements", response_model=GradeRequirementResponse)
 async def create_grade_requirement(
     data: GradeRequirementCreate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_grades),
     db: AsyncSession = Depends(get_db),
 ):
     req = GradeRequirement(
@@ -102,7 +102,7 @@ async def create_grade_requirement(
 async def update_grade_requirement(
     req_id: str,
     data: GradeRequirementUpdate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_grades),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -174,7 +174,7 @@ async def _manager_school_ids(db: AsyncSession, user_id: str) -> list[str]:
 @router.post("/manual-change")
 async def manual_grade_change(
     data: ManualGradeChangeRequest,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_grades),
     db: AsyncSession = Depends(get_db),
 ):
     if not data.note or not data.note.strip():
@@ -303,7 +303,7 @@ async def list_grade_change_requests(
 @router.post("/change-requests/{request_id}/approve", response_model=GradeChangeRequestResponse)
 async def approve_grade_change_request(
     request_id: str,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_grades),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -347,7 +347,7 @@ async def approve_grade_change_request(
 @router.post("/change-requests/{request_id}/reject", response_model=GradeChangeRequestResponse)
 async def reject_grade_change_request(
     request_id: str,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_grades),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

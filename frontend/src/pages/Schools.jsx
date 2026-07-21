@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Plus, Edit2, Trash2, UserPlus, School, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, UserPlus, School, CheckCircle, Clock, XCircle, Upload, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Schools() {
@@ -20,6 +20,9 @@ export default function Schools() {
   const [managerUserId, setManagerUserId] = useState('');
   const [managers, setManagers] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const galleryFileRef = useRef(null);
   const { user, isAdmin, isMember } = useAuth();
 
   useEffect(() => {
@@ -61,6 +64,7 @@ export default function Schools() {
   const openCreate = () => {
     setEditing(null);
     setForm({ name: '', address: '', description: '', phone: '', email: '', cover_image_url: '', long_description: '', youtube_url: '' });
+    setGalleryImages([]);
     setModalOpen(true);
   };
 
@@ -76,7 +80,44 @@ export default function Schools() {
       long_description: school.long_description || '',
       youtube_url: school.youtube_url || '',
     });
+    setGalleryImages(school.media || []);
     setModalOpen(true);
+  };
+
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !editing) return;
+
+    setGalleryUploading(true);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await api.post(`/media/upload?school_id=${editing.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setGalleryImages((prev) => [...prev, { id: res.data.id, file_url: res.data.file_url, file_size: res.data.file_size }]);
+      }
+      toast.success('Gorseller yuklendi');
+      fetchSchools();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Yukleme hatasi');
+    } finally {
+      setGalleryUploading(false);
+      if (galleryFileRef.current) galleryFileRef.current.value = '';
+    }
+  };
+
+  const handleDeleteGalleryImage = async (mediaId) => {
+    if (!confirm('Bu gorseli galeriden silmek istediginize emin misiniz?')) return;
+    try {
+      await api.delete(`/media/${mediaId}`);
+      setGalleryImages((prev) => prev.filter((m) => m.id !== mediaId));
+      toast.success('Gorsel silindi');
+      fetchSchools();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Hata olustu');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -111,8 +152,8 @@ export default function Schools() {
     setSelectedSchool(school);
     setManagerUserId('');
     try {
-      const res = await api.get('/users/?role=MANAGER&limit=100');
-      setManagers(res.data.items);
+      const res = await api.get('/schools/managers/available');
+      setManagers(res.data);
     } catch {}
     setManagerModalOpen(true);
   };
@@ -295,6 +336,36 @@ export default function Schools() {
           <div>
             <label className="block text-sm font-medium mb-1">Kapak Gorseli URL</label>
             <input value={form.cover_image_url} onChange={(e) => update('cover_image_url', e.target.value)} className="input-field" placeholder="/uploads/... veya https://..." />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Galeri</label>
+            {editing ? (
+              <>
+                {galleryImages.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mb-2">
+                    {galleryImages.map((m) => (
+                      <div key={m.id} className="relative group">
+                        <img src={m.file_url} alt="" className="h-20 w-full rounded-lg border border-dark-700 object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGalleryImage(m.id)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Galeriden kaldir"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className={`btn-secondary btn-sm cursor-pointer inline-flex items-center gap-1.5 ${galleryUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <Upload size={14} /> {galleryUploading ? 'Yukleniyor...' : 'Dosya Sec'}
+                  <input ref={galleryFileRef} type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" />
+                </label>
+              </>
+            ) : (
+              <p className="text-xs text-dark-400">Galeriye gorsel eklemek icin once okulu olusturup tekrar duzenleyin.</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Detayli Tanitim Metni</label>

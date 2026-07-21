@@ -9,7 +9,8 @@ import EmptyState from '../components/EmptyState';
 import { Plus, Edit2, Trash2, Package } from 'lucide-react';
 
 export default function Products() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission } = useAuth();
+  const canManageProducts = isAdmin || hasPermission('manage_products');
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
@@ -101,7 +102,7 @@ export default function Products() {
   return (
     <div>
       <PageHeader title="Urun Katalogu" subtitle={`${total} urun`}>
-        {isAdmin && (
+        {canManageProducts && (
           <>
             <button onClick={() => setCatModalOpen(true)} className="btn-secondary"><Plus size={18} /> Kategori</button>
             <button onClick={openCreate} className="btn-primary"><Plus size={18} /> Yeni Urun</button>
@@ -125,7 +126,7 @@ export default function Products() {
                 <p className="text-sm font-semibold text-primary-600 mt-2">{p.price.toFixed(2)} ₺</p>
               )}
               {p.sizes && <p className="text-xs text-dark-400 mt-1">Bedenler: {p.sizes}</p>}
-              {isAdmin && (
+              {canManageProducts && (
                 <div className="flex gap-2 mt-3 pt-3 border-t border-dark-100">
                   <button onClick={() => openEdit(p)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
                   <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>

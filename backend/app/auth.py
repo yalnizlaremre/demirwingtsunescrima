@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.models.user import User, UserRole, UserStatus
+from app.permissions import Permission, user_has_permission
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -113,3 +114,23 @@ require_super_admin = require_roles(UserRole.SUPER_ADMIN)
 require_admin_or_above = require_roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
 require_manager_or_above = require_roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
 require_member_or_above = require_roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER, UserRole.USER, UserRole.MEMBER)
+
+
+def require_admin_or_permission(permission: Permission):
+    """Gercek ADMIN/SUPER_ADMIN her zaman gecer; MANAGER sadece ilgili extra_permissions
+    anahtarina sahipse gecer. Granular yetki sistemi icin (bkz. app/permissions.py)."""
+    async def checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role in (UserRole.SUPER_ADMIN.value, UserRole.ADMIN.value):
+            return current_user
+        if current_user.role == UserRole.MANAGER.value and user_has_permission(current_user, permission):
+            return current_user
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bu işlem için yetkiniz yok")
+    return checker
+
+
+require_manage_schools = require_admin_or_permission(Permission.MANAGE_SCHOOLS)
+require_manage_site_content = require_admin_or_permission(Permission.MANAGE_SITE_CONTENT)
+require_manage_events = require_admin_or_permission(Permission.MANAGE_EVENTS)
+require_manage_products = require_admin_or_permission(Permission.MANAGE_PRODUCTS)
+require_manage_grades = require_admin_or_permission(Permission.MANAGE_GRADES)
+require_manage_users = require_admin_or_permission(Permission.MANAGE_USERS)

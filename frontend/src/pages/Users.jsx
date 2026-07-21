@@ -6,8 +6,19 @@ import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 import { Plus, Edit2, Trash2, Users as UsersIcon } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+
+const ADMIN_PERMISSIONS = [
+  { key: 'manage_schools', label: 'Okul yonetimi' },
+  { key: 'manage_site_content', label: 'Site icerigi yonetimi' },
+  { key: 'manage_events', label: 'Etkinlik yonetimi' },
+  { key: 'manage_products', label: 'Urun/magaza yonetimi' },
+  { key: 'manage_grades', label: 'Derece gereksinimleri ve manuel derece degisikligi' },
+  { key: 'manage_users', label: 'Kullanici yonetimi (riskli)' },
+];
 
 export default function Users() {
+  const { isAdmin } = useAuth();
   const [users, setUsers] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -20,7 +31,7 @@ export default function Users() {
     email: '', password: '', first_name: '', last_name: '', phone: '',
     role: 'USER', instructor_title: '', can_upload_media: false,
     bio: '', display_order: 0, is_featured_instructor: false, instagram_url: '',
-    student_id: '', school_id: '', new_student_school_id: '',
+    student_id: '', school_id: '', new_student_school_id: '', extra_permissions: [],
   });
 
   useEffect(() => {
@@ -45,7 +56,7 @@ export default function Users() {
     setForm({
       email: '', password: '', first_name: '', last_name: '', phone: '',
       role: 'USER', instructor_title: '', can_upload_media: false,
-      bio: '', display_order: 0, is_featured_instructor: false,
+      bio: '', display_order: 0, is_featured_instructor: false, extra_permissions: [],
     });
     setModalOpen(true);
   };
@@ -57,7 +68,7 @@ export default function Users() {
       role: u.role, instructor_title: u.instructor_title || '', can_upload_media: u.can_upload_media,
       bio: u.bio || '', display_order: u.display_order || 0, is_featured_instructor: u.is_featured_instructor || false,
       instagram_url: u.instagram_url || '', student_id: u.student_id || '', school_id: u.school_id || '',
-      new_student_school_id: '',
+      new_student_school_id: '', extra_permissions: u.extra_permissions || [],
     });
     setModalOpen(true);
   };
@@ -72,6 +83,7 @@ export default function Users() {
         delete payload.student_id;
         delete payload.school_id;
         delete payload.new_student_school_id;
+        if (!isAdmin) delete payload.extra_permissions;
         if (!payload.instructor_title) payload.instructor_title = null;
         await api.put(`/users/${editing.id}`, payload);
         if (form.role === 'USER' && editing.student_id && form.school_id && form.school_id !== editing.school_id) {
@@ -170,10 +182,12 @@ export default function Users() {
                   <td>{getRoleBadge(u.role)}</td>
                   <td className="hidden md:table-cell">{getStatusBadge(u.status)}</td>
                   <td>
-                    <div className="flex gap-2">
-                      <button onClick={() => openEdit(u)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
-                      <button onClick={() => handleDelete(u.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
-                    </div>
+                    {(isAdmin || !['ADMIN', 'SUPER_ADMIN'].includes(u.role)) && (
+                      <div className="flex gap-2">
+                        <button onClick={() => openEdit(u)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
+                        <button onClick={() => handleDelete(u.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -216,8 +230,8 @@ export default function Users() {
               <option value="MEMBER">Uye</option>
               <option value="USER">Ogrenci</option>
               <option value="MANAGER">Egitmen (Manager)</option>
-              <option value="ADMIN">Admin</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
+              {isAdmin && <option value="ADMIN">Admin</option>}
+              {isAdmin && <option value="SUPER_ADMIN">Super Admin</option>}
             </select>
           </div>
           {editing && form.role === 'USER' && editing.student_id && (
@@ -271,6 +285,24 @@ export default function Users() {
                 <label className="block text-sm font-medium mb-1">Instagram Linki</label>
                 <input value={form.instagram_url} onChange={(e) => update('instagram_url', e.target.value)} className="input-field" placeholder="https://instagram.com/..." />
               </div>
+              {isAdmin && (
+                <div className="pt-2 border-t border-dark-100">
+                  <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Admin Yetkileri</p>
+                  {ADMIN_PERMISSIONS.map((p) => (
+                    <label key={p.key} className="flex items-center gap-2 cursor-pointer mb-1.5">
+                      <input
+                        type="checkbox"
+                        checked={form.extra_permissions.includes(p.key)}
+                        onChange={(e) => update('extra_permissions', e.target.checked
+                          ? [...form.extra_permissions, p.key]
+                          : form.extra_permissions.filter((k) => k !== p.key))}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">{p.label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </>
           )}
           <div className="flex justify-end gap-3 pt-2">

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.auth import get_current_user, require_manager_or_above, require_admin_or_above
+from app.auth import get_current_user, require_manager_or_above, require_manage_users
 from app.config import settings
 from app.models.user import User, UserRole, UserStatus
 from app.models.student import Student, StudentProgress, Branch
@@ -237,13 +237,14 @@ async def apply_to_school(
 @router.post("/", response_model=StudentResponse)
 async def create_student(
     data: StudentCreate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_users),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Admin/super admin'in var olan bir kullaniciyi (henuz ogrenci olmayan) secip
-    dogrudan bir okula ogrenci olarak atamasi. Kullanicinin kendi basvurusuna
-    (POST /apply) ya da enrollment onayina gerek kalmadan tek adimda tamamlanir.
+    Admin/super admin'in (ya da manage_users izinli MANAGER'in) var olan bir
+    kullaniciyi (henuz ogrenci olmayan) secip dogrudan bir okula ogrenci olarak
+    atamasi. Kullanicinin kendi basvurusuna (POST /apply) ya da enrollment
+    onayina gerek kalmadan tek adimda tamamlanir.
     """
     from app.models.school import School
 
@@ -251,6 +252,9 @@ async def create_student(
     user = user_result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="Kullanici bulunamadi")
+
+    if current_user.role == UserRole.MANAGER.value and user.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
+        raise HTTPException(status_code=403, detail="Bu kullaniciyi ogrenci olarak atayamazsiniz")
 
     existing_student = await db.execute(
         select(Student).where(Student.user_id == data.user_id)

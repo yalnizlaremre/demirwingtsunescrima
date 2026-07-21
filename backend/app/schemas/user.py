@@ -29,6 +29,7 @@ class UserUpdate(BaseModel):
     display_order: int | None = None
     is_featured_instructor: bool | None = None
     instagram_url: str | None = None
+    extra_permissions: list[str] | None = None
 
 
 class UserResponse(BaseModel):
@@ -46,6 +47,7 @@ class UserResponse(BaseModel):
     display_order: int = 0
     is_featured_instructor: bool = False
     instagram_url: str | None = None
+    extra_permissions: list[str] = []
     student_id: str | None = None
     school_id: str | None = None
     school_name: str | None = None

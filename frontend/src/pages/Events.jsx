@@ -9,7 +9,8 @@ import EmptyState from '../components/EmptyState';
 import { Plus, CalendarDays, Users, CheckCircle2, ClipboardList, AlertTriangle } from 'lucide-react';
 
 export default function Events() {
-  const { isAdmin, isUser } = useAuth();
+  const { isAdmin, isUser, hasPermission } = useAuth();
+  const canManageEvents = isAdmin || hasPermission('manage_events');
   const [events, setEvents] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -28,7 +29,7 @@ export default function Events() {
 
   useEffect(() => {
     fetchEvents();
-    if (isAdmin) api.get('/schools/?limit=100').then(r => setSchools(r.data.items || [])).catch(() => {});
+    if (canManageEvents) api.get('/schools/?limit=100').then(r => setSchools(r.data.items || [])).catch(() => {});
   }, []);
 
   const fetchEvents = async () => {
@@ -132,7 +133,7 @@ export default function Events() {
   return (
     <div>
       <PageHeader title="Etkinlikler" subtitle={`${total} etkinlik`}>
-        {isAdmin && <button onClick={() => setModalOpen(true)} className="btn-primary"><Plus size={18} /> Yeni Etkinlik</button>}
+        {canManageEvents && <button onClick={() => setModalOpen(true)} className="btn-primary"><Plus size={18} /> Yeni Etkinlik</button>}
       </PageHeader>
 
       {events.length === 0 ? (
@@ -161,7 +162,7 @@ export default function Events() {
                 {isUser && !e.is_completed && (
                   <button onClick={() => openRegister(e)} className="btn-primary btn-sm flex-1">Kayit Ol</button>
                 )}
-                {isAdmin && e.event_type === 'SEMINAR' && !e.is_completed && (
+                {canManageEvents && e.event_type === 'SEMINAR' && !e.is_completed && (
                   <button onClick={() => openEvaluate(e)} className="btn-success btn-sm flex-1">
                     <ClipboardList size={14} /> Degerlendir
                   </button>

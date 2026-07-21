@@ -42,6 +42,7 @@ def _user_to_response(user: User) -> UserResponse:
         display_order=user.display_order,
         is_featured_instructor=user.is_featured_instructor,
         instagram_url=user.instagram_url,
+        extra_permissions=user.extra_permissions or [],
         created_at=user.created_at,
     )
 

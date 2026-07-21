@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.auth import get_current_user, require_admin_or_above
+from app.auth import get_current_user, require_manage_events
 from app.models.user import User, UserRole
 from app.models.student import Student, StudentProgress, Branch
 from app.models.event import (
@@ -83,7 +83,7 @@ async def list_events(
 @router.post("/", response_model=EventResponse)
 async def create_event(
     data: EventCreate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_events),
     db: AsyncSession = Depends(get_db),
 ):
     event = Event(
@@ -168,7 +168,7 @@ async def get_event(
 async def update_event(
     event_id: str,
     data: EventUpdate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_events),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Event).where(Event.id == event_id))
@@ -215,7 +215,7 @@ async def update_event(
 @router.delete("/{event_id}")
 async def delete_event(
     event_id: str,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_events),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Event).where(Event.id == event_id))
@@ -409,7 +409,7 @@ async def get_my_eligibility(
 async def approve_exam_registration(
     event_id: str,
     reg_id: str,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_events),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -435,7 +435,7 @@ async def approve_exam_registration(
 async def evaluate_seminar(
     event_id: str,
     data: SeminarEvaluateRequest,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_events),
     db: AsyncSession = Depends(get_db),
 ):
     # --- Temel kontroller ---

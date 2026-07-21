@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import String, Boolean, Integer, Text
+from sqlalchemy import String, Boolean, Integer, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin, UUIDMixin
 
@@ -41,6 +41,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     display_order: Mapped[int] = mapped_column(Integer, default=0)
     is_featured_instructor: Mapped[bool] = mapped_column(Boolean, default=False)
     instagram_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    extra_permissions: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, default=list)
 
     # Relationships
     managed_schools = relationship("SchoolManager", back_populates="manager", lazy="selectin")

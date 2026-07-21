@@ -51,7 +51,7 @@ export default function App() {
       >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/schools" element={
-          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'USER']}>
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'USER']} permission="manage_schools">
             <Schools />
           </ProtectedRoute>
         } />
@@ -100,12 +100,12 @@ export default function App() {
           </ProtectedRoute>
         } />
         <Route path="/users" element={
-          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']}>
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} permission="manage_users">
             <Users />
           </ProtectedRoute>
         } />
         <Route path="/site-content" element={
-          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']}>
+          <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} permission="manage_site_content">
             <SiteContent />
           </ProtectedRoute>
         } />

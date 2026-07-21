@@ -54,6 +54,7 @@ export function AuthProvider({ children }) {
   const isUser = user?.role === 'USER';
   const isMember = user?.role === 'MEMBER';
   const isManagerOrAbove = isAdmin || isManager;
+  const hasPermission = (key) => isAdmin || (user?.extra_permissions || []).includes(key);
 
   return (
     <AuthContext.Provider
@@ -70,6 +71,7 @@ export function AuthProvider({ children }) {
         isUser,
         isMember,
         isManagerOrAbove,
+        hasPermission,
       }}
     >
       {children}

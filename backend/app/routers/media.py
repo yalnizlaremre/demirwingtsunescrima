@@ -11,6 +11,7 @@ from app.auth import get_current_user
 from app.config import settings
 from app.models.user import User, UserRole
 from app.models.media import Media, MediaType
+from app.permissions import Permission, user_has_permission
 
 router = APIRouter()
 
@@ -29,8 +30,12 @@ async def upload_media(
     # Check permission
     if current_user.role in (UserRole.USER.value, UserRole.MEMBER.value):
         raise HTTPException(status_code=403, detail="Dosya yükleme yetkiniz yok")
-    if current_user.role == UserRole.MANAGER.value and not current_user.can_upload_media:
-        raise HTTPException(status_code=403, detail="Dosya yükleme yetkiniz yok")
+    if current_user.role == UserRole.MANAGER.value:
+        allowed = current_user.can_upload_media or (
+            bool(school_id) and user_has_permission(current_user, Permission.MANAGE_SCHOOLS)
+        )
+        if not allowed:
+            raise HTTPException(status_code=403, detail="Dosya yükleme yetkiniz yok")
 
     # Determine media type
     content_type = file.content_type or ""
@@ -95,8 +100,12 @@ async def import_youtube(
     """YouTube video linki ekle (dosya yuklemeden)."""
     if current_user.role in (UserRole.USER.value, UserRole.MEMBER.value):
         raise HTTPException(status_code=403, detail="YouTube import yetkiniz yok")
-    if current_user.role == UserRole.MANAGER.value and not current_user.can_upload_media:
-        raise HTTPException(status_code=403, detail="Medya yukleme yetkiniz yok")
+    if current_user.role == UserRole.MANAGER.value:
+        allowed = current_user.can_upload_media or (
+            bool(data.school_id) and user_has_permission(current_user, Permission.MANAGE_SCHOOLS)
+        )
+        if not allowed:
+            raise HTTPException(status_code=403, detail="Medya yukleme yetkiniz yok")
 
     if not data.youtube_url or "youtu" not in data.youtube_url:
         raise HTTPException(status_code=400, detail="Gecerli bir YouTube linki girin")
@@ -164,13 +173,19 @@ async def delete_media(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if current_user.role not in (UserRole.SUPER_ADMIN.value, UserRole.ADMIN.value):
-        raise HTTPException(status_code=403, detail="Silme yetkiniz yok")
-
     result = await db.execute(select(Media).where(Media.id == media_id))
     media = result.scalar_one_or_none()
     if not media:
         raise HTTPException(status_code=404, detail="Medya bulunamadı")
+
+    is_real_admin = current_user.role in (UserRole.SUPER_ADMIN.value, UserRole.ADMIN.value)
+    can_manage_school_gallery = (
+        current_user.role == UserRole.MANAGER.value
+        and media.school_id
+        and user_has_permission(current_user, Permission.MANAGE_SCHOOLS)
+    )
+    if not is_real_admin and not can_manage_school_gallery:
+        raise HTTPException(status_code=403, detail="Silme yetkiniz yok")
 
     # Delete file
     file_path = os.path.join(settings.UPLOAD_DIR, media.filename)

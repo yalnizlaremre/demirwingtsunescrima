@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.auth import get_current_user, get_current_user_optional, require_admin_or_above, require_manager_or_above
+from app.auth import get_current_user, get_current_user_optional, require_manage_schools, require_manager_or_above
 from app.models.user import User, UserRole
 from app.models.school import School, SchoolManager
 from app.models.student import Student
@@ -16,12 +16,31 @@ from app.schemas.school import (
     SchoolResponse,
     SchoolListResponse,
     SchoolDetailResponse,
+    SchoolMediaItem,
     InstructorInfo,
     LessonInfo,
     AssignManagerRequest,
 )
+from app.services.school_gallery import get_school_gallery_map
 
 router = APIRouter()
+
+
+def _to_school_response(school: School, media: list[SchoolMediaItem] | None = None) -> SchoolResponse:
+    return SchoolResponse(
+        id=str(school.id),
+        name=school.name,
+        address=school.address,
+        description=school.description,
+        phone=school.phone,
+        email=school.email,
+        is_active=school.is_active,
+        created_at=school.created_at,
+        cover_image_url=school.cover_image_url,
+        long_description=school.long_description,
+        youtube_url=school.youtube_url,
+        media=media or [],
+    )
 
 
 @router.get("/my-school", response_model=SchoolDetailResponse)
@@ -148,32 +167,34 @@ async def list_schools(
         query.order_by(School.created_at.desc()).offset(skip).limit(limit)
     )
     schools = result.scalars().all()
+    gallery_map = await get_school_gallery_map(db, [s.id for s in schools])
 
     return SchoolListResponse(
-        items=[
-            SchoolResponse(
-                id=str(s.id),
-                name=s.name,
-                address=s.address,
-                description=s.description,
-                phone=s.phone,
-                email=s.email,
-                is_active=s.is_active,
-                created_at=s.created_at,
-                cover_image_url=s.cover_image_url,
-                long_description=s.long_description,
-                youtube_url=s.youtube_url,
-            )
-            for s in schools
-        ],
+        items=[_to_school_response(s, gallery_map.get(s.id)) for s in schools],
         total=total,
     )
+
+
+@router.get("/managers/available")
+async def list_available_managers(
+    current_user: User = Depends(require_manage_schools),
+    db: AsyncSession = Depends(get_db),
+):
+    """Egitmen atama modalinin kullandigi hafif liste — tam /api/users/ erisimi
+    olmayan (sadece manage_schools iznine sahip) bir MANAGER icin de calisir."""
+    result = await db.execute(
+        select(User).where(User.role == UserRole.MANAGER.value).order_by(User.first_name)
+    )
+    return [
+        {"id": str(m.id), "first_name": m.first_name, "last_name": m.last_name, "email": m.email}
+        for m in result.scalars().all()
+    ]
 
 
 @router.post("/", response_model=SchoolResponse)
 async def create_school(
     data: SchoolCreate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_schools),
     db: AsyncSession = Depends(get_db),
 ):
     school = School(
@@ -190,19 +211,7 @@ async def create_school(
     await db.commit()
     await db.refresh(school)
 
-    return SchoolResponse(
-        id=str(school.id),
-        name=school.name,
-        address=school.address,
-        description=school.description,
-        phone=school.phone,
-        email=school.email,
-        is_active=school.is_active,
-        created_at=school.created_at,
-        cover_image_url=school.cover_image_url,
-        long_description=school.long_description,
-        youtube_url=school.youtube_url,
-    )
+    return _to_school_response(school)
 
 
 @router.get("/{school_id}", response_model=SchoolResponse)
@@ -216,26 +225,15 @@ async def get_school(
     if not school:
         raise HTTPException(status_code=404, detail="Okul bulunamadı")
 
-    return SchoolResponse(
-        id=str(school.id),
-        name=school.name,
-        address=school.address,
-        description=school.description,
-        phone=school.phone,
-        email=school.email,
-        is_active=school.is_active,
-        created_at=school.created_at,
-        cover_image_url=school.cover_image_url,
-        long_description=school.long_description,
-        youtube_url=school.youtube_url,
-    )
+    gallery_map = await get_school_gallery_map(db, [school.id])
+    return _to_school_response(school, gallery_map.get(school.id))
 
 
 @router.put("/{school_id}", response_model=SchoolResponse)
 async def update_school(
     school_id: str,
     data: SchoolUpdate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_schools),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(School).where(School.id == school_id))
@@ -249,25 +247,14 @@ async def update_school(
     await db.commit()
     await db.refresh(school)
 
-    return SchoolResponse(
-        id=str(school.id),
-        name=school.name,
-        address=school.address,
-        description=school.description,
-        phone=school.phone,
-        email=school.email,
-        is_active=school.is_active,
-        created_at=school.created_at,
-        cover_image_url=school.cover_image_url,
-        long_description=school.long_description,
-        youtube_url=school.youtube_url,
-    )
+    gallery_map = await get_school_gallery_map(db, [school.id])
+    return _to_school_response(school, gallery_map.get(school.id))
 
 
 @router.delete("/{school_id}")
 async def delete_school(
     school_id: str,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_schools),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(School).where(School.id == school_id))
@@ -284,7 +271,7 @@ async def delete_school(
 async def assign_manager(
     school_id: str,
     data: AssignManagerRequest,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_schools),
     db: AsyncSession = Depends(get_db),
 ):
     # Check school exists
@@ -320,7 +307,7 @@ async def assign_manager(
 async def remove_manager(
     school_id: str,
     user_id: str,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_schools),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

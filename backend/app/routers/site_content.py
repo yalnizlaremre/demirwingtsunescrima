@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.auth import require_admin_or_above
+from app.auth import require_manage_site_content
 from app.models.user import User
 from app.models.site_content import SiteContent
 from app.schemas.site_content import (
@@ -18,7 +18,7 @@ router = APIRouter()
 
 @router.get("/", response_model=SiteContentListResponse)
 async def list_site_content(
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_site_content),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(SiteContent).order_by(SiteContent.slug))
@@ -29,7 +29,7 @@ async def list_site_content(
 @router.post("/", response_model=SiteContentResponse)
 async def create_site_content(
     data: SiteContentCreate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_site_content),
     db: AsyncSession = Depends(get_db),
 ):
     content = SiteContent(**data.model_dump())
@@ -43,7 +43,7 @@ async def create_site_content(
 async def update_site_content(
     content_id: str,
     data: SiteContentUpdate,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_site_content),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(SiteContent).where(SiteContent.id == content_id))
@@ -62,7 +62,7 @@ async def update_site_content(
 @router.delete("/{content_id}")
 async def delete_site_content(
     content_id: str,
-    current_user: User = Depends(require_admin_or_above),
+    current_user: User = Depends(require_manage_site_content),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(SiteContent).where(SiteContent.id == content_id))

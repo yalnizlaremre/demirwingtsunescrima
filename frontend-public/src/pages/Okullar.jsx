@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { School, MapPin, Phone } from 'lucide-react';
+import { School, MapPin, Phone, X } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
@@ -7,6 +7,7 @@ import YouTubeEmbed from '../components/YouTubeEmbed';
 export default function Okullar() {
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState(null);
 
   useEffect(() => {
     api.get('/schools')
@@ -57,6 +58,19 @@ export default function Okullar() {
               <p className="text-dark-300 text-sm whitespace-pre-line">
                 {s.long_description || s.description}
               </p>
+              {s.media && s.media.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {s.media.map((m) => (
+                    <img
+                      key={m.id}
+                      src={m.file_url}
+                      alt=""
+                      onClick={() => setLightbox(m.file_url)}
+                      className="w-full h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                    />
+                  ))}
+                </div>
+              )}
               {s.youtube_url && (
                 <div className="mt-4">
                   <YouTubeEmbed url={s.youtube_url} title={s.name} />
@@ -64,6 +78,22 @@ export default function Okullar() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            onClick={() => setLightbox(null)}
+            className="absolute top-6 right-6 text-white hover:text-dark-300"
+            title="Kapat"
+          >
+            <X size={32} />
+          </button>
+          <img src={lightbox} alt="" className="max-w-full max-h-full rounded-lg" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>

@@ -9,7 +9,8 @@ import EmptyState from '../components/EmptyState';
 import { Plus, ArrowUpDown, Award, Check, X, ClipboardList } from 'lucide-react';
 
 export default function Grades() {
-  const { isAdmin, isManagerOrAbove } = useAuth();
+  const { isAdmin, isManagerOrAbove, hasPermission } = useAuth();
+  const canManageGrades = isAdmin || hasPermission('manage_grades');
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reqModalOpen, setReqModalOpen] = useState(false);
@@ -17,7 +18,7 @@ export default function Grades() {
   const [tab, setTab] = useState('WING_TSUN');
   const [students, setStudents] = useState([]);
   const [changeRequests, setChangeRequests] = useState([]);
-  const [statusFilter, setStatusFilter] = useState(isAdmin ? 'PENDING' : '');
+  const [statusFilter, setStatusFilter] = useState(canManageGrades ? 'PENDING' : '');
   const [reqForm, setReqForm] = useState({ branch: 'WING_TSUN', grade: 1, grade_name: '', required_hours: 0 });
   const [changeForm, setChangeForm] = useState({ student_id: '', branch: 'WING_TSUN', new_grade: 1, note: '' });
 
@@ -69,7 +70,7 @@ export default function Grades() {
     e.preventDefault();
     if (!changeForm.note.trim()) { toast.error('Not alani zorunludur'); return; }
     try {
-      if (isAdmin) {
+      if (canManageGrades) {
         await api.post('/grades/manual-change', { ...changeForm, new_grade: parseInt(changeForm.new_grade) });
         toast.success('Derece guncellendi');
         refreshStudents();
@@ -128,13 +129,13 @@ export default function Grades() {
 
   return (
     <div>
-      <PageHeader title="Dereceler & Saat Yonetimi" subtitle={isAdmin ? 'Derece gereksinimleri ve manuel duzenleme' : 'Ogrenci dereceleri ve degisiklik talepleri'}>
+      <PageHeader title="Dereceler & Saat Yonetimi" subtitle={canManageGrades ? 'Derece gereksinimleri ve manuel duzenleme' : 'Ogrenci dereceleri ve degisiklik talepleri'}>
         {isManagerOrAbove && (
           <button onClick={() => openChangeModal()} className="btn-primary">
-            <ArrowUpDown size={18} /> {isAdmin ? 'Derece Degistir' : 'Degisiklik Talep Et'}
+            <ArrowUpDown size={18} /> {canManageGrades ? 'Derece Degistir' : 'Degisiklik Talep Et'}
           </button>
         )}
-        {isAdmin && (
+        {canManageGrades && (
           <button onClick={() => setReqModalOpen(true)} className="btn-secondary"><Plus size={18} /> Gereksinim Ekle</button>
         )}
       </PageHeader>
@@ -191,7 +192,7 @@ export default function Grades() {
         </div>
       )}
 
-      {isAdmin && (
+      {canManageGrades && (
         <>
           <div className="flex gap-2 mb-6">
             <button onClick={() => setTab('WING_TSUN')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'WING_TSUN' ? 'bg-primary-600 text-white' : 'bg-dark-200 text-dark-700 hover:bg-dark-300'}`}>
@@ -238,9 +239,9 @@ export default function Grades() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <ClipboardList size={20} /> {isAdmin ? 'Derece Degisiklik Talepleri' : 'Taleplerim'}
+              <ClipboardList size={20} /> {canManageGrades ? 'Derece Degisiklik Talepleri' : 'Taleplerim'}
             </h2>
-            {isAdmin && (
+            {canManageGrades && (
               <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); fetchChangeRequests(e.target.value); }} className="select-field w-auto">
                 <option value="">Tum Durumlar</option>
                 <option value="PENDING">Bekliyor</option>
@@ -263,7 +264,7 @@ export default function Grades() {
                     <th>Mevcut → Talep</th>
                     <th className="hidden md:table-cell">Not</th>
                     <th>Durum</th>
-                    {isAdmin && <th>Islem</th>}
+                    {canManageGrades && <th>Islem</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -275,7 +276,7 @@ export default function Grades() {
                       <td>{r.current_grade} → {r.requested_grade}</td>
                       <td className="hidden md:table-cell text-sm text-dark-500">{r.note}</td>
                       <td>{getStatusBadge(r.status)}</td>
-                      {isAdmin && (
+                      {canManageGrades && (
                         <td>
                           {r.status === 'PENDING' && (
                             <div className="flex gap-2">
@@ -326,7 +327,7 @@ export default function Grades() {
       </Modal>
 
       {/* Grade Change / Change Request Modal */}
-      <Modal isOpen={changeModalOpen} onClose={() => setChangeModalOpen(false)} title={isAdmin ? 'Manuel Derece Degistir' : 'Derece Degisikligi Talep Et'}>
+      <Modal isOpen={changeModalOpen} onClose={() => setChangeModalOpen(false)} title={canManageGrades ? 'Manuel Derece Degistir' : 'Derece Degisikligi Talep Et'}>
         <form onSubmit={handleGradeChange} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Ogrenci *</label>
@@ -344,7 +345,7 @@ export default function Grades() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">{isAdmin ? 'Yeni Derece' : 'Talep Edilen Derece'}</label>
+              <label className="block text-sm font-medium mb-1">{canManageGrades ? 'Yeni Derece' : 'Talep Edilen Derece'}</label>
               <input type="number" min={1} max={17} value={changeForm.new_grade} onChange={(e) => setChangeForm(p => ({ ...p, new_grade: e.target.value }))} className="input-field" required />
             </div>
           </div>
@@ -354,7 +355,7 @@ export default function Grades() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setChangeModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">{isAdmin ? 'Degistir' : 'Talep Gonder'}</button>
+            <button type="submit" className="btn-primary">{canManageGrades ? 'Degistir' : 'Talep Gonder'}</button>
           </div>
         </form>
       </Modal>

@@ -36,9 +36,10 @@ async def _migrate_sqlite(conn):
         "manager_approved": "ALTER TABLE event_registrations ADD COLUMN manager_approved BOOLEAN DEFAULT 0",
     })
 
-    # users: avatar
+    # users: avatar, granular admin permissions
     await _add_columns("users", {
         "avatar_url": "ALTER TABLE users ADD COLUMN avatar_url VARCHAR(1000)",
+        "extra_permissions": "ALTER TABLE users ADD COLUMN extra_permissions JSON",
     })
 
     # media: youtube, title, school_id
