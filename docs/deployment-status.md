@@ -1,9 +1,38 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-21 (üçüncü tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `90c3c1c`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
+> Son güncelleme: 2026-07-21 (dördüncü tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `53868fc`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
 
-## Bu oturumda yapılanlar (2026-07-21, üçüncü tur): İkinci turdaki özellik gerçekte çalışmıyordu — düzeltildi
+## Bu oturumda yapılanlar (2026-07-21, dördüncü tur): Eğitmenlere granular admin yetkisi + Okullar galerisi
+
+Kullanıcı iki şey istedi: (1) Okullar sayfasında tek kapak görseli yerine çoklu görsel galerisi + dosya seçici, (2) admin panelinden belirli bir eğitmene (MANAGER) tik kutularıyla admin yetkilerinden istediklerini tek tek verebilme — kullanıcı yönetimi (riskli) dahil tüm kategorileri seçti, riskli olduğu kendisine söylendi.
+
+Kapsam büyük olduğundan (7 router, ~27 admin-only endpoint, hem backend hem frontend) önce Plan mode ile detaylı bir plan çıkarıldı ve onaylandı, sonra uygulandı:
+
+**Backend:**
+- `User.extra_permissions` (JSON liste alanı, migration `f0888503e082`), `app/permissions.py` (6 yetki: manage_schools/site_content/events/products/grades/users), `auth.py`'de `require_admin_or_permission()` — gerçek ADMIN/SUPER_ADMIN her zaman geçer, MANAGER sadece ilgili izne sahipse geçer.
+- `grades.py`, `products.py`, `events.py`, `schools.py`, `site_content.py`, `students.py`, `users.py` — tüm `require_admin_or_above` kullanımları ilgili `require_manage_*`'e çevrildi.
+- **Güvenlik kuralları (users.py, zorunlu):** `manage_users` izinli bir MANAGER (a) kimseyi ADMIN/SUPER_ADMIN yapamaz, (b) mevcut rolü ADMIN/SUPER_ADMIN olan bir kullanıcıyı düzenleyemez/silemez, (c) `extra_permissions` alanını değiştiremez (izin verme yetkisi sadece gerçek admin'de).
+- Okullar galerisi: yeni tablo gerekmedi, mevcut `Media` tablosu (`school_id` FK'si zaten vardı) galeri olarak kullanıldı. Yeni `app/services/school_gallery.py`, `SchoolResponse.media` alanı, `media.py`'de MANAGER'ın `manage_schools` izniyle de yükleme/silme yapabilmesi için izin kesişimi.
+- 17 yeni backend testi (`test_permissions.py`, `test_auth.py` eki), toplam **128/128 test geçiyor**.
+
+**Frontend:**
+- `AuthContext.hasPermission()`, `ProtectedRoute`'a `permission` prop'u, `App.jsx`'te `/schools`/`/users`/`/site-content` route'larına permission eklendi, `Layout.jsx` nav görünürlüğü güncellendi.
+- `Events.jsx`/`Products.jsx`/`Grades.jsx`'teki admin-only buton kontrolleri `isAdmin || hasPermission(...)` oldu.
+- `Users.jsx`: MANAGER düzenlenirken (sadece gerçek admin görür) 6 checkbox'lık "Admin Yetkileri" paneli; ADMIN/SUPER_ADMIN rol seçenekleri ve o rollerdeki kullanıcıların düzenle/sil butonları artık sadece gerçek admin'e görünüyor.
+- `Schools.jsx`: çoklu dosya seçici + thumbnail grid + silme (SiteContent.jsx'teki upload deseni referans alındı), `Okullar.jsx` (tanıtım sitesi) galeri/lightbox gösterimi.
+
+**Bulunan ve düzeltilen gerçek bug:** `POST /media/upload` endpoint'i `school_id`'yi form alanı değil query parametresi olarak bekliyormuş (önceden hiçbir çağıran bunu kullanmadığı için fark edilmemiş bir mevcut kısıt) — `Schools.jsx`'teki galeri yükleme kodu buna göre düzeltildi, düzeltilmeseydi galeri özelliği sessizce çalışmayacaktı.
+
+**Test:** API üzerinden uçtan uca doğrulandı (local'de geçici test kullanıcıları: bir eğitmene izin verilmeden 403, verildikten sonra 200; üç güvenlik kuralının her biri ayrı ayrı 403 verdi; galeriye yükleme→görüntüleme→silme akışı), sonra hepsi temizlendi. Chrome eklentisi bu oturumda bağlanamadı, tıklayarak/görsel test yapılamadı.
+
+**Deploy:** commit `53868fc` → push → sunucuda `git pull` + `docker compose up -d --build`, migration `f0888503e082` otomatik uygulandı (canlı loglarda `users.extra_permissions` kolonu doğrulandı), `docker compose ps` tüm container `Up`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com` doğrulandı.
+
+**Not:** Bu oturumda local dev sunucular (backend :8000, frontend :5173) arka planda açık bırakıldı; ayrıca backend dev sunucusu bu oturumda bir kez "hayalet süreç" sorunu yaşadı (eski kod çalışmaya devam ediyordu, restart görünüşte başarılı olsa da port'ta eski süreç kalmıştı) — PowerShell ile gerçek süreç tespit edilip temizlendi. Sonraki oturumda backend değişikliği sonrası dev sunucu davranışı garip görünürse (örn. yeni alan response'ta yok) süreci PowerShell'de (`Get-CimInstance Win32_Process -Filter "Name = 'python.exe'"`) kontrol et, Bash/netstat PID'leri güvenilmeyebilir.
+
+---
+
+## Önceki oturum (2026-07-21, üçüncü tur): İkinci turdaki özellik gerçekte çalışmıyordu — düzeltildi
 
 Kullanıcı ikinci turda canlıya alınan "kullanıcıyı okula öğrenci olarak ata" özelliğini denedi ve hâlâ çalışmadığını bildirdi ("istekte bulunmasa da atayabileyim" — yani MEMBER rolündeki, hiç başvurmamış kullanıcılar için de).
 
