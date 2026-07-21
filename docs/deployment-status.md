@@ -1,9 +1,22 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-21 — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `bb457f5`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
+> Son güncelleme: 2026-07-21 (ikinci tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `d7597de`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
 
-## Bu oturumda yapılanlar (2026-07-21)
+## Bu oturumda yapılanlar (2026-07-21, ikinci tur): Kullanıcıyı doğrudan öğrenci yapıp okula atama
+
+Kullanıcı, Kullanıcılar sayfasından öğrenci kaydı olmayan bir kullanıcıyı (örn. MEMBER rolündeki, henüz hiçbir okula başvurmamış biri) doğrudan öğrenci yapıp bir okula atayabilmek istedi. Önceden bunun bir yolu yoktu — sadece kullanıcının kendi başlattığı iki akış vardı (`/apply`, enrollment talebi), admin'in inisiyatifiyle başlayan bir yol yoktu.
+
+**Yapılan:**
+- Backend: yeni `POST /api/students/` endpoint'i (`backend/app/routers/students.py`, ADMIN/SUPER_ADMIN yetkili) — `user_id` + `school_id` alıp Student + her branş için StudentProgress kaydı oluşturuyor, hedef kullanıcı MEMBER ise USER'a yükseltiyor, PENDING ise ACTIVE yapıyor. Daha önce tanımlı ama hiç kullanılmayan `StudentCreate` şeması kullanıldı.
+- Frontend (`frontend/src/pages/Users.jsx`): düzenleme modalında rol "Ogrenci" (USER) seçiliyken ve kullanıcının öğrenci kaydı yoksa, önceden sadece bilgilendirme metni ("okul atanamaz") vardı — yerine gerçek bir okul seçici + "Güncelle" butonuna basınca hem rolü güncelleyen hem yeni `POST /students/` çağrısını yapan bir akış geldi. Tek adımda tamamlanıyor, ayrı bir onay adımı yok (zaten admin bizzat yapıyor).
+- 7 yeni backend testi (`test_students_create.py`), toplam **104/104 test geçiyor**.
+- Chrome tarayıcı eklentisi bu oturumda bağlanamadı, UI'da tıklayarak test edilemedi — bunun yerine backend'de frontend'in yapacağı iki çağrıyı (rol güncelleme + öğrenci oluşturma) birebir API üzerinden simüle ederek uçtan uca doğrulandı (geçici test kullanıcısı: MEMBER → USER'a yükseldi → okula öğrenci olarak atandı → doğru göründü), sonra temizlendi. **Bir sonraki oturumda gerçek tarayıcıda da denenmeli.**
+- Commit `d7597de` → push → sunucuda `git pull` + `docker compose up -d --build`, `docker compose ps` tüm container `Up`, `/api/health` ve `app.demirwingtsun.com` doğrulandı.
+
+**Yan bulgu (bu işin kapsamı dışında, düzeltilmedi):** `DELETE /api/users/{id}`, öğrenci kaydı olan bir kullanıcıda 500 hatası veriyor — `Student.user_id` FK'inde cascade delete tanımlı değil (`backend/app/models/student.py`). Bu özellik öğrenci sayısını artıracağından bu bug'a çarpma ihtimali de arttı; ayrı bir iş olarak ele alınmalı.
+
+## Önceki oturum (2026-07-21, ilk tur)
 
 Kullanıcı canlıda gezerken 5 eksik/kırık nokta bildirdi, hepsi planlanıp aynı oturumda tamamlandı, test edildi ve canlıya alındı:
 
