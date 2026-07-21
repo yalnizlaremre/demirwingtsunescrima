@@ -77,7 +77,7 @@ export default function Users() {
         if (form.role === 'USER' && editing.student_id && form.school_id && form.school_id !== editing.school_id) {
           await api.put(`/students/${editing.student_id}`, { school_id: form.school_id });
         }
-        if (form.role === 'USER' && !editing.student_id && form.new_student_school_id) {
+        if (!editing.student_id && form.new_student_school_id && !['MANAGER', 'ADMIN', 'SUPER_ADMIN'].includes(editing.role)) {
           await api.post('/students/', { user_id: editing.id, school_id: form.new_student_school_id });
         }
         toast.success('Kullanici guncellendi');
@@ -105,6 +105,7 @@ export default function Users() {
       ADMIN: { label: 'Admin', class: 'bg-blue-100 text-blue-800' },
       MANAGER: { label: 'Egitmen', class: 'bg-emerald-100 text-emerald-800' },
       USER: { label: 'Ogrenci', class: 'bg-amber-100 text-amber-800' },
+      MEMBER: { label: 'Uye', class: 'bg-dark-100 text-dark-600' },
     };
     const r = map[role] || map.USER;
     return <span className={`badge ${r.class}`}>{r.label}</span>;
@@ -140,6 +141,7 @@ export default function Users() {
           <option value="ADMIN">Admin</option>
           <option value="MANAGER">Egitmen</option>
           <option value="USER">Ogrenci</option>
+          <option value="MEMBER">Uye</option>
         </select>
       </div>
 
@@ -211,6 +213,7 @@ export default function Users() {
           <div>
             <label className="block text-sm font-medium mb-1">Rol</label>
             <select value={form.role} onChange={(e) => update('role', e.target.value)} className="select-field">
+              <option value="MEMBER">Uye</option>
               <option value="USER">Ogrenci</option>
               <option value="MANAGER">Egitmen (Manager)</option>
               <option value="ADMIN">Admin</option>
@@ -225,7 +228,7 @@ export default function Users() {
               </select>
             </div>
           )}
-          {editing && form.role === 'USER' && !editing.student_id && (
+          {editing && !editing.student_id && !['MANAGER', 'ADMIN', 'SUPER_ADMIN'].includes(editing.role) && (
             <div>
               <label className="block text-sm font-medium mb-1">Okula Ogrenci Olarak Kaydet</label>
               <select value={form.new_student_school_id} onChange={(e) => update('new_student_school_id', e.target.value)} className="select-field">
