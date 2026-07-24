@@ -1,9 +1,33 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-21 (dördüncü tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `53868fc`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
+> Son güncelleme: 2026-07-24 — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `24b1d73`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
 
-## Bu oturumda yapılanlar (2026-07-21, dördüncü tur): Eğitmenlere granular admin yetkisi + Okullar galerisi
+## Bu oturumda yapılanlar (2026-07-24): Medya genel/tanıtım paylaşımı + tanıtım sitesine Medya sekmesi
+
+Kullanıcı iki şey istedi: (1) video/foto yükleme yetkisi olanların kim olduğunu öğrenmek, (2) medyaların hem web hem mobilden yüklenip bir sayfada oynatılabilmesi, (3) tanıtım sitesine (Anasayfa/Okullar/DemirWteo/Eğitmenler/İletişim'in yanına) bir **Medya** sekmesi eklenip yüklenenlerin orada da görünmesi.
+
+**Yetki durumu (prod'da bu oturum başında sorgulandı):** `ADMIN`/`SUPER_ADMIN` her zaman yükleyebiliyor (`batucet@hotmail.com`, `emreyalnizlar@outlook.com`); `MANAGER` rolünde sadece `can_upload_media=true` tik'i açık olanlar yükleyebiliyor (`gunder86.gnmk@gmail.com`, `emreyalnizlar@gmail.com` — bu ikinci hesap kullanıcının kendi gmail'i, MANAGER rolünde, outlook'taki SUPER_ADMIN hesabından ayrı).
+
+İki tasarım kararı kullanıcıyla netleştirildi: video limiti 10MB→100MB'a çıkarıldı (Caddy'de ek body-size limiti yok, sorun çıkarmadı) **ve** YouTube linki seçeneği de korundu; tanıtım sitesindeki Medya sekmesi sistemdeki tüm medyayı değil, sadece admin'in tek tek "genel/tanıtım" işaretlediği medyayı gösteriyor (okul içi/hassas fotoğraflar otomatik sızmasın diye).
+
+**Yapılan:**
+- Backend: `Media.is_public` alanı (migration `c1a2b3d4e5f6`), upload/youtube uçlarına `is_public` parametresi, yeni `PATCH /media/{id}` (yükleme yetkisi olan herkes kendi/erişebildiği medyada genel/özel toggle'ı yapabiliyor), yeni auth'suz `GET /api/public/media` (sadece `is_public=true`).
+- `MAX_UPLOAD_SIZE` 10MB → 100MB.
+- Admin panel (`frontend/src/pages/Media.jsx`): yükleme sırasında "Tanıtım sitesinde göster" checkbox'ı, mevcut medyalarda toggle butonu (globe ikonu), **video oynatma düzeltildi** (önceden VIDEO tipi sadece statik ikon gösteriyordu, tıklayınca hiçbir şey olmuyordu — artık modal içinde gerçekten oynuyor).
+- `frontend-public/src/pages/Medya.jsx` (yeni): foto/video/YouTube filtreli galeri, foto lightbox, video/YouTube modal oynatıcı. Nav'a Eğitmenler ile İletişim arasına eklendi.
+- 9 yeni backend testi, toplam **132/132 test geçiyor**.
+- Mobilden yükleme için ayrı bir iş gerekmedi — admin panelindeki mevcut dosya seçici (`accept="image/*,video/*"`) telefon tarayıcısında zaten native kamera/galeri seçiciyi açıyor.
+
+**Test:** Chrome'da uçtan uca doğrulandı (local'de geçici admin hesabıyla: foto yükleme+genel işaretleme, YouTube ekleme, toggle aç/kapa, public sayfada filtreleme, lightbox, YouTube modal oynatma), sonra temizlendi. Gerçek bir video dosyası (mp4) elde olmadığından video yükleme/oynatma sadece kod incelemesiyle doğrulandı (foto/YouTube ile birebir aynı `<video controls>` deseni) — ilk gerçek video yüklemesinde bir kontrol iyi olur.
+
+**Deploy:** commit `24b1d73` → push → sunucuda `git pull` + `docker compose up -d --build`, migration `c1a2b3d4e5f6` otomatik uygulandı (loglarda doğrulandı), `docker compose ps` tüm container `Up`, `/api/health` ve `https://demirwingtsun.com/api/public/media` (`[]` dönüyor, beklenen — prod'da henüz hiçbir medya genel işaretlenmedi) doğrulandı.
+
+**Not:** Bu oturumda local dev sunucular (backend :8000, frontend :5173, frontend-public :5174) arka planda açık bırakıldı.
+
+---
+
+## Önceki oturum (2026-07-21, dördüncü tur): Eğitmenlere granular admin yetkisi + Okullar galerisi
 
 Kullanıcı iki şey istedi: (1) Okullar sayfasında tek kapak görseli yerine çoklu görsel galerisi + dosya seçici, (2) admin panelinden belirli bir eğitmene (MANAGER) tik kutularıyla admin yetkilerinden istediklerini tek tek verebilme — kullanıcı yönetimi (riskli) dahil tüm kategorileri seçti, riskli olduğu kendisine söylendi.
 
