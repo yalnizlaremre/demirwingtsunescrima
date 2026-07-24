@@ -24,6 +24,7 @@ async def upload_media(
     file: UploadFile = File(...),
     title: str | None = None,
     school_id: str | None = None,
+    is_public: bool = False,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -49,7 +50,7 @@ async def upload_media(
     # Read file content
     content = await file.read()
     if len(content) > settings.MAX_UPLOAD_SIZE:
-        raise HTTPException(status_code=400, detail="Dosya boyutu çok büyük (max 10MB)")
+        raise HTTPException(status_code=400, detail="Dosya boyutu çok büyük (max 100MB)")
 
     # Generate unique filename
     ext = os.path.splitext(file.filename)[1] if file.filename else ""
@@ -71,6 +72,7 @@ async def upload_media(
         mime_type=content_type,
         uploaded_by=current_user.id,
         school_id=school_id,
+        is_public=is_public,
     )
     db.add(media)
     await db.commit()
@@ -82,6 +84,7 @@ async def upload_media(
         "filename": media.original_filename,
         "media_type": media.media_type,
         "file_size": media.file_size,
+        "is_public": media.is_public,
     }
 
 
@@ -89,6 +92,7 @@ class YouTubeImportRequest(BaseModel):
     youtube_url: str
     title: str | None = None
     school_id: str | None = None
+    is_public: bool = False
 
 
 @router.post("/youtube")
@@ -121,6 +125,7 @@ async def import_youtube(
         mime_type="video/youtube",
         uploaded_by=current_user.id,
         school_id=data.school_id,
+        is_public=data.is_public,
     )
     db.add(media)
     await db.commit()
@@ -133,6 +138,7 @@ async def import_youtube(
         "title": media.title,
         "media_type": media.media_type,
         "file_size": 0,
+        "is_public": media.is_public,
     }
 
 
@@ -161,10 +167,46 @@ async def list_media(
             "youtube_url": m.youtube_url,
             "file_size": m.file_size,
             "school_id": m.school_id,
+            "is_public": m.is_public,
             "created_at": m.created_at.isoformat(),
         }
         for m in media_list
     ]
+
+
+def _can_manage_media(current_user: User, media: Media) -> bool:
+    if current_user.role in (UserRole.SUPER_ADMIN.value, UserRole.ADMIN.value):
+        return True
+    if current_user.role == UserRole.MANAGER.value:
+        if current_user.can_upload_media:
+            return True
+        if media.school_id and user_has_permission(current_user, Permission.MANAGE_SCHOOLS):
+            return True
+    return False
+
+
+class MediaUpdateRequest(BaseModel):
+    is_public: bool
+
+
+@router.patch("/{media_id}")
+async def update_media(
+    media_id: str,
+    data: MediaUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Media).where(Media.id == media_id))
+    media = result.scalar_one_or_none()
+    if not media:
+        raise HTTPException(status_code=404, detail="Medya bulunamadı")
+
+    if not _can_manage_media(current_user, media):
+        raise HTTPException(status_code=403, detail="Bu medyayı düzenleme yetkiniz yok")
+
+    media.is_public = data.is_public
+    await db.commit()
+    return {"id": str(media.id), "is_public": media.is_public}
 
 
 @router.delete("/{media_id}")
@@ -178,13 +220,7 @@ async def delete_media(
     if not media:
         raise HTTPException(status_code=404, detail="Medya bulunamadı")
 
-    is_real_admin = current_user.role in (UserRole.SUPER_ADMIN.value, UserRole.ADMIN.value)
-    can_manage_school_gallery = (
-        current_user.role == UserRole.MANAGER.value
-        and media.school_id
-        and user_has_permission(current_user, Permission.MANAGE_SCHOOLS)
-    )
-    if not is_real_admin and not can_manage_school_gallery:
+    if not _can_manage_media(current_user, media):
         raise HTTPException(status_code=403, detail="Silme yetkiniz yok")
 
     # Delete file

@@ -6,7 +6,7 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Upload, Trash2, Image, Film, Play } from 'lucide-react';
+import { Upload, Trash2, Image, Film, Play, Globe, X } from 'lucide-react';
 
 export default function Media() {
   const { user, isAdmin, isManager } = useAuth();
@@ -16,7 +16,9 @@ export default function Media() {
   const [youtubeModal, setYoutubeModal] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [youtubeTitle, setYoutubeTitle] = useState('');
+  const [makePublic, setMakePublic] = useState(false);
   const [filter, setFilter] = useState('ALL');
+  const [player, setPlayer] = useState(null);
   const fileRef = useRef(null);
 
   const canUpload = isAdmin || (isManager && user?.can_upload_media);
@@ -43,7 +45,7 @@ export default function Media() {
     setUploading(true);
 
     try {
-      await api.post('/media/upload', formData, {
+      await api.post(`/media/upload?is_public=${makePublic}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success('Dosya yuklendi');
@@ -64,6 +66,7 @@ export default function Media() {
       await api.post('/media/youtube', {
         youtube_url: youtubeUrl,
         title: youtubeTitle || null,
+        is_public: makePublic,
       });
       toast.success('YouTube video eklendi');
       setYoutubeModal(false);
@@ -81,6 +84,14 @@ export default function Media() {
       await api.delete(`/media/${id}`);
       toast.success('Medya silindi');
       fetchMedia();
+    } catch (err) { toast.error(err.response?.data?.detail || 'Hata'); }
+  };
+
+  const handleTogglePublic = async (m) => {
+    try {
+      await api.patch(`/media/${m.id}`, { is_public: !m.is_public });
+      setMedia((prev) => prev.map((x) => (x.id === m.id ? { ...x, is_public: !m.is_public } : x)));
+      toast.success(!m.is_public ? 'Tanitim sitesinde gosterilecek' : 'Tanitim sitesinden kaldirildi');
     } catch (err) { toast.error(err.response?.data?.detail || 'Hata'); }
   };
 
@@ -102,9 +113,17 @@ export default function Media() {
   return (
     <div>
       <PageHeader title="Medya" subtitle={`${media.length} dosya`}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {canUpload && (
             <>
+              <label className="flex items-center gap-2 text-sm text-dark-500 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={makePublic}
+                  onChange={(e) => setMakePublic(e.target.checked)}
+                />
+                Tanıtım sitesinde göster
+              </label>
               <button
                 onClick={() => setYoutubeModal(true)}
                 className="btn-secondary flex items-center gap-2"
@@ -148,6 +167,11 @@ export default function Media() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {media.map(m => (
             <div key={m.id} className="card p-3 group relative">
+              {m.is_public && (
+                <div className="absolute top-1 right-1 bg-primary-600 text-white text-xs px-1.5 py-0.5 rounded z-10">
+                  Genel
+                </div>
+              )}
               {m.media_type === 'IMAGE' ? (
                 <img src={m.file_url} alt={m.title || m.filename} className="w-full h-32 object-cover rounded-lg" />
               ) : m.media_type === 'YOUTUBE' ? (
@@ -176,12 +200,27 @@ export default function Media() {
                   </div>
                 </a>
               ) : (
-                <div className="w-full h-32 bg-dark-100 rounded-lg flex items-center justify-center">
+                <button
+                  onClick={() => setPlayer(m)}
+                  className="w-full h-32 bg-dark-100 rounded-lg flex items-center justify-center relative group/play"
+                >
                   <Film size={32} className="text-dark-400" />
-                </div>
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/play:opacity-100 transition-opacity">
+                    <Play size={32} className="text-white" />
+                  </div>
+                </button>
               )}
               <p className="text-xs text-dark-500 mt-2 truncate">{m.title || m.filename}</p>
               {m.media_type !== 'YOUTUBE' && <p className="text-xs text-dark-400">{formatSize(m.file_size)}</p>}
+              {canUpload && (
+                <button
+                  onClick={() => handleTogglePublic(m)}
+                  title={m.is_public ? 'Tanıtım sitesinden kaldır' : 'Tanıtım sitesinde göster'}
+                  className={`absolute bottom-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${m.is_public ? 'bg-primary-600 text-white' : 'bg-dark-200 text-dark-600'}`}
+                >
+                  <Globe size={14} />
+                </button>
+              )}
               {isAdmin && (
                 <button
                   onClick={() => handleDelete(m.id)}
@@ -223,6 +262,29 @@ export default function Media() {
           </div>
         </form>
       </Modal>
+
+      {/* Video Player */}
+      {player && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
+          onClick={() => setPlayer(null)}
+        >
+          <button
+            onClick={() => setPlayer(null)}
+            className="absolute top-6 right-6 text-white hover:text-dark-300"
+            title="Kapat"
+          >
+            <X size={32} />
+          </button>
+          <video
+            src={player.file_url}
+            controls
+            autoPlay
+            className="max-w-full max-h-full rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

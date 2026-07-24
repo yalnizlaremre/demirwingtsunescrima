@@ -82,7 +82,89 @@ class TestMediaUploadPermissions:
             headers=auth_headers(admin),
         )
         assert resp.status_code == 200
+        assert resp.json()["is_public"] is False
         file_url = resp.json()["file_url"]
         file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(file_url))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+class TestMediaIsPublic:
+    async def test_upload_with_is_public_flag(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        resp = await client.post(
+            "/api/media/upload?is_public=true",
+            files={"file": ("test.png", TINY_PNG, "image/png")},
+            headers=auth_headers(admin),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["is_public"] is True
+        file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(resp.json()["file_url"]))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+    async def test_public_media_list_only_returns_public_items(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        public_resp = await client.post(
+            "/api/media/upload?is_public=true",
+            files={"file": ("public.png", TINY_PNG, "image/png")},
+            headers=auth_headers(admin),
+        )
+        private_resp = await client.post(
+            "/api/media/upload",
+            files={"file": ("private.png", TINY_PNG, "image/png")},
+            headers=auth_headers(admin),
+        )
+
+        resp = await client.get("/api/public/media")
+        assert resp.status_code == 200
+        ids = [m["id"] for m in resp.json()]
+        assert public_resp.json()["id"] in ids
+        assert private_resp.json()["id"] not in ids
+
+        for r in (public_resp, private_resp):
+            file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(r.json()["file_url"]))
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+    async def test_manager_without_upload_rights_cannot_toggle_public(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        upload_resp = await client.post(
+            "/api/media/upload",
+            files={"file": ("test.png", TINY_PNG, "image/png")},
+            headers=auth_headers(admin),
+        )
+        media_id = upload_resp.json()["id"]
+
+        resp = await client.patch(
+            f"/api/media/{media_id}",
+            json={"is_public": True},
+            headers=auth_headers(manager),
+        )
+        assert resp.status_code == 403
+
+        file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(upload_resp.json()["file_url"]))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+    async def test_admin_can_toggle_public(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        upload_resp = await client.post(
+            "/api/media/upload",
+            files={"file": ("test.png", TINY_PNG, "image/png")},
+            headers=auth_headers(admin),
+        )
+        media_id = upload_resp.json()["id"]
+
+        resp = await client.patch(
+            f"/api/media/{media_id}",
+            json={"is_public": True},
+            headers=auth_headers(admin),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["is_public"] is True
+
+        file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(upload_resp.json()["file_url"]))
         if os.path.exists(file_path):
             os.remove(file_path)

@@ -8,6 +8,7 @@ const LINKS = [
   { to: '/okullar', label: 'Okullar' },
   { to: '/demirwteo', label: 'DemirWteo' },
   { to: '/egitmenler', label: 'Eğitmenler' },
+  { to: '/medya', label: 'Medya' },
   { to: '/iletisim', label: 'İletişim' },
 ];
 

@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     # Upload
     UPLOAD_DIR: Path = Path("uploads")
-    MAX_UPLOAD_SIZE: int = 10485760  # 10MB
+    MAX_UPLOAD_SIZE: int = 104857600  # 100MB
 
     # Mail (SMTP)
     MAIL_ENABLED: bool = False

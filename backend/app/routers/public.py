@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.school import School
 from app.models.user import User
 from app.models.site_content import SiteContent
+from app.models.media import Media
 from app.schemas.school import SchoolResponse
 from app.schemas.public import PublicInstructorResponse, PublicInstructorListResponse
 from app.schemas.site_content import SiteContentResponse, SiteContentListResponse
@@ -81,3 +82,27 @@ async def public_get_content(slug: str, db: AsyncSession = Depends(get_db)):
     )
     items = result.scalars().all()
     return SiteContentListResponse(items=[SiteContentResponse.model_validate(c) for c in items])
+
+
+@router.get("/media")
+async def public_list_media(
+    media_type: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(Media).where(Media.is_public == True).order_by(Media.created_at.desc())
+    if media_type:
+        query = query.where(Media.media_type == media_type)
+    result = await db.execute(query)
+    media_list = result.scalars().all()
+
+    return [
+        {
+            "id": str(m.id),
+            "media_type": m.media_type,
+            "title": m.title,
+            "file_url": m.file_url,
+            "youtube_url": m.youtube_url,
+            "created_at": m.created_at.isoformat(),
+        }
+        for m in media_list
+    ]

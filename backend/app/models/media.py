@@ -1,7 +1,7 @@
 import uuid
 import enum
 from datetime import datetime
-from sqlalchemy import String, Integer, DateTime, ForeignKey, func
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, UUIDMixin
 
@@ -23,6 +23,7 @@ class Media(Base, UUIDMixin):
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
     youtube_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     school_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("schools.id", ondelete="SET NULL"), nullable=True
     )

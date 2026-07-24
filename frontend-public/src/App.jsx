@@ -5,6 +5,7 @@ import Anasayfa from './pages/Anasayfa';
 import Okullar from './pages/Okullar';
 import DemirWteo from './pages/DemirWteo';
 import Egitmenler from './pages/Egitmenler';
+import Medya from './pages/Medya';
 import Iletisim from './pages/Iletisim';
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/okullar" element={<Okullar />} />
           <Route path="/demirwteo" element={<DemirWteo />} />
           <Route path="/egitmenler" element={<Egitmenler />} />
+          <Route path="/medya" element={<Medya />} />
           <Route path="/iletisim" element={<Iletisim />} />
         </Routes>
       </main>
