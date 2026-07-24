@@ -33,6 +33,12 @@ export default function Register() {
         <div className="text-center mb-8">
           <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-20 w-auto mx-auto mb-4" />
           <p className="text-dark-400 mt-2">Uye Kayit</p>
+          <a
+            href="https://demirwingtsun.com"
+            className="inline-block text-sm text-dark-500 hover:text-white transition-colors mt-2"
+          >
+            ← Tanıtım sitesine dön
+          </a>
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">

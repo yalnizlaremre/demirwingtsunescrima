@@ -117,6 +117,12 @@ export default function Layout() {
             <LogOut size={16} />
             Cikis Yap
           </button>
+          <a
+            href="https://demirwingtsun.com"
+            className="block mt-2 text-dark-500 hover:text-white text-xs transition-colors"
+          >
+            ← Tanıtım sitesine dön
+          </a>
         </div>
       </aside>
 
