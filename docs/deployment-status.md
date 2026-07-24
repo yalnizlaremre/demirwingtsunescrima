@@ -1,9 +1,21 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-24 — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `24b1d73`). Bu oturumda yapılanların özeti hemen altta, sonraki oturum burdan devam edebilir ya da yeni bir iş için sıfırdan başlayabilir.
+> Son güncelleme: 2026-07-25 — **Bekleyen iş var (kod değil, içerik):** Site İçeriği panelinden `anasayfa` slug'ının ilk bloğu gerçek bir tanıtım metniyle değiştirilmeli (şu an "Kadıköy Okulu" gibi görünüyor, aşağıda detay var). Bunun dışında `main` ile `origin/main` ve prod aynı hizada (son commit `3191801`).
 
-## Bu oturumda yapılanlar (2026-07-24): Medya genel/tanıtım paylaşımı + tanıtım sitesine Medya sekmesi
+## Bu oturumda yapılanlar (2026-07-25): Tanıtım sitesi ↔ panel geçiş incelemesi + eksik geri dönüş linkleri
+
+Kullanıcı demirwingtsun.com'a giriş, öğrenci yönetimi paneline geçiş ve geri dönüş akışının incelenmesini istedi. Bulunan 3 sorun:
+
+1. **(Düzeltildi)** `app.demirwingtsun.com`'daki karşılama ekranında ("Panele Devam Et" öncesi) "Tanıtım sitesine dön" linki vardı, ama gerçek Giriş Yap / Kayıt Ol formlarına (`Login.jsx`, `Register.jsx`) geçilince bu link kayboluyordu — kullanıcı tanıtım sitesine dönmek için tarayıcı geri tuşuna mecbur kalıyordu. Aynı link giriş yaptıktan sonraki panelde (sidebar) de yoktu. Üçüne de (`Login.jsx`, `Register.jsx`, `Layout.jsx` sidebar alt kısmı) "← Tanıtım sitesine dön" linki eklendi.
+2. **(Kod değil, içerik — kullanıcı kendi düzenleyecek)** Anasayfa'nın ilk ve en büyük başlığı "Kadıköy Okulu" — organizasyonu tanıtan bir giriş metni yok, direkt tek bir okulun adı görünüyor, hemen altında "Tekirdağ Okulu" bloğu geliyor (Okullar sayfasıyla neredeyse birebir tekrar). Kod doğru çalışıyor (`Anasayfa.jsx` `content/anasayfa` slug'ının ilk kaydını hero olarak, gerisini ek blok olarak basıyor) — sorun Site İçeriği panelinden girilen içerikte. **Kullanıcı bunu kendisi Site İçeriği panelinden düzenleyecek.**
+3. **(Not edildi, dokunulmadı)** İletişim sayfası çok yalın — sadece 2 kişi + telefon, e-posta/harita/form/Instagram linki yok (Eğitmenler sayfasında Instagram linkleri var ama İletişim'de kullanılmıyor).
+
+**Deploy:** commit `3191801` → push → sunucuda `git pull` + `docker compose up -d --build` (migration gerekmedi, sadece frontend statik dosyaları değişti), `docker compose ps` tüm container `Up`, `/api/health` ve canlıda `/login` sayfasında link görüldü.
+
+---
+
+## Önceki oturum (2026-07-24): Medya genel/tanıtım paylaşımı + tanıtım sitesine Medya sekmesi
 
 Kullanıcı iki şey istedi: (1) video/foto yükleme yetkisi olanların kim olduğunu öğrenmek, (2) medyaların hem web hem mobilden yüklenip bir sayfada oynatılabilmesi, (3) tanıtım sitesine (Anasayfa/Okullar/DemirWteo/Eğitmenler/İletişim'in yanına) bir **Medya** sekmesi eklenip yüklenenlerin orada da görünmesi.
 
