@@ -38,8 +38,10 @@ export default function Anasayfa() {
 
   if (loading) return <LoadingSpinner />;
 
-  const [hero, ...extra] = items;
-  const heroIsVideo = isVideoUrl(hero?.image_url);
+  // Ilk blok sadece hero arkaplan medyasini (video/gorsel) secmek icin kullanilir;
+  // metin icerigi (baslik/govde/youtube) diger butun bloklarla ayni sekilde asagida, alt alta gosterilir.
+  const [heroMedia] = items;
+  const heroIsVideo = isVideoUrl(heroMedia?.image_url);
   const hasSlideshow = !heroIsVideo && slideshow.length > 0;
 
   return (
@@ -49,7 +51,7 @@ export default function Anasayfa() {
         <div className="absolute inset-0 z-0">
           {heroIsVideo ? (
             <video
-              src={hero.image_url}
+              src={heroMedia.image_url}
               autoPlay
               muted
               loop
@@ -67,8 +69,8 @@ export default function Anasayfa() {
                 }`}
               />
             ))
-          ) : hero?.image_url ? (
-            <img src={hero.image_url} alt="" className="w-full h-full object-cover" />
+          ) : heroMedia?.image_url ? (
+            <img src={heroMedia.image_url} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-dark-800 via-dark-900 to-black" />
           )}
@@ -79,7 +81,7 @@ export default function Anasayfa() {
           <img src="/logo.png" alt={ORG_NAME} className="h-16 w-auto mx-auto mb-6" />
           <h1 className="text-4xl md:text-6xl font-bold mb-4">{ORG_NAME}</h1>
           <p className="text-dark-300 text-lg max-w-2xl mx-auto mb-10 whitespace-pre-line">
-            {hero?.body || DEFAULT_TAGLINE}
+            {DEFAULT_TAGLINE}
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/okullar" className="btn-primary text-base px-6 py-3">
@@ -92,25 +94,9 @@ export default function Anasayfa() {
         </div>
       </section>
 
-      {/* Hero basligi (SiteContent'ten girilen baslik, gorselin ustune degil altina) */}
-      {hero?.title && (
-        <section className="border-b border-dark-800">
-          <div className="max-w-4xl mx-auto px-6 py-6 text-center">
-            <p className="text-primary-500 text-lg font-medium">{hero.title}</p>
-          </div>
-        </section>
-      )}
-
-      {/* Hero'ya eklenmis YouTube tanitim videosu (varsa) */}
-      {hero?.youtube_url && (
-        <section className="max-w-4xl mx-auto px-6 py-16">
-          <YouTubeEmbed url={hero.youtube_url} title={hero.title} />
-        </section>
-      )}
-
-      {/* Ek icerik bloklari */}
-      {extra.map((block) => (
-        <section key={block.id} className="max-w-4xl mx-auto px-6 pb-16">
+      {/* Icerik bloklari - hepsi (Site Icerigi'nde girilen sirayla) alt alta, ayni sekilde gosterilir */}
+      {items.map((block) => (
+        <section key={block.id} className="max-w-4xl mx-auto px-6 py-16 border-b border-dark-800 last:border-b-0">
           {block.title && <h2 className="text-2xl font-bold mb-4">{block.title}</h2>}
           {block.body && <p className="text-dark-300 leading-relaxed whitespace-pre-line mb-6">{block.body}</p>}
           {block.image_url && (
