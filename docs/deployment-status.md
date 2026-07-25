@@ -1,9 +1,17 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-25 (üçüncü tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `bca178d`). Anasayfa'daki "Kadıköy Okulu" içerik sorunu artık kritik değil (aşağıda detay var) — isterseniz Site İçeriği panelinden hâlâ düzeltebilirsiniz ama artık ana başlık değil, küçük bir etiket olarak görünüyor.
+> Son güncelleme: 2026-07-25 (dördüncü tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `fa38531`).
 
-## Bu oturumda yapılanlar (2026-07-25, üçüncü tur): Hero'da Medya slayt gösterisi
+## Bu oturumda yapılanlar (2026-07-25, dördüncü tur): Hero başlığı aşağı alındı, istatistik şeridi kaldırıldı
+
+Kullanıcı üçüncü turdaki tasarımda iki şey istedi: (1) hero görselinin/slaytının üzerindeki "Kadıköy Okulu" başlığı görselin üstünde durmasın, aşağıda konumlansın, (2) istatistik şeridi (okul/öğrenci/eğitmen sayısı) kaldırılsın. `Anasayfa.jsx`'te `hero?.title` artık hero overlay'inden çıkarılıp hero'nun hemen altında ayrı, sade bir şeritte gösteriliyor (istatistiklerin durduğu yerin yerini aldı); istatistik state/fetch/bölümü tamamen kaldırıldı (backend'deki `/api/public/stats` ucu dokunulmadan kaldı, başka bir yerde kullanılabilir). Sadece frontend-public değişti.
+
+**Deploy:** commit `fa38531` → push → `git pull` + `docker compose up -d --build`, canlıda `document.querySelector('main').innerText` ile doğrulandı — "Kadıköy Okulu" artık hero'nun altında, istatistik yok.
+
+---
+
+## Önceki oturum (2026-07-25, üçüncü tur): Hero'da Medya slayt gösterisi
 
 Kullanıcı ikinci turdaki hero'nun tek sabit görsel yerine Medya sayfasındaki "genel" işaretli fotoğrafların 7-8 saniyede bir dönmesini istedi. `Anasayfa.jsx`'e `is_public` görsellerin (`GET /public/media?media_type=IMAGE`) 7.5 saniyede bir crossfade (`opacity` geçişi, `transition-opacity duration-1000`) ile döndüğü bir slayt gösterisi eklendi — öncelik sırası: video hero (varsa) > Medya slaytı (genel foto varsa) > tekil SiteContent görseli > gradient fallback. Backend değişikliği yok, sadece frontend-public.
 
