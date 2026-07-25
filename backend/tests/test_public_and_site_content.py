@@ -40,6 +40,24 @@ class TestPublicInstructors:
         assert str(not_featured.id) not in ids
 
 
+class TestPublicStats:
+    async def test_stats_counts_active_schools_and_featured_instructors(self, client, db_session):
+        active = await make_school(db_session, name="Active School")
+        inactive = await make_school(db_session, name="Inactive School")
+        inactive.is_active = False
+        featured = await make_user(db_session, role=UserRole.MANAGER.value)
+        featured.is_featured_instructor = True
+        not_featured = await make_user(db_session, role=UserRole.MANAGER.value)
+        await db_session.commit()
+
+        resp = await client.get("/api/public/stats")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["schools"] >= 1
+        assert data["instructors"] >= 1
+        assert "students" in data
+
+
 class TestSiteContentAdmin:
     async def test_admin_creates_and_public_reads_content(self, client, db_session):
         admin = await make_user(db_session, role=UserRole.ADMIN.value)

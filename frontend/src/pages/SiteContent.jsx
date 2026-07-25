@@ -19,6 +19,10 @@ function getYouTubeId(url) {
   return match ? match[1] : null;
 }
 
+function isVideoUrl(url) {
+  return !!url && /\.(mp4|webm|mov)$/i.test(url);
+}
+
 export default function SiteContent() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +139,11 @@ export default function SiteContent() {
             return (
               <div key={item.id} className="card">
                 {item.image_url && (
-                  <img src={item.image_url} alt="" className="w-full h-32 object-cover rounded-lg mb-3" />
+                  isVideoUrl(item.image_url) ? (
+                    <video src={item.image_url} muted className="w-full h-32 object-cover rounded-lg mb-3" />
+                  ) : (
+                    <img src={item.image_url} alt="" className="w-full h-32 object-cover rounded-lg mb-3" />
+                  )
                 )}
                 <div className="mb-4">
                   <span className="badge bg-dark-100 text-dark-600">{item.slug}</span>
@@ -181,10 +189,14 @@ export default function SiteContent() {
             <textarea value={form.body} onChange={(e) => update('body', e.target.value)} className="input-field" rows={6} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Gorsel</label>
+            <label className="block text-sm font-medium mb-1">Gorsel / Video</label>
             {form.image_url && (
               <div className="relative mb-2 inline-block">
-                <img src={form.image_url} alt="" className="h-28 w-auto rounded-lg border border-dark-700 object-cover" />
+                {isVideoUrl(form.image_url) ? (
+                  <video src={form.image_url} controls muted className="h-28 w-auto rounded-lg border border-dark-700 object-cover" />
+                ) : (
+                  <img src={form.image_url} alt="" className="h-28 w-auto rounded-lg border border-dark-700 object-cover" />
+                )}
                 <button
                   type="button"
                   onClick={() => update('image_url', '')}
@@ -198,7 +210,7 @@ export default function SiteContent() {
             <div className="flex items-center gap-2">
               <label className={`btn-secondary btn-sm cursor-pointer flex items-center gap-1.5 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
                 <Upload size={14} /> {uploading ? 'Yukleniyor...' : 'Dosya Sec'}
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleImageUpload} className="hidden" />
               </label>
               <span className="text-xs text-dark-400">veya asagiya link yapistir</span>
             </div>
@@ -208,6 +220,9 @@ export default function SiteContent() {
               className="input-field mt-2"
               placeholder="/uploads/... veya https://..."
             />
+            <p className="text-xs text-dark-400 mt-1">
+              anasayfa icin ilk blokta video dosyasi secilirse (mp4/webm), hero arkaplaninda otomatik oynatilir.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">YouTube Linki</label>

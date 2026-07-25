@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 
 from app.database import get_db
 from app.models.school import School
 from app.models.user import User
+from app.models.student import Student
 from app.models.site_content import SiteContent
 from app.models.media import Media
 from app.schemas.school import SchoolResponse
@@ -82,6 +83,18 @@ async def public_get_content(slug: str, db: AsyncSession = Depends(get_db)):
     )
     items = result.scalars().all()
     return SiteContentListResponse(items=[SiteContentResponse.model_validate(c) for c in items])
+
+
+@router.get("/stats")
+async def public_stats(db: AsyncSession = Depends(get_db)):
+    schools = await db.scalar(
+        select(func.count()).select_from(School).where(School.is_active == True)
+    )
+    students = await db.scalar(select(func.count()).select_from(Student))
+    instructors = await db.scalar(
+        select(func.count()).select_from(User).where(User.is_featured_instructor == True)
+    )
+    return {"schools": schools, "students": students, "instructors": instructors}
 
 
 @router.get("/media")
