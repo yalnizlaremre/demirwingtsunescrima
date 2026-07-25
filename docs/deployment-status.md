@@ -1,9 +1,19 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-25 (dördüncü tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `fa38531`).
+> Son güncelleme: 2026-07-25 (beşinci tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `85d6d38`).
 
-## Bu oturumda yapılanlar (2026-07-25, dördüncü tur): Hero başlığı aşağı alındı, istatistik şeridi kaldırıldı
+## Bu oturumda yapılanlar (2026-07-25, beşinci tur): Anasayfa içerik blokları alt alta, tutarlı
+
+Kullanıcı dördüncü turdaki değişiklikten sonra "Kadıköy Okulu görünmüyor, Tekirdağ gözüküyor" dedi. Kök neden: ilk Site İçeriği bloğu (Kadıköy Okulu) hâlâ özel "hero" muamelesi görüyordu — sadece küçük bir başlık şeridi olarak gösteriliyordu, kendi görseli hiç render edilmiyordu (hero arkaplanı artık Medya slaytı tarafından domine ediliyordu). İkinci blok (Tekirdağ Okulu) ise tam blok (başlık+görsel) olarak görünüyordu — asimetri buradan kaynaklanıyordu.
+
+**Düzeltme:** `Anasayfa.jsx`'te ilk blok artık sadece hero arkaplan medyası (video varsa) seçimi için kullanılıyor, metin/görsel içeriği artık **tüm** bloklarla (`items.map`, eskiden `extra.map`) birlikte aynı şekilde alt alta render ediliyor. Hero'nun kendi metni (başlık+tagline) artık tamamen sabit, hiçbir Site İçeriği bloğundan alınmıyor — böylece hiçbir içerik metni iki yerde tekrar etmiyor.
+
+**Deploy:** commit `85d6d38` → push → `git pull` + `docker compose up -d --build`, canlıda JS ile doğrulandı: "Kadıköy Okulu" ve "Tekirdağ Okulu" ikisi de h2 başlık + kendi görseliyle, alt alta görünüyor.
+
+---
+
+## Önceki oturum (2026-07-25, dördüncü tur): Hero başlığı aşağı alındı, istatistik şeridi kaldırıldı
 
 Kullanıcı üçüncü turdaki tasarımda iki şey istedi: (1) hero görselinin/slaytının üzerindeki "Kadıköy Okulu" başlığı görselin üstünde durmasın, aşağıda konumlansın, (2) istatistik şeridi (okul/öğrenci/eğitmen sayısı) kaldırılsın. `Anasayfa.jsx`'te `hero?.title` artık hero overlay'inden çıkarılıp hero'nun hemen altında ayrı, sade bir şeritte gösteriliyor (istatistiklerin durduğu yerin yerini aldı); istatistik state/fetch/bölümü tamamen kaldırıldı (backend'deki `/api/public/stats` ucu dokunulmadan kaldı, başka bir yerde kullanılabilir). Sadece frontend-public değişti.
 
