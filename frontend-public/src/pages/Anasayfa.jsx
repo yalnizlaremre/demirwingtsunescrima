@@ -17,7 +17,6 @@ const SLIDESHOW_INTERVAL_MS = 7500;
 
 export default function Anasayfa() {
   const [items, setItems] = useState([]);
-  const [stats, setStats] = useState(null);
   const [slideshow, setSlideshow] = useState([]);
   const [slideIndex, setSlideIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -25,7 +24,6 @@ export default function Anasayfa() {
   useEffect(() => {
     Promise.all([
       api.get('/content/anasayfa').then((res) => setItems(res.data.items)).catch(() => setItems([])),
-      api.get('/stats').then((res) => setStats(res.data)).catch(() => setStats(null)),
       api.get('/media?media_type=IMAGE').then((res) => setSlideshow(res.data)).catch(() => setSlideshow([])),
     ]).finally(() => setLoading(false));
   }, []);
@@ -43,7 +41,6 @@ export default function Anasayfa() {
   const [hero, ...extra] = items;
   const heroIsVideo = isVideoUrl(hero?.image_url);
   const hasSlideshow = !heroIsVideo && slideshow.length > 0;
-  const hasStats = stats && (stats.schools > 0 || stats.students > 0 || stats.instructors > 0);
 
   return (
     <div>
@@ -81,7 +78,6 @@ export default function Anasayfa() {
         <div className="relative z-10 max-w-6xl mx-auto px-6 py-24 text-center w-full">
           <img src="/logo.png" alt={ORG_NAME} className="h-16 w-auto mx-auto mb-6" />
           <h1 className="text-4xl md:text-6xl font-bold mb-4">{ORG_NAME}</h1>
-          {hero?.title && <p className="text-primary-500 text-lg font-medium mb-4">{hero.title}</p>}
           <p className="text-dark-300 text-lg max-w-2xl mx-auto mb-10 whitespace-pre-line">
             {hero?.body || DEFAULT_TAGLINE}
           </p>
@@ -96,22 +92,11 @@ export default function Anasayfa() {
         </div>
       </section>
 
-      {/* Istatistikler */}
-      {hasStats && (
+      {/* Hero basligi (SiteContent'ten girilen baslik, gorselin ustune degil altina) */}
+      {hero?.title && (
         <section className="border-b border-dark-800">
-          <div className="max-w-4xl mx-auto px-6 py-10 grid grid-cols-3 gap-6 text-center">
-            <div>
-              <p className="text-3xl md:text-4xl font-bold text-primary-500">{stats.schools}</p>
-              <p className="text-dark-400 text-sm mt-1">Okul</p>
-            </div>
-            <div>
-              <p className="text-3xl md:text-4xl font-bold text-primary-500">{stats.students}</p>
-              <p className="text-dark-400 text-sm mt-1">Öğrenci</p>
-            </div>
-            <div>
-              <p className="text-3xl md:text-4xl font-bold text-primary-500">{stats.instructors}</p>
-              <p className="text-dark-400 text-sm mt-1">Eğitmen</p>
-            </div>
+          <div className="max-w-4xl mx-auto px-6 py-6 text-center">
+            <p className="text-primary-500 text-lg font-medium">{hero.title}</p>
           </div>
         </section>
       )}
