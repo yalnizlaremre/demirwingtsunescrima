@@ -1,9 +1,17 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-25 (ikinci tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `6d37976`). Anasayfa'daki "Kadıköy Okulu" içerik sorunu artık kritik değil (aşağıda detay var) — isterseniz Site İçeriği panelinden hâlâ düzeltebilirsiniz ama artık ana başlık değil, küçük bir etiket olarak görünüyor.
+> Son güncelleme: 2026-07-25 (üçüncü tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `bca178d`). Anasayfa'daki "Kadıköy Okulu" içerik sorunu artık kritik değil (aşağıda detay var) — isterseniz Site İçeriği panelinden hâlâ düzeltebilirsiniz ama artık ana başlık değil, küçük bir etiket olarak görünüyor.
 
-## Bu oturumda yapılanlar (2026-07-25, ikinci tur): Anasayfa yeniden tasarımı
+## Bu oturumda yapılanlar (2026-07-25, üçüncü tur): Hero'da Medya slayt gösterisi
+
+Kullanıcı ikinci turdaki hero'nun tek sabit görsel yerine Medya sayfasındaki "genel" işaretli fotoğrafların 7-8 saniyede bir dönmesini istedi. `Anasayfa.jsx`'e `is_public` görsellerin (`GET /public/media?media_type=IMAGE`) 7.5 saniyede bir crossfade (`opacity` geçişi, `transition-opacity duration-1000`) ile döndüğü bir slayt gösterisi eklendi — öncelik sırası: video hero (varsa) > Medya slaytı (genel foto varsa) > tekil SiteContent görseli > gradient fallback. Backend değişikliği yok, sadece frontend-public.
+
+**Deploy:** commit `bca178d` → push → sunucuda `git pull` + `docker compose up -d --build`, prod'daki gerçek 3 genel fotoğrafla (`/api/public/media`) DOM üzerinden JS ile doğrulandı (ilk görsel `opacity:1`, diğerleri `opacity:0`, sırayla dönecek şekilde kuruldu). Otomasyon sekmesi bu ortamda arka planda sayıldığından (`document.visibilityState: "hidden"`) Chrome'un timer throttling'i yüzünden geçişi canlı izleyemedim — kod standart bir `setInterval` deseni, kullanıcının kendi (görünür) tarayıcısında düzgün çalışması bekleniyor, doğrulanmadı.
+
+---
+
+## Önceki oturum (2026-07-25, ikinci tur): Anasayfa yeniden tasarımı
 
 Kullanıcı referans olarak `ertanbalaban.com`'u gösterdi, anasayfanın "kullanışlı" hale gelmesini istedi (özellikle video arkaplan fikri). İncelenen referans sitenin yapısı: tam ekran hero (görsel/video), büyük isim+tagline+tek CTA, kart tarzı bölümler, zengin footer — bunlardan uygun olanlar uygulandı, `ertanbalaban.com`'un biraz "buggy" hissettiren scroll-jack/snap-back etkileşimi kasıtlı olarak kopyalanmadı.
 
