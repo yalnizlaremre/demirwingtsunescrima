@@ -1,9 +1,28 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-25 — **Bekleyen iş var (kod değil, içerik):** Site İçeriği panelinden `anasayfa` slug'ının ilk bloğu gerçek bir tanıtım metniyle değiştirilmeli (şu an "Kadıköy Okulu" gibi görünüyor, aşağıda detay var). Bunun dışında `main` ile `origin/main` ve prod aynı hizada (son commit `3191801`).
+> Son güncelleme: 2026-07-25 (ikinci tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `6d37976`). Anasayfa'daki "Kadıköy Okulu" içerik sorunu artık kritik değil (aşağıda detay var) — isterseniz Site İçeriği panelinden hâlâ düzeltebilirsiniz ama artık ana başlık değil, küçük bir etiket olarak görünüyor.
 
-## Bu oturumda yapılanlar (2026-07-25): Tanıtım sitesi ↔ panel geçiş incelemesi + eksik geri dönüş linkleri
+## Bu oturumda yapılanlar (2026-07-25, ikinci tur): Anasayfa yeniden tasarımı
+
+Kullanıcı referans olarak `ertanbalaban.com`'u gösterdi, anasayfanın "kullanışlı" hale gelmesini istedi (özellikle video arkaplan fikri). İncelenen referans sitenin yapısı: tam ekran hero (görsel/video), büyük isim+tagline+tek CTA, kart tarzı bölümler, zengin footer — bunlardan uygun olanlar uygulandı, `ertanbalaban.com`'un biraz "buggy" hissettiren scroll-jack/snap-back etkileşimi kasıtlı olarak kopyalanmadı.
+
+**Yapılan:**
+- Backend: yeni auth'suz `GET /api/public/stats` (aktif okul/öğrenci/öne-çıkan-eğitmen sayısı, aggregate, PII yok).
+- `Anasayfa.jsx` tamamen yeniden yazıldı: hero artık tam ekran (`min-h-[85vh]`), arkaplanda `SiteContent.anasayfa`'nın ilk bloğundaki `image_url` — dosya uzantısına göre (`.mp4/.webm/.mov`) otomatik `<video autoPlay muted loop playsInline>` ya da `<img>` olarak render ediliyor, içerik hiç yoksa gradient fallback. **Başlık artık her zaman sabit "Demir Wing Tsun Akademi"** — admin'in girdiği başlık (varsa, ör. "Kadıköy Okulu") artık H1 değil, altında küçük bir tagline satırı; böylece hem dünkü "ilk izlenim kafa karıştırıcı" bulgusu koda bağlı olmadan çözüldü hem de hiç içerik girilmemiş olması sorun olmuyor. İstatistik şeridi eklendi. Hızlı bağlantı kartları 2'den 4'e çıktı (Okullar/Eğitmenler/DemirWteo/Medya).
+- `Footer.jsx`: tek satır telif yerine logo + tüm sayfalara nav linkleri.
+- `SiteContent.jsx` (admin): "Görsel" yükleme alanı artık video da kabul ediyor (`accept="image/*,video/*"`), önizleme video ise `<video>` ile gösteriliyor; kısa bir ipucu metni eklendi ("anasayfa hero'sunda video dosyası otomatik oynatılır").
+- 1 yeni backend testi, toplam **133/133 test geçiyor**. Her iki frontend hatasız build oluyor.
+
+**Test:** Local'de gerçek prod olmayan verilerle (2 okul, 0 öğrenci) ve sahte bir video URL'siyle (mp4 uzantılı harici test dosyası, DOM'da doğrudan JS ile `<video>` elementinin doğru `src`'i aldığı doğrulandı) uçtan uca kontrol edildi, sonra temizlendi. Bu oturumda Chrome ekran görüntüsü aracı (CDP screenshot) birkaç kez zaman aşımına uğradı — sayfa içeriği `get_page_text`/JS ile doğrulandı, görsel kontrol sınırlı kaldı, kullanıcının kendi tarayıcısından bakması istendi.
+
+**Deploy:** commit `6d37976` → push → sunucuda `git pull` + `docker compose up -d --build` (migration gerekmedi), `docker compose ps` tüm container `Up`, canlıda `/api/public/stats` gerçek veriyle doğrulandı (`{"schools":2,"students":22,"instructors":3}`), anasayfa içeriği `get_page_text` ile kontrol edildi — yeni başlık, istatistik şeridi ve 4 kart hepsi doğru görünüyor.
+
+**Ortam notu:** Bu oturumda local backend dev sunucusu tekrar "hayalet süreç" davranışı gösterdi (yeni `/api/public/stats` route'u loglarda "Reloading..." dese de 404 dönmeye devam etti) — [[manager_permissions_and_school_gallery_2026_07_21]]'de belgelenen aynı sorun, PowerShell'de gerçek `python.exe` sürecini bulup kapatıp yeniden başlatmak çözdü.
+
+---
+
+## Önceki oturum (2026-07-25, ilk tur): Tanıtım sitesi ↔ panel geçiş incelemesi + eksik geri dönüş linkleri
 
 Kullanıcı demirwingtsun.com'a giriş, öğrenci yönetimi paneline geçiş ve geri dönüş akışının incelenmesini istedi. Bulunan 3 sorun:
 
