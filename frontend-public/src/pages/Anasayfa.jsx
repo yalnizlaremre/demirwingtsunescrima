@@ -13,22 +13,36 @@ function isVideoUrl(url) {
   return !!url && /\.(mp4|webm|mov)$/i.test(url);
 }
 
+const SLIDESHOW_INTERVAL_MS = 7500;
+
 export default function Anasayfa() {
   const [items, setItems] = useState([]);
   const [stats, setStats] = useState(null);
+  const [slideshow, setSlideshow] = useState([]);
+  const [slideIndex, setSlideIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       api.get('/content/anasayfa').then((res) => setItems(res.data.items)).catch(() => setItems([])),
       api.get('/stats').then((res) => setStats(res.data)).catch(() => setStats(null)),
+      api.get('/media?media_type=IMAGE').then((res) => setSlideshow(res.data)).catch(() => setSlideshow([])),
     ]).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (slideshow.length < 2) return;
+    const timer = setInterval(() => {
+      setSlideIndex((i) => (i + 1) % slideshow.length);
+    }, SLIDESHOW_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [slideshow.length]);
 
   if (loading) return <LoadingSpinner />;
 
   const [hero, ...extra] = items;
   const heroIsVideo = isVideoUrl(hero?.image_url);
+  const hasSlideshow = !heroIsVideo && slideshow.length > 0;
   const hasStats = stats && (stats.schools > 0 || stats.students > 0 || stats.instructors > 0);
 
   return (
@@ -45,6 +59,17 @@ export default function Anasayfa() {
               playsInline
               className="w-full h-full object-cover"
             />
+          ) : hasSlideshow ? (
+            slideshow.map((img, i) => (
+              <img
+                key={img.id}
+                src={img.file_url}
+                alt=""
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+                  i === slideIndex ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            ))
           ) : hero?.image_url ? (
             <img src={hero.image_url} alt="" className="w-full h-full object-cover" />
           ) : (
