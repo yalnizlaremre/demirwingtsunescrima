@@ -227,6 +227,22 @@ async def update_user(
     return _user_to_response(user)
 
 
+def check_can_delete_user(current_user: User, target_user: User) -> None:
+    """Bir kullanicinin silinip silinemeyecegini kontrol eder, degilse HTTPException firlatir."""
+    if current_user.id == target_user.id:
+        raise HTTPException(status_code=400, detail="Kendi hesabinizi silemezsiniz")
+    if current_user.role == UserRole.MANAGER.value and target_user.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
+        raise HTTPException(status_code=403, detail="Bu kullaniciyi silemezsiniz")
+
+
+async def delete_user_and_cascade(db: AsyncSession, target_user: User) -> None:
+    """Kullaniciyi siler; FK'ler SET NULL/CASCADE ile dogru davrandigi icin
+    olusturdugu kayitlar (etkinlik, ders, medya vb.) kalir, sadece kendi
+    ogrenci/kayit/yonetim atamalari (CASCADE olanlar) onunla birlikte gider."""
+    await db.delete(target_user)
+    await db.commit()
+
+
 @router.delete("/{user_id}")
 async def delete_user(
     user_id: str,
@@ -238,9 +254,6 @@ async def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
-    if current_user.role == UserRole.MANAGER.value and user.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
-        raise HTTPException(status_code=403, detail="Bu kullaniciyi silemezsiniz")
-
-    await db.delete(user)
-    await db.commit()
+    check_can_delete_user(current_user, user)
+    await delete_user_and_cascade(db, user)
     return {"message": "Kullanıcı silindi"}

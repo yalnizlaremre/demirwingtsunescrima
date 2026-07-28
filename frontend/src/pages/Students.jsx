@@ -6,10 +6,11 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { GraduationCap, Search, Award, Edit2 } from 'lucide-react';
+import { GraduationCap, Search, Award, Edit2, Trash2 } from 'lucide-react';
 
 export default function Students() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission } = useAuth();
+  const canDelete = isAdmin || hasPermission('manage_users');
   const [students, setStudents] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -64,6 +65,17 @@ export default function Students() {
   };
 
   const handleSearch = () => fetchStudents(search, schoolFilter);
+
+  const handleDelete = async (s) => {
+    if (!window.confirm(`${s.user_name || 'Bu ogrenci'} ve giris hesabi kalici olarak silinecek. Emin misiniz?`)) return;
+    try {
+      await api.delete(`/students/${s.id}`);
+      toast.success('Ogrenci silindi');
+      fetchStudents(search, schoolFilter);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Silme basarisiz');
+    }
+  };
 
   const getGrade = (progress, branch) => {
     const p = progress?.find(pr => pr.branch === branch);
@@ -141,7 +153,12 @@ export default function Students() {
                   </td>
                   <td className="hidden md:table-cell">{getHours(s.progress, 'ESCRIMA')}h</td>
                   <td>
-                    <button onClick={() => openEdit(s)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => openEdit(s)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
+                      {canDelete && (
+                        <button onClick={() => handleDelete(s)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

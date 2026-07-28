@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     CORS_ORIGINS: str = "http://localhost:5173"
 
+    # Sifremi unuttum e-postasindaki reset linkinin isaret edecegi panel adresi
+    FRONTEND_URL: str = "http://localhost:5173"
+
     # Upload
     UPLOAD_DIR: Path = Path("uploads")
     MAX_UPLOAD_SIZE: int = 104857600  # 100MB

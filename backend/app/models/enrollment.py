@@ -19,7 +19,7 @@ class Enrollment(Base, UUIDMixin, TimestampMixin):
     school_id: Mapped[str] = mapped_column(String(36), ForeignKey("schools.id", ondelete="CASCADE"), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=EnrollmentStatus.PENDING.value)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    handled_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    handled_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     handled_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 
     user = relationship("User", foreign_keys=[user_id])

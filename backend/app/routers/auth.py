@@ -8,6 +8,8 @@ from app.auth import (
     verify_password,
     create_access_token,
     create_refresh_token,
+    create_password_reset_token,
+    password_hash_fingerprint,
     get_current_user,
 )
 from app.rate_limit import limiter
@@ -18,10 +20,16 @@ from app.schemas.auth import (
     TokenResponse,
     RefreshRequest,
     ChangePasswordRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
 )
 from app.schemas.user import UserResponse
+from app.services.mail import send_email
 from jose import JWTError, jwt
 from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -136,3 +144,55 @@ async def change_password(
     current_user.password_hash = get_password_hash(data.new_password)
     await db.commit()
     return {"message": "Şifre başarıyla değiştirildi"}
+
+
+_FORGOT_PASSWORD_GENERIC_RESPONSE = {
+    "message": "Bu e-posta adresi sistemde kayıtlıysa, şifre sıfırlama linki gönderildi."
+}
+
+
+@router.post("/forgot-password")
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, data: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
+    """Kullanici var/yok/aktif degil farketmeksizin ayni genel mesaji doner
+    (e-posta enumeration'ini onlemek icin)."""
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+
+    if user and user.status == UserStatus.ACTIVE.value:
+        token = create_password_reset_token(user)
+        reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+        body = (
+            f"Merhaba {user.first_name},\n\n"
+            "Şifrenizi sıfırlamak için aşağıdaki linke tıklayın (link 30 dakika geçerlidir):\n"
+            f"{reset_link}\n\n"
+            "Bu talebi siz yapmadıysanız bu e-postayı yok sayabilirsiniz."
+        )
+        try:
+            await send_email(to_emails=[user.email], subject="Şifre Sıfırlama Talebi", body=body)
+        except Exception:
+            logger.exception("Sifre sifirlama maili gonderilemedi: %s", user.email)
+        if not settings.MAIL_ENABLED:
+            logger.info("MAIL_ENABLED=false, sifre sifirlama linki (sadece log): %s", reset_link)
+
+    return _FORGOT_PASSWORD_GENERIC_RESPONSE
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        payload = jwt.decode(data.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Link geçersiz veya süresi dolmuş")
+
+    if payload.get("type") != "password_reset":
+        raise HTTPException(status_code=400, detail="Link geçersiz veya süresi dolmuş")
+
+    result = await db.execute(select(User).where(User.id == payload.get("sub")))
+    user = result.scalar_one_or_none()
+    if not user or payload.get("pwh") != password_hash_fingerprint(user.password_hash):
+        raise HTTPException(status_code=400, detail="Link daha önce kullanılmış veya geçersiz")
+
+    user.password_hash = get_password_hash(data.new_password)
+    await db.commit()
+    return {"message": "Şifreniz başarıyla değiştirildi"}

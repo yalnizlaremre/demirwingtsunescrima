@@ -1,6 +1,7 @@
 import uuid
 import pytest
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -28,6 +29,12 @@ async def db_session():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    @event.listens_for(engine.sync_engine, "connect")
+    def set_sqlite_pragma(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

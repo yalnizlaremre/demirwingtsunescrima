@@ -44,8 +44,8 @@ class User(Base, UUIDMixin, TimestampMixin):
     extra_permissions: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, default=list)
 
     # Relationships
-    managed_schools = relationship("SchoolManager", back_populates="manager", lazy="selectin")
-    student_profile = relationship("Student", back_populates="user", uselist=False, lazy="selectin")
+    managed_schools = relationship("SchoolManager", back_populates="manager", lazy="selectin", passive_deletes=True)
+    student_profile = relationship("Student", back_populates="user", uselist=False, lazy="selectin", passive_deletes=True)
 
     @property
     def full_name(self) -> str:

@@ -28,6 +28,7 @@ from app.schemas.student import (
     StudentUpdate,
 )
 from app.services.grade_hours import get_hours_for_grade, check_exam_eligibility
+from app.routers.users import check_can_delete_user, delete_user_and_cascade
 
 router = APIRouter()
 
@@ -417,6 +418,31 @@ async def get_student(
         raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
 
     return _student_to_response(student)
+
+
+@router.delete("/{student_id}")
+async def delete_student(
+    student_id: str,
+    current_user: User = Depends(require_manage_users),
+    db: AsyncSession = Depends(get_db),
+):
+    """Ogrenciyi ve baglantili giris hesabini (User) kalici olarak siler.
+
+    Student.user_id -> users.id ON DELETE CASCADE oldugundan User silinince
+    Student/StudentProgress/Attendance/EventRegistration/Request/GradeChangeRequest
+    hepsi otomatik silinir."""
+    result = await db.execute(
+        select(Student).options(selectinload(Student.user)).where(Student.id == student_id)
+    )
+    student = result.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+    if not student.user:
+        raise HTTPException(status_code=404, detail="Ogrenciye bagli kullanici bulunamadi")
+
+    check_can_delete_user(current_user, student.user)
+    await delete_user_and_cascade(db, student.user)
+    return {"message": "Ogrenci ve giris hesabi silindi"}
 
 
 @router.put("/{student_id}", response_model=StudentResponse)

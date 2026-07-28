@@ -20,8 +20,8 @@ class LessonSchedule(Base, UUIDMixin):
     end_date: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_by: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=False
+    created_by: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(), server_default=func.now(), nullable=False

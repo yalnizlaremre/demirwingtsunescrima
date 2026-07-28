@@ -57,7 +57,7 @@ def _schedule_to_response(schedule: LessonSchedule) -> LessonScheduleResponse:
         end_date=schedule.end_date,
         is_active=schedule.is_active,
         notes=schedule.notes,
-        created_by=str(schedule.created_by),
+        created_by=str(schedule.created_by) if schedule.created_by else None,
         created_at=schedule.created_at,
         school_name=schedule.school.name if schedule.school else None,
         generated_lesson_count=len(schedule.lessons) if schedule.lessons else 0,

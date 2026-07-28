@@ -1,3 +1,4 @@
+import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -38,6 +39,26 @@ def create_refresh_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire, "type": "refresh"})
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def password_hash_fingerprint(password_hash: str) -> str:
+    """Bir sifre hash'inin kisa bir parmak izi - reset token'i iceine gomulur.
+
+    Sifre degistirildiginde bu fingerprint de degisir, boylece eski
+    sifirlama linkleri ayrica bir DB kaydi tutmaya gerek kalmadan otomatik
+    olarak gecersiz kalir (tek kullanimlik gibi davranir)."""
+    return hashlib.sha256(password_hash.encode()).hexdigest()[:16]
+
+
+def create_password_reset_token(user: User) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+    to_encode = {
+        "sub": str(user.id),
+        "type": "password_reset",
+        "pwh": password_hash_fingerprint(user.password_hash),
+        "exp": expire,
+    }
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 

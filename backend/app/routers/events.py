@@ -69,7 +69,7 @@ async def list_events(
                 wt_fee=float(e.wt_fee) if e.wt_fee else None,
                 escrima_fee=float(e.escrima_fee) if e.escrima_fee else None,
                 is_completed=e.is_completed,
-                created_by=str(e.created_by),
+                created_by=str(e.created_by) if e.created_by else None,
                 created_at=e.created_at,
                 registration_count=len(e.registrations) if e.registrations else 0,
                 selected_school_ids=[str(es.school_id) for es in (e.selected_schools or [])],
@@ -123,7 +123,7 @@ async def create_event(
         wt_fee=float(event.wt_fee) if event.wt_fee else None,
         escrima_fee=float(event.escrima_fee) if event.escrima_fee else None,
         is_completed=event.is_completed,
-        created_by=str(event.created_by),
+        created_by=str(event.created_by) if event.created_by else None,
         created_at=event.created_at,
         selected_school_ids=data.selected_school_ids,
     )
@@ -157,7 +157,7 @@ async def get_event(
         wt_fee=float(event.wt_fee) if event.wt_fee else None,
         escrima_fee=float(event.escrima_fee) if event.escrima_fee else None,
         is_completed=event.is_completed,
-        created_by=str(event.created_by),
+        created_by=str(event.created_by) if event.created_by else None,
         created_at=event.created_at,
         registration_count=len(event.registrations) if event.registrations else 0,
         selected_school_ids=[str(es.school_id) for es in (event.selected_schools or [])],
@@ -207,7 +207,7 @@ async def update_event(
         wt_fee=float(event.wt_fee) if event.wt_fee else None,
         escrima_fee=float(event.escrima_fee) if event.escrima_fee else None,
         is_completed=event.is_completed,
-        created_by=str(event.created_by),
+        created_by=str(event.created_by) if event.created_by else None,
         created_at=event.created_at,
     )
 

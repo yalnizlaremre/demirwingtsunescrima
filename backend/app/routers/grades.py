@@ -37,7 +37,7 @@ def _change_request_to_response(r: GradeChangeRequest) -> GradeChangeRequestResp
         requested_grade=r.requested_grade,
         note=r.note,
         status=r.status,
-        requested_by=str(r.requested_by),
+        requested_by=str(r.requested_by) if r.requested_by else None,
         handled_by=str(r.handled_by) if r.handled_by else None,
         handled_at=r.handled_at,
         created_at=r.created_at,

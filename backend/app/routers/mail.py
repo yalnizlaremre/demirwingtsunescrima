@@ -143,7 +143,7 @@ async def list_email_logs(
         items=[
             EmailLogResponse(
                 id=str(l.id),
-                sent_by=str(l.sent_by),
+                sent_by=str(l.sent_by) if l.sent_by else None,
                 subject=l.subject,
                 body=l.body,
                 recipient_count=l.recipient_count,

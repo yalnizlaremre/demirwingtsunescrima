@@ -8,8 +8,8 @@ from app.models.base import Base, UUIDMixin
 class EmailLog(Base, UUIDMixin):
     __tablename__ = "email_logs"
 
-    sent_by: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=False
+    sent_by: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)

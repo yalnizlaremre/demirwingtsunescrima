@@ -33,8 +33,8 @@ class AuditLog(Base, UUIDMixin):
     action: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    performed_by: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=False
+    performed_by: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
     old_value: Mapped[str | None] = mapped_column(Text, nullable=True)

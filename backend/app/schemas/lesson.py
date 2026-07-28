@@ -27,7 +27,7 @@ class LessonResponse(BaseModel):
     lesson_type: str
     lesson_date: datetime
     duration_hours: float
-    created_by: str
+    created_by: str | None
     notes: str | None
     created_at: datetime
     school_name: str | None = None

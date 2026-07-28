@@ -27,8 +27,8 @@ class Lesson(Base, UUIDMixin):
     lesson_type: Mapped[str] = mapped_column(String(20), nullable=False)
     lesson_date: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
     duration_hours: Mapped[float] = mapped_column(Numeric(4, 2), nullable=False)
-    created_by: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=False
+    created_by: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     schedule_id: Mapped[str | None] = mapped_column(

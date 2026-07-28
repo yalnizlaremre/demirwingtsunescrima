@@ -4,7 +4,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
-import { Award, Clock, Target, AlertTriangle, CheckCircle2, User, Camera, Upload, School, Shield } from 'lucide-react';
+import { Award, Clock, Target, AlertTriangle, CheckCircle2, User, Camera, Upload, School, Shield, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Profile() {
@@ -16,6 +16,8 @@ export default function Profile() {
   const [editForm, setEditForm] = useState({ first_name: '', last_name: '', phone: '' });
   const [saving, setSaving] = useState(false);
   const fileRef = useRef(null);
+  const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
+  const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -72,6 +74,27 @@ export default function Profile() {
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (pwForm.new_password !== pwForm.confirm_password) {
+      toast.error('Yeni sifreler eslesmiyor');
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await api.post('/auth/change-password', {
+        current_password: pwForm.current_password,
+        new_password: pwForm.new_password,
+      });
+      toast.success('Sifre basariyla degistirildi');
+      setPwForm({ current_password: '', new_password: '', confirm_password: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Sifre degistirilemedi');
+    } finally {
+      setPwSaving(false);
     }
   };
 
@@ -212,6 +235,52 @@ export default function Profile() {
             </div>
           </form>
         )}
+      </div>
+
+      {/* Sifre Degistir - tum roller */}
+      <div className="card mb-6">
+        <h3 className="font-semibold text-dark-700 flex items-center gap-2 mb-4">
+          <Lock size={18} /> Sifre Degistir
+        </h3>
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Mevcut Sifre</label>
+              <input
+                type="password"
+                value={pwForm.current_password}
+                onChange={(e) => setPwForm(f => ({ ...f, current_password: e.target.value }))}
+                className="input-field"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Yeni Sifre</label>
+              <input
+                type="password"
+                value={pwForm.new_password}
+                onChange={(e) => setPwForm(f => ({ ...f, new_password: e.target.value }))}
+                className="input-field"
+                minLength={6}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Yeni Sifre (Tekrar)</label>
+              <input
+                type="password"
+                value={pwForm.confirm_password}
+                onChange={(e) => setPwForm(f => ({ ...f, confirm_password: e.target.value }))}
+                className="input-field"
+                minLength={6}
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" className="btn-primary" disabled={pwSaving}>
+            {pwSaving ? 'Kaydediliyor...' : 'Sifreyi Degistir'}
+          </button>
+        </form>
       </div>
 
       {/* Student Progress (only for students with profile) */}

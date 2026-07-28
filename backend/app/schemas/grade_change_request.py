@@ -17,7 +17,7 @@ class GradeChangeRequestResponse(BaseModel):
     requested_grade: int
     note: str
     status: str
-    requested_by: str
+    requested_by: str | None
     handled_by: str | None
     handled_at: datetime | None
     created_at: datetime

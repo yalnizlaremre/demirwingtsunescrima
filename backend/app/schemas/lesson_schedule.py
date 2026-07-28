@@ -26,7 +26,7 @@ class LessonScheduleResponse(BaseModel):
     end_date: datetime
     is_active: bool
     notes: str | None
-    created_by: str
+    created_by: str | None
     created_at: datetime
     school_name: str | None = None
     generated_lesson_count: int = 0

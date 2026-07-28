@@ -39,7 +39,7 @@ class Request(Base, UUIDMixin, TimestampMixin):
 
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     handled_by: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=True
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     handled_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 

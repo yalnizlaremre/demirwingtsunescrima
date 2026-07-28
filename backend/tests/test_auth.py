@@ -190,3 +190,115 @@ class TestMeExtraPermissions:
         resp = await client.get("/api/auth/me", headers=auth_headers(user))
         assert resp.status_code == 200
         assert resp.json()["extra_permissions"] == []
+
+
+class TestChangePassword:
+    async def test_change_password_success(self, client, db_session):
+        user = await make_user(db_session, email="cp@test.com", password="oldpass123")
+        resp = await client.post(
+            "/api/auth/change-password",
+            json={"current_password": "oldpass123", "new_password": "newpass456"},
+            headers=auth_headers(user),
+        )
+        assert resp.status_code == 200
+
+        login_old = await client.post("/api/auth/login", json={"email": "cp@test.com", "password": "oldpass123"})
+        assert login_old.status_code == 401
+        login_new = await client.post("/api/auth/login", json={"email": "cp@test.com", "password": "newpass456"})
+        assert login_new.status_code == 200
+
+    async def test_change_password_wrong_current_password(self, client, db_session):
+        user = await make_user(db_session, email="cp2@test.com", password="oldpass123")
+        resp = await client.post(
+            "/api/auth/change-password",
+            json={"current_password": "wrong", "new_password": "newpass456"},
+            headers=auth_headers(user),
+        )
+        assert resp.status_code == 400
+
+    async def test_change_password_requires_auth(self, client, db_session):
+        resp = await client.post(
+            "/api/auth/change-password",
+            json={"current_password": "x", "new_password": "y"},
+        )
+        assert resp.status_code == 401
+
+
+class TestForgotPassword:
+    async def test_unknown_email_returns_generic_success(self, client, db_session):
+        resp = await client.post("/api/auth/forgot-password", json={"email": "nobody@test.com"})
+        assert resp.status_code == 200
+        assert "message" in resp.json()
+
+    async def test_known_email_returns_same_generic_message(self, client, db_session):
+        await make_user(db_session, email="fp@test.com", password="secret123")
+        resp_known = await client.post("/api/auth/forgot-password", json={"email": "fp@test.com"})
+        resp_unknown = await client.post("/api/auth/forgot-password", json={"email": "nobody2@test.com"})
+        assert resp_known.status_code == 200
+        assert resp_known.json() == resp_unknown.json()
+
+    async def test_rate_limited_after_three_requests(self, client, db_session):
+        for _ in range(3):
+            resp = await client.post("/api/auth/forgot-password", json={"email": "rl@test.com"})
+            assert resp.status_code == 200
+        resp = await client.post("/api/auth/forgot-password", json={"email": "rl@test.com"})
+        assert resp.status_code == 429
+
+
+class TestResetPassword:
+    async def test_reset_password_success(self, client, db_session):
+        from app.auth import create_password_reset_token
+
+        user = await make_user(db_session, email="rp@test.com", password="oldpass123")
+        token = create_password_reset_token(user)
+
+        resp = await client.post(
+            "/api/auth/reset-password", json={"token": token, "new_password": "brandnew456"}
+        )
+        assert resp.status_code == 200
+
+        login_old = await client.post("/api/auth/login", json={"email": "rp@test.com", "password": "oldpass123"})
+        assert login_old.status_code == 401
+        login_new = await client.post("/api/auth/login", json={"email": "rp@test.com", "password": "brandnew456"})
+        assert login_new.status_code == 200
+
+    async def test_reset_password_token_is_single_use(self, client, db_session):
+        from app.auth import create_password_reset_token
+
+        user = await make_user(db_session, email="rp2@test.com", password="oldpass123")
+        token = create_password_reset_token(user)
+
+        first = await client.post(
+            "/api/auth/reset-password", json={"token": token, "new_password": "brandnew456"}
+        )
+        assert first.status_code == 200
+
+        second = await client.post(
+            "/api/auth/reset-password", json={"token": token, "new_password": "anotherone789"}
+        )
+        assert second.status_code == 400
+
+    async def test_reset_password_invalid_token(self, client, db_session):
+        resp = await client.post(
+            "/api/auth/reset-password", json={"token": "not-a-real-token", "new_password": "x"}
+        )
+        assert resp.status_code == 400
+
+    async def test_reset_password_expired_token(self, client, db_session):
+        from datetime import datetime, timedelta, timezone
+        from jose import jwt as jose_jwt
+        from app.auth import password_hash_fingerprint
+
+        user = await make_user(db_session, email="rp3@test.com", password="oldpass123")
+        expired_payload = {
+            "sub": str(user.id),
+            "type": "password_reset",
+            "pwh": password_hash_fingerprint(user.password_hash),
+            "exp": datetime.now(timezone.utc) - timedelta(minutes=1),
+        }
+        expired_token = jose_jwt.encode(expired_payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+        resp = await client.post(
+            "/api/auth/reset-password", json={"token": expired_token, "new_password": "x"}
+        )
+        assert resp.status_code == 400

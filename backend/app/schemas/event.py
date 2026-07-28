@@ -44,7 +44,7 @@ class EventResponse(BaseModel):
     wt_fee: float | None
     escrima_fee: float | None
     is_completed: bool
-    created_by: str
+    created_by: str | None
     created_at: datetime
     registration_count: int = 0
     selected_school_ids: list[str] = []

@@ -30,7 +30,7 @@ class Event(Base, UUIDMixin, TimestampMixin):
     wt_fee: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     escrima_fee: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_by: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    created_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     creator = relationship("User", foreign_keys=[created_by])
     selected_schools = relationship("EventSchool", back_populates="event", lazy="selectin")
@@ -77,7 +77,7 @@ class SeminarEvaluation(Base, UUIDMixin):
     passed: Mapped[bool] = mapped_column(Boolean, nullable=False)
     grade_before: Mapped[int] = mapped_column(Integer, nullable=False)
     grade_after: Mapped[int] = mapped_column(Integer, nullable=False)
-    evaluated_by: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    evaluated_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     evaluated_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(), server_default=func.now(), nullable=False)
 

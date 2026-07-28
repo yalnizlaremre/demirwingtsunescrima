@@ -13,7 +13,7 @@ class SendMailRequest(BaseModel):
 
 class EmailLogResponse(BaseModel):
     id: str
-    sent_by: str
+    sent_by: str | None
     subject: str
     body: str
     recipient_count: int
