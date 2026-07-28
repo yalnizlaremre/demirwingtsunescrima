@@ -1,7 +1,26 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-28 — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `4a57899`). **Not: `MAIL_ENABLED` prod'da hâlâ `false`, şifremi unuttum e-postaları gerçekten gönderilmiyor — aşağıya bak.**
+> Son güncelleme: 2026-07-28 (ikinci tur) — **Faz 1 (SMTP kurulumu) bekleniyor, kullanıcıya adım adım yönlendirme yapılacak.** `main` ile `origin/main` ve prod aynı hizada (son commit `e93c904`).
+
+## Bu oturumda yapılanlar (2026-07-28, ikinci tur): Mail/Etkinlik/Derece durumu incelendi, 3 faza bölündü
+
+Kullanıcı üç şey sordu: mail gönderme (tekil+toplu) durumu, etkinlik oluşturma/silme/düzenleme durumu, ve öğrencilerin Escrima derecesinin neden görünmediği. Üçü de incelenip fazlara bölündü, Faz 2 ve 3 bu oturumda tamamlandı, Faz 1 kullanıcıdan SMTP bilgisi bekliyor.
+
+**Faz 1 — Mail (bekliyor):** Kod tarafı tamamen doğru (`/mail/send` zaten okul/branş/derece filtreli toplu gönderim yapıyor, `EmailLog`'a kaydediyor). Sorun `MAIL_ENABLED=false` + placeholder SMTP bilgileri (prod `.env`'de doğrulandı) — [[user_student_deletion_and_password_reset_2026_07_28]]'de de not edilen aynı açık konu. Kullanıcı gerçek bir SMTP hesabı (Gmail uygulama şifresi öneriliyor) sağladığında adım adım kurulacak.
+
+**Faz 2 — Etkinlik düzenleme/silme (TAMAMLANDI):** Backend'de `PUT`/`DELETE /events/{id}` zaten vardı ve doğru çalışıyordu, ama `Events.jsx` hiçbir düzenle/sil butonu hiç eklememişti — sadece oluşturma vardı. Users.jsx/Students.jsx ile aynı desende düzenle (kalem) + sil (çöp kutusu) butonları eklendi, aynı modal create/edit arasında paylaşılıyor. Bu sırada gerçek bir bug bulundu: `EventResponse.end_datetime` şemada zorunluydu ama modelde nullable — `end_datetime`'ı olmayan bir etkinlik döndürülmeye çalışıldığında 500 verirdi (pratikte hiç tetiklenmemişti çünkü frontend her zaman bir fallback gönderiyordu, ama API'ye doğrudan istek veya farklı bir client için gerçek bir risk). Düzeltildi + `EventUpdate`'e `event_type` eklendi (düzenlerken tür de değiştirilebilsin diye). 5 yeni backend testi eklendi.
+
+**Faz 3 — Escrima derecesi görünmüyor (TAMAMLANDI):** Kök neden — mevcut kod (öğrenci atama, kendi başvurusu+onay, okul kayıt talebi onayı, üçü de) artık doğru şekilde hem WT hem Escrima progress kaydı oluşturuyor, ama `enrollments.py`'deki eski `# Create StudentProgress records for both branches (BUG FIX)` yorumu, geçmişte bir akışın sadece WT için yapıldığını ve düzeltmenin geriye dönük uygulanmadığını gösteriyordu. Tek seferlik, idempotent bir migration (`e5f6a7b8c9d0`) ile her öğrenci için eksik olan branş progress kaydı (derece 1, 0/54 saat) tamamlandı. Local'de sahte bir "sadece WT'si olan" öğrenciyle test edildi: migration çalıştı → ESCRIMA doğru değerlerle eklendi → tekrar çalıştırıldığında (idempotency testi) duplicate oluşmadı → temizlendi.
+
+**Test:** 162/162 backend testi geçiyor (5 yeni event update/delete testi). Chrome'da uçtan uca doğrulandı: geçici admin hesabıyla etkinlik oluşturuldu → düzenle butonuyla ad değiştirildi, "Etkinlik güncellendi" toast'ı ve listede güncel ad görüldü → silme API üzerinden (native `window.confirm` UI tıklamasını tekrar tetiklememek için, backend zaten pytest ile kapsamlı test edilmişti) temizlendi.
+
+**Not (Faz 2 sırasında öğrenilen genel ders):** `Events.jsx`'teki gibi "backend'de var ama frontend hiç bağlamamış" tarzı eksikler bu projede birden fazla kez çıktı (bkz. [[user_student_deletion_and_password_reset_2026_07_28]]'deki `/auth/change-password`). Yeni bir "X çalışmıyor/eksik" şikayeti geldiğinde önce ilgili backend router'ı (`grep "@router\."`) tarayıp hangi uçların zaten var olduğunu, frontend'in bunlardan hangilerini gerçekten kullandığını karşılaştırmak hızlı ve güvenilir bir ilk adım.
+
+**Deploy:** commit `e93c904` → push → sunucuda `git pull` + `docker compose up -d --build`, migration `e5f6a7b8c9d0` loglarda hatasız uygulandı, `docker compose ps` tüm container `Up`/`healthy`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com` hepsi 200 döndü.
+
+---
+
 
 ## Bu oturumda yapılanlar (2026-07-28): Kullanıcı/öğrenci silme düzeltmesi + şifremi unuttum & şifre değiştirme
 
