@@ -21,6 +21,7 @@ class EventCreate(BaseModel):
 class EventUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
+    event_type: str | None = None
     start_datetime: NaiveDatetime | None = None
     end_datetime: NaiveDatetime | None = None
     location: str | None = None
@@ -37,7 +38,7 @@ class EventResponse(BaseModel):
     description: str | None
     event_type: str
     start_datetime: datetime
-    end_datetime: datetime
+    end_datetime: datetime | None
     location: str | None
     capacity: int | None
     scope: str

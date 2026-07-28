@@ -120,6 +120,58 @@ class TestRegisterForEvent:
         assert second.status_code == 400
 
 
+class TestUpdateAndDeleteEvent:
+    async def test_admin_can_update_event(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        event = await make_event(db_session, admin, event_type=EventType.EVENT.value)
+
+        resp = await client.put(
+            f"/api/events/{event.id}",
+            json={"name": "Guncellenmis Ad", "event_type": "SEMINAR", "location": "Yeni Yer"},
+            headers=auth_headers(admin),
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["name"] == "Guncellenmis Ad"
+        assert body["event_type"] == "SEMINAR"
+        assert body["location"] == "Yeni Yer"
+
+    async def test_manager_without_permission_cannot_update_event(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        event = await make_event(db_session, admin)
+
+        resp = await client.put(
+            f"/api/events/{event.id}", json={"name": "X"}, headers=auth_headers(manager)
+        )
+        assert resp.status_code == 403
+
+    async def test_update_nonexistent_event_returns_404(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        resp = await client.put(
+            "/api/events/does-not-exist", json={"name": "X"}, headers=auth_headers(admin)
+        )
+        assert resp.status_code == 404
+
+    async def test_admin_can_delete_event(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        event = await make_event(db_session, admin)
+
+        resp = await client.delete(f"/api/events/{event.id}", headers=auth_headers(admin))
+        assert resp.status_code == 200
+
+        result = await db_session.execute(select(Event).where(Event.id == event.id))
+        assert result.scalar_one_or_none() is None
+
+    async def test_manager_without_permission_cannot_delete_event(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        event = await make_event(db_session, admin)
+
+        resp = await client.delete(f"/api/events/{event.id}", headers=auth_headers(manager))
+        assert resp.status_code == 403
+
+
 class TestEvaluateSeminar:
     async def _setup_registered_student(self, db_session, admin, school, event, grade=1, hours=54, branch_wt=True):
         user, student = await make_student_user(db_session, school)

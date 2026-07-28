@@ -6,7 +6,7 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Plus, CalendarDays, Users, CheckCircle2, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Plus, CalendarDays, Users, CheckCircle2, ClipboardList, AlertTriangle, Edit2, Trash2 } from 'lucide-react';
 
 export default function Events() {
   const { isAdmin, isUser, hasPermission } = useAuth();
@@ -15,6 +15,7 @@ export default function Events() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [regModalOpen, setRegModalOpen] = useState(false);
   const [evalModalOpen, setEvalModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -40,7 +41,43 @@ export default function Events() {
     } catch {} finally { setLoading(false); }
   };
 
-  const handleCreate = async (e) => {
+  const emptyForm = {
+    name: '', description: '', event_type: 'EVENT', start_datetime: '', end_datetime: '',
+    location: '', capacity: '', scope: 'ALL_SCHOOLS', selected_school_ids: [], wt_fee: '', escrima_fee: '',
+  };
+
+  const toDatetimeLocal = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm);
+    setModalOpen(true);
+  };
+
+  const openEdit = (event) => {
+    setEditing(event);
+    setForm({
+      name: event.name || '',
+      description: event.description || '',
+      event_type: event.event_type,
+      start_datetime: toDatetimeLocal(event.start_datetime),
+      end_datetime: toDatetimeLocal(event.end_datetime),
+      location: event.location || '',
+      capacity: event.capacity || '',
+      scope: event.scope,
+      selected_school_ids: event.selected_school_ids || [],
+      wt_fee: event.wt_fee || '',
+      escrima_fee: event.escrima_fee || '',
+    });
+    setModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const payload = {
@@ -51,12 +88,28 @@ export default function Events() {
         wt_fee: form.wt_fee ? parseFloat(form.wt_fee) : null,
         escrima_fee: form.escrima_fee ? parseFloat(form.escrima_fee) : null,
       };
-      await api.post('/events/', payload);
-      toast.success('Etkinlik olusturuldu');
+      if (editing) {
+        await api.put(`/events/${editing.id}`, payload);
+        toast.success('Etkinlik guncellendi');
+      } else {
+        await api.post('/events/', payload);
+        toast.success('Etkinlik olusturuldu');
+      }
       setModalOpen(false);
       fetchEvents();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Hata olustu');
+    }
+  };
+
+  const handleDelete = async (event) => {
+    if (!window.confirm(`"${event.name}" etkinligi kalici olarak silinecek. Emin misiniz?`)) return;
+    try {
+      await api.delete(`/events/${event.id}`);
+      toast.success('Etkinlik silindi');
+      fetchEvents();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Silme basarisiz');
     }
   };
 
@@ -133,7 +186,7 @@ export default function Events() {
   return (
     <div>
       <PageHeader title="Etkinlikler" subtitle={`${total} etkinlik`}>
-        {canManageEvents && <button onClick={() => setModalOpen(true)} className="btn-primary"><Plus size={18} /> Yeni Etkinlik</button>}
+        {canManageEvents && <button onClick={openCreate} className="btn-primary"><Plus size={18} /> Yeni Etkinlik</button>}
       </PageHeader>
 
       {events.length === 0 ? (
@@ -149,7 +202,15 @@ export default function Events() {
                     {e.event_type === 'SEMINAR' ? 'Seminer' : 'Etkinlik'}
                   </span>
                 </div>
-                {e.is_completed && <CheckCircle2 size={20} className="text-emerald-500" />}
+                <div className="flex items-center gap-2 shrink-0">
+                  {e.is_completed && <CheckCircle2 size={20} className="text-emerald-500" />}
+                  {canManageEvents && (
+                    <>
+                      <button onClick={() => openEdit(e)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
+                      <button onClick={() => handleDelete(e)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="text-sm text-dark-500 space-y-1 mb-4">
                 <p>{new Date(e.start_datetime).toLocaleDateString('tr-TR')} - {new Date(e.start_datetime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
@@ -173,9 +234,9 @@ export default function Events() {
         </div>
       )}
 
-      {/* Create Event Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Yeni Etkinlik" size="lg">
-        <form onSubmit={handleCreate} className="space-y-4">
+      {/* Create/Edit Event Modal */}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Etkinligi Duzenle' : 'Yeni Etkinlik'} size="lg">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="block text-sm font-medium mb-1">Ad *</label>
@@ -219,7 +280,7 @@ export default function Events() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">Olustur</button>
+            <button type="submit" className="btn-primary">{editing ? 'Guncelle' : 'Olustur'}</button>
           </div>
         </form>
       </Modal>
