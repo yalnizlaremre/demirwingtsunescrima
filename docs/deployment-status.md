@@ -1,7 +1,30 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-25 (beşinci tur) — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `85d6d38`).
+> Son güncelleme: 2026-07-28 — **Bekleyen iş yok.** `main` ile `origin/main` ve prod aynı hizada (son commit `4a57899`). **Not: `MAIL_ENABLED` prod'da hâlâ `false`, şifremi unuttum e-postaları gerçekten gönderilmiyor — aşağıya bak.**
+
+## Bu oturumda yapılanlar (2026-07-28): Kullanıcı/öğrenci silme düzeltmesi + şifremi unuttum & şifre değiştirme
+
+Kullanıcı üç şey istedi: (1) daha önce not edilen açık konuların ([[user_to_student_assignment_2026_07_21]]'deki `DELETE /users/{id}` 500 bug'ı) çözülmesi, (2) admin/super admin'in kullanıcı **ve** öğrenci silebilmesi, (3) şifremi unuttum + giriş yaptıktan sonra şifre değiştirme akışı.
+
+**Kök neden (beklenenden farklı çıktı):** `DELETE /api/users/{id}` FK constraint eksikliğinden değil, SQLAlchemy ORM'un `User.student_profile`/`managed_schools` ilişkilerini (`lazy="selectin"`, `passive_deletes` yok) varsayılan davranışla yönetmesinden 500 veriyordu — kullanıcı silinirken ORM önce bağlı `Student`/`SchoolManager` kaydının FK'sini Python tarafında `NULL`'a çekmeye çalışıyordu, ama `students.user_id` `NOT NULL` olduğundan `IntegrityError` patlıyordu. `passive_deletes=True` eklenerek bu tamamen DB'nin kendi `ON DELETE CASCADE`'ine bırakıldı (`backend/app/models/user.py`).
+
+**Ayrıca:** `events.created_by`, `lessons.created_by`, `lesson_schedules.created_by`, `media.uploaded_by`, `audit_logs.performed_by`, `email_logs.sent_by`, `seminar_evaluations.evaluated_by`, `grade_change_requests.requested_by/handled_by`, `requests.handled_by`, `enrollments.handled_by` gibi "kim yaptı" kolonlarına migration (`d4e5f6a7b8c9`) ile `ON DELETE SET NULL` eklendi — bir kullanıcı silinince oluşturduğu kayıtlar (etkinlik, ders, medya vb.) kalır, sadece "kim yaptı" alanı boşalır. İlgili response şemaları (`created_by`, `sent_by`, `requested_by` vb.) `str | None` yapıldı, `str(x) if x else None` deseniyle düzeltildi.
+
+**Yeni:** `DELETE /api/users/{id}`'e kendi hesabını silme engeli eklendi. `DELETE /api/students/{id}` hiç yoktu, eklendi — kullanıcı kararıyla öğrenci silindiğinde **login hesabı da tamamen siliniyor** (geri dönüşü yok), `Student.user_id → users.id ON DELETE CASCADE` sayesinde tüm bağlı kayıtlar (progress/attendance/event_registrations/requests/grade_change_requests) otomatik gidiyor. `Students.jsx`'e silme butonu eklendi (admin/`manage_users` izni olan MANAGER görüyor).
+
+**Şifremi unuttum + şifre değiştirme:** `POST /auth/forgot-password` + `POST /auth/reset-password` eklendi — stateless JWT reset token (30 dk geçerli, `pwh` alanı şifre hash'inin fingerprint'i olduğundan şifre bir kere değiştirilince eski link otomatik geçersiz kalıyor, ayrı bir DB kaydı gerekmedi). Mevcut ama hiçbir sayfaya bağlı olmayan `/auth/change-password` ucu ilk kez kullanılır hale geldi. Frontend: Login'e "Şifremi unuttum?" linki, yeni `ForgotPassword.jsx`/`ResetPassword.jsx` sayfaları, Profil sayfasına tüm roller (MEMBER dahil) için "Şifre Değiştir" kartı.
+
+**Test:** 152/152 backend testi geçiyor (10 yeni: `test_user_deletion.py` silme/cascade senaryoları, `test_auth.py`'ye change/forgot/reset-password testleri). Chrome'da uçtan uca doğrulandı: local'de geçici admin hesabıyla giriş → Profil'den şifre değiştirme (eski şifreyle giriş engellendi, yeniyle çalıştı) → Kullanıcılar sayfasında silme butonu ve onay diyaloğu doğru tetikleniyor (native `window.confirm` CDP otomasyonunu kilitlediği için tıklama kullanıcı tarafından elle onaylandı, backend tarafı zaten pytest ile kapsamlı test edilmişti) → sahte reset token ile `/reset-password` sayfasından şifre değiştirme çalıştı. Sonra tüm geçici test verisi silindi, local dev sunucular durduruldu.
+
+**Deploy:** commit `4a57899` → push → sunucuda `git pull` + `docker compose up -d --build`, migration `d4e5f6a7b8c9` loglarda hatasız uygulandı, `docker compose ps` tüm container `Up`/`healthy`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com` hepsi 200 döndü.
+
+**Kalan iş / not edilmesi gerekenler:**
+- **SMTP hâlâ kurulu değil** (`MAIL_ENABLED=false` prod'da) — şifremi unuttum akışı kod olarak tam çalışıyor ama gerçek e-posta gönderilmiyor, sadece backend loglarına düşüyor. Kullanıcı gerçekten şifresini sıfırlamak isterse şu an için backend loglarından linki almak gerekir. Gerçek SMTP hesabı (ör. Gmail uygulama şifresi) girilip `.env`'de `MAIL_ENABLED=true` + `MAIL_USER`/`MAIL_PASSWORD` doldurulmalı.
+- Video yükleme/oynatma hâlâ gerçek bir video dosyasıyla uçtan uca test edilmedi ([[media_public_sharing_2026_07_24]]'te not edilmişti).
+- İletişim sayfası hâlâ yalın (form/harita/Instagram linki yok) — daha önce not edilmiş, kullanıcı isterse ayrı bir iş.
+
+---
 
 ## Bu oturumda yapılanlar (2026-07-25, beşinci tur): Anasayfa içerik blokları alt alta, tutarlı
 
