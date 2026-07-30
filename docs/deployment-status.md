@@ -1,7 +1,35 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-28 (ikinci tur) — **Faz 1 (SMTP kurulumu) bekleniyor, kullanıcıya adım adım yönlendirme yapılacak.** `main` ile `origin/main` ve prod aynı hizada (son commit `e93c904`).
+> Son güncelleme: 2026-07-30 — **Brevo SMTP kurulumu TAMAMLANDI, uçtan uca doğrulandı.** `main` ile `origin/main` ve prod aynı hizada (son commit `e93c904`) — prod `.env` güncellendi, `.env.production.example`'a `FRONTEND_URL` eklendi (henüz commit edilmedi, küçük bir doc/template değişikliği, istenirse commit edilebilir).
+
+## TAMAMLANDI (2026-07-30): Brevo SMTP kurulumu
+
+Brevo hesabı açıldı, `demirwingtsun.com` domain doğrulandı (GoDaddy DNS'e 7 kayıt eklendi: branded subdomain `mail` CNAME, `brevo-code` TXT, 2x DKIM CNAME, DMARC TXT, img/redirect CNAME'ler — hepsi doğrulandı). Sender oluşturuldu: `noreply@demirwingtsun.com` / "Demir Wing Tsun Akademi". SMTP key üretildi (Standard, no expiration).
+
+Prod `/opt/wteo/.env` güncellendi (eski değerler `.env.bak.<timestamp>` olarak yedeklendi):
+```
+MAIL_ENABLED=true
+MAIL_HOST=smtp-relay.brevo.com
+MAIL_PORT=587
+MAIL_USER=emreyalnizlar@gmail.com   # Brevo login maili olarak varsayıldı, DOĞRULANMADI
+MAIL_FROM=noreply@demirwingtsun.com
+MAIL_FROM_NAME=Demir Wing Tsun Akademi
+# MAIL_PASSWORD = üretilen SMTP key (xsmtpsib-... ile başlıyor)
+```
+`docker compose up -d --force-recreate backend` ile devreye alındı, `/api/health` 200 döndü.
+
+**Test sonucu — BAŞARISIZ:** `POST /auth/forgot-password` (`emreyalnizlar@gmail.com` ile) tetiklendi, backend logunda: `Mail gönderilemedi -> emreyalnizlar@gmail.com: (535, '5.7.8 Authentication failed')`.
+
+**Şüphelenilen sebep:** `MAIL_USER` olarak kullanıcının Brevo'ya kayıt olurken kullandığı e-posta (`emreyalnizlar@gmail.com`) varsayıldı, ama bu doğrulanmadı — Brevo'nun SMTP & API sayfasında SMTP key'in yanında/üstünde gösterilen gerçek **"Login"** değeri farklı olabilir (özellikle Google ile giriş yapıldıysa). Kullanıcıdan bu ekrandaki tam Login string'ini kopyalayıp gelmesi istendi, oturum burada "3 saat sonra devam" diyerek durduruldu.
+
+**Nasıl çözüldü:** İlk 535 hatasının sebebi, `MAIL_USER`'ın Brevo hesap login maili (`emreyalnizlar@gmail.com`) olduğu varsayımıydı — Brevo'nun kendi ürettiği ayrı bir SMTP login'i var (`b3b9c2001@smtp-brevo.com`, hesap mailinden tamamen farklı bir format). Bunu düzeltip container'ı yeniden başlatınca mail gönderimi çalıştı.
+
+İkinci sorun (mail geldi ama linke tıklayınca sayfa açılmadı): `FRONTEND_URL` prod `.env`'de hiç tanımlı değildi, kod varsayılanı (`http://localhost:5173`) kullanıyordu — reset linki telefonda haliyle açılmadı. `.env`'e `FRONTEND_URL=https://app.demirwingtsun.com` eklenip (repo'daki `.env.production.example`'a da eklendi, gelecekte unutulmasın diye) container yeniden başlatıldı.
+
+**Test:** Kullanıcı kendi hesabına (`emreyalnizlar@gmail.com`) gerçek şifre sıfırlama maili aldı, prod linkiyle telefondan açıp şifresini gerçekten değiştirdi — tamamen uçtan uca doğrulandı, kalan iş yok.
+
+**Not:** Toplu duyuru maili (`/mail/send`) kod olarak zaten hazırdı ([[deployment_status]]'ta daha önce not edilmişti), SMTP artık canlı olduğu için o da otomatik olarak çalışır hale geldi — ayrıca test edilmedi ama aynı `mail.py` servisini kullanıyor.
 
 ## Bu oturumda yapılanlar (2026-07-28, ikinci tur): Mail/Etkinlik/Derece durumu incelendi, 3 faza bölündü
 
@@ -291,7 +319,7 @@ Kullanıcı devamında görsel URL'sini elle yazmak yerine dosya seçici, YouTub
 
 ### Orta Öncelik (docs/prd.md'de de not düşülmüş, henüz yapılmadı)
 - [ ] Refresh token revocation yok (stateless JWT, logout sonrası token 7 gün geçerli kalıyor)
-- [ ] Mail hâlâ kapalı (`MAIL_ENABLED=false`) — gerçek SMTP bilgisi girilmedi
+- [x] ~~Mail hâlâ kapalı (`MAIL_ENABLED=false`)~~ → Brevo SMTP kuruldu, 2026-07-30'da uçtan uca doğrulandı (bkz. yukarıdaki "TAMAMLANDI (2026-07-30)" bölümü)
 
 ### Düşük Öncelik
 - [ ] `GradeRequirement` tablosu kullanılmıyor (hardcoded `grade_hours.py` üzerinden hesaplanıyor)
