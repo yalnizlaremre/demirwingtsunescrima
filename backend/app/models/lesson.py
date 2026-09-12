@@ -41,4 +41,4 @@ class Lesson(Base, UUIDMixin):
     school = relationship("School", back_populates="lessons")
     creator = relationship("User", foreign_keys=[created_by])
     schedule = relationship("LessonSchedule", back_populates="lessons")
-    attendances = relationship("Attendance", back_populates="lesson", lazy="selectin")
+    attendances = relationship("Attendance", back_populates="lesson", lazy="selectin", passive_deletes="all")

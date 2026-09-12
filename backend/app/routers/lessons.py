@@ -154,6 +154,66 @@ async def get_lesson(
     )
 
 
+@router.put("/{lesson_id}", response_model=LessonResponse)
+async def update_lesson(
+    lesson_id: str,
+    data: LessonUpdate,
+    current_user: User = Depends(require_manager_or_above),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Lesson)
+        .options(selectinload(Lesson.school), selectinload(Lesson.attendances))
+        .where(Lesson.id == lesson_id)
+    )
+    lesson = result.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Ders bulunamadı")
+
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        school_ids = [row[0] for row in manager_schools.all()]
+        if lesson.school_id not in school_ids:
+            raise HTTPException(status_code=403, detail="Bu ders sizin okulunuzda değil")
+
+    update_data = data.model_dump(exclude_unset=True)
+
+    # Yoklama alinmis bir derste brans/tur GERCEKTEN degisirse, o yoklamalarla
+    # zaten islenmis StudentProgress saatleri yanlis branşta kalir - bunu engelle.
+    # (Ayni degeri tekrar gondermek - ornek: form her zaman mevcut degeri yolluyor -
+    # engellenmemeli, sadece gercek bir degisiklik denemesi engellenir.)
+    branch_changing = "branch" in update_data and update_data["branch"] != lesson.branch
+    type_changing = "lesson_type" in update_data and update_data["lesson_type"] != lesson.lesson_type
+    if lesson.attendances and (branch_changing or type_changing):
+        raise HTTPException(
+            status_code=400,
+            detail="Bu derse yoklama alınmış, branş/tür değiştirilemez. Önce yoklama kayıtlarını silin.",
+        )
+
+    for field, value in update_data.items():
+        setattr(lesson, field, value)
+
+    await db.commit()
+    await db.refresh(lesson)
+
+    return LessonResponse(
+        id=str(lesson.id),
+        school_id=str(lesson.school_id),
+        branch=lesson.branch,
+        lesson_type=lesson.lesson_type,
+        lesson_date=lesson.lesson_date,
+        duration_hours=float(lesson.duration_hours),
+        created_by=str(lesson.created_by) if lesson.created_by else None,
+        notes=lesson.notes,
+        created_at=lesson.created_at,
+        school_name=lesson.school.name if lesson.school else None,
+        attendance_count=len(lesson.attendances) if lesson.attendances else 0,
+        schedule_id=str(lesson.schedule_id) if lesson.schedule_id else None,
+    )
+
+
 @router.delete("/{lesson_id}")
 async def delete_lesson(
     lesson_id: str,
@@ -168,6 +228,14 @@ async def delete_lesson(
     lesson = result.scalar_one_or_none()
     if not lesson:
         raise HTTPException(status_code=404, detail="Ders bulunamadı")
+
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        school_ids = [row[0] for row in manager_schools.all()]
+        if lesson.school_id not in school_ids:
+            raise HTTPException(status_code=403, detail="Bu ders sizin okulunuzda değil")
 
     # Yoklama saatlerini geri al: dersin yoklamalarına ait saatleri StudentProgress'ten düş
     for att in (lesson.attendances or []):

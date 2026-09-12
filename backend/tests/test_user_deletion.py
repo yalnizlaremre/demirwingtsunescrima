@@ -10,7 +10,7 @@ from app.models.email_log import EmailLog
 from app.models.grade_change_request import GradeChangeRequest, GradeChangeStatus
 from app.models.student import Student, StudentProgress
 
-from tests.conftest import make_user, make_school, make_student, make_lesson, auth_headers
+from tests.conftest import make_user, make_school, make_student, make_lesson, make_school_manager, auth_headers
 
 pytestmark = pytest.mark.asyncio
 
@@ -128,6 +128,43 @@ class TestDeleteUserKeepsRelatedRecords:
 
         await db_session.refresh(req)
         assert req.requested_by is None
+
+
+class TestDeleteUserWithLinkedProfile:
+    """`passive_deletes=True` (plain bool) yeterli degildi: student_profile/managed_schools
+    `lazy="selectin"` oldugundan her User sorgusunda onceden yukleniyor, ve SQLAlchemy
+    zaten yuklu bir koleksiyon icin FK'yi NULL'a cekmeye calisiyordu -> 500. Bu, `/users/{id}`
+    ile ogrenci profili olan ya da bir okulu yoneten bir kullaniciyi silmeye calisan HERHANGI
+    bir admin'in canlida karsilasabilecegi gercek bir regresyon."""
+
+    async def test_delete_user_with_student_profile_does_not_500(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        school = await make_school(db_session)
+        student = await make_student(db_session, school, grades={"WING_TSUN": (1, 10)})
+        user_id = student.user_id
+
+        resp = await client.delete(f"/api/users/{user_id}", headers=auth_headers(admin))
+        assert resp.status_code == 200
+
+        from app.models.user import User
+        user_result = await db_session.execute(select(User).where(User.id == user_id))
+        assert user_result.scalar_one_or_none() is None
+
+        student_result = await db_session.execute(select(Student).where(Student.id == student.id))
+        assert student_result.scalar_one_or_none() is None
+
+    async def test_delete_manager_with_managed_school_does_not_500(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        school = await make_school(db_session)
+        await make_school_manager(db_session, school, manager)
+
+        resp = await client.delete(f"/api/users/{manager.id}", headers=auth_headers(admin))
+        assert resp.status_code == 200
+
+        from app.models.user import User
+        user_result = await db_session.execute(select(User).where(User.id == manager.id))
+        assert user_result.scalar_one_or_none() is None
 
 
 class TestSelfDeleteGuard:

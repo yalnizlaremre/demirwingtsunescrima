@@ -5,7 +5,8 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Plus, BookOpen, Users, ClipboardCheck, Calendar, Repeat, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, BookOpen, Users, ClipboardCheck, Calendar, Repeat, Trash2, RefreshCw, Edit2 } from 'lucide-react';
+import { parseServerDatetime, toDatetimeLocalInput } from '../utils/datetime';
 
 const DAY_NAMES = {
   0: 'Pazartesi',
@@ -28,6 +29,8 @@ export default function Lessons() {
   const [students, setStudents] = useState([]);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [selectedStudents, setSelectedStudents] = useState([]);
+  const [initialAttendance, setInitialAttendance] = useState({}); // student_id -> attendance_id
+  const [editingLesson, setEditingLesson] = useState(null);
   const [form, setForm] = useState({ school_id: '', branch: 'WING_TSUN', lesson_type: 'GROUP', lesson_date: '', notes: '' });
 
   // Schedule states
@@ -56,11 +59,39 @@ export default function Lessons() {
     } catch {} finally { setLoading(false); }
   };
 
-  const handleCreate = async (e) => {
+  const openCreateLesson = () => {
+    setEditingLesson(null);
+    setForm({ school_id: '', branch: 'WING_TSUN', lesson_type: 'GROUP', lesson_date: '', notes: '' });
+    setModalOpen(true);
+  };
+
+  const openEditLesson = (lesson) => {
+    setEditingLesson(lesson);
+    setForm({
+      school_id: lesson.school_id,
+      branch: lesson.branch,
+      lesson_type: lesson.lesson_type,
+      lesson_date: toDatetimeLocalInput(lesson.lesson_date),
+      notes: lesson.notes || '',
+    });
+    setModalOpen(true);
+  };
+
+  const handleSubmitLesson = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/lessons/', { ...form, lesson_date: new Date(form.lesson_date).toISOString() });
-      toast.success('Ders olusturuldu');
+      if (editingLesson) {
+        await api.put(`/lessons/${editingLesson.id}`, {
+          branch: form.branch,
+          lesson_type: form.lesson_type,
+          lesson_date: new Date(form.lesson_date).toISOString(),
+          notes: form.notes,
+        });
+        toast.success('Ders guncellendi');
+      } else {
+        await api.post('/lessons/', { ...form, lesson_date: new Date(form.lesson_date).toISOString() });
+        toast.success('Ders olusturuldu');
+      }
       setModalOpen(false);
       fetchLessons();
     } catch (err) {
@@ -68,21 +99,53 @@ export default function Lessons() {
     }
   };
 
+  const handleDeleteLesson = async (lesson) => {
+    if (!confirm('Bu dersi silmek istediginize emin misiniz? Derse ait yoklama saatleri ogrencilerden geri alinacak.')) return;
+    try {
+      await api.delete(`/lessons/${lesson.id}`);
+      toast.success('Ders silindi');
+      fetchLessons();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Silme basarisiz');
+    }
+  };
+
   const openAttendance = async (lesson) => {
     setSelectedLesson(lesson);
     setSelectedStudents([]);
+    setInitialAttendance({});
     try {
-      const res = await api.get(`/students/?school_id=${lesson.school_id}&limit=200`);
-      setStudents(res.data.items);
-    } catch {}
+      const [studentsRes, attendanceRes] = await Promise.all([
+        api.get(`/students/?school_id=${lesson.school_id}&limit=100`),
+        api.get(`/attendance/lesson/${lesson.id}`),
+      ]);
+      setStudents(studentsRes.data.items);
+      const attMap = {};
+      attendanceRes.data.items.forEach((a) => { attMap[a.student_id] = a.id; });
+      setInitialAttendance(attMap);
+      setSelectedStudents(Object.keys(attMap));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ogrenci/yoklama listesi yuklenemedi');
+    }
     setAttModalOpen(true);
   };
 
   const handleAttendance = async () => {
-    if (selectedStudents.length === 0) return;
+    const initialIds = Object.keys(initialAttendance);
+    const toAdd = selectedStudents.filter((id) => !initialIds.includes(id));
+    const toRemove = initialIds.filter((id) => !selectedStudents.includes(id));
+
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      setAttModalOpen(false);
+      return;
+    }
+
     try {
-      await api.post('/attendance/', { lesson_id: selectedLesson.id, student_ids: selectedStudents });
-      toast.success('Yoklama kaydedildi');
+      await Promise.all([
+        toAdd.length > 0 ? api.post('/attendance/', { lesson_id: selectedLesson.id, student_ids: toAdd }) : Promise.resolve(),
+        ...toRemove.map((id) => api.delete(`/attendance/${initialAttendance[id]}`)),
+      ]);
+      toast.success('Yoklama guncellendi');
       setAttModalOpen(false);
       fetchLessons();
     } catch (err) {
@@ -166,7 +229,7 @@ export default function Lessons() {
     <div>
       <PageHeader title="Dersler" subtitle="Ders yonetimi ve haftalik program">
         {activeTab === 'lessons' ? (
-          <button onClick={() => setModalOpen(true)} className="btn-primary"><Plus size={18} /> Tek Ders Ekle</button>
+          <button onClick={openCreateLesson} className="btn-primary"><Plus size={18} /> Tek Ders Ekle</button>
         ) : (
           <button onClick={() => setScheduleModalOpen(true)} className="btn-primary"><Plus size={18} /> Yeni Program</button>
         )}
@@ -219,7 +282,7 @@ export default function Lessons() {
                 <tbody>
                   {lessons.map(l => (
                     <tr key={l.id}>
-                      <td className="font-medium">{new Date(l.lesson_date).toLocaleDateString('tr-TR')}</td>
+                      <td className="font-medium">{parseServerDatetime(l.lesson_date).toLocaleDateString('tr-TR')}</td>
                       <td>
                         <span className={`badge ${l.branch === 'WING_TSUN' ? 'badge-danger' : 'badge-info'}`}>
                           {l.branch === 'WING_TSUN' ? 'WT' : 'ESC'}
@@ -247,9 +310,17 @@ export default function Lessons() {
                         )}
                       </td>
                       <td>
-                        <button onClick={() => openAttendance(l)} className="text-blue-600 hover:text-blue-800" title="Yoklama">
-                          <ClipboardCheck size={16} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openAttendance(l)} className="text-blue-600 hover:text-blue-800" title="Yoklama">
+                            <ClipboardCheck size={16} />
+                          </button>
+                          <button onClick={() => openEditLesson(l)} className="text-dark-500 hover:text-dark-700" title="Duzenle">
+                            <Edit2 size={16} />
+                          </button>
+                          <button onClick={() => handleDeleteLesson(l)} className="text-red-500 hover:text-red-700" title="Sil">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -338,12 +409,18 @@ export default function Lessons() {
         </>
       )}
 
-      {/* New Single Lesson Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Yeni Ders">
-        <form onSubmit={handleCreate} className="space-y-4">
+      {/* New/Edit Single Lesson Modal */}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingLesson ? 'Dersi Duzenle' : 'Yeni Ders'}>
+        <form onSubmit={handleSubmitLesson} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Okul *</label>
-            <select value={form.school_id} onChange={(e) => update('school_id', e.target.value)} className="select-field" required>
+            <select
+              value={form.school_id}
+              onChange={(e) => update('school_id', e.target.value)}
+              className="select-field"
+              required
+              disabled={!!editingLesson}
+            >
               <option value="">Secin...</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -351,19 +428,34 @@ export default function Lessons() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1">Brans</label>
-              <select value={form.branch} onChange={(e) => update('branch', e.target.value)} className="select-field">
+              <select
+                value={form.branch}
+                onChange={(e) => update('branch', e.target.value)}
+                className="select-field"
+                disabled={editingLesson && editingLesson.attendance_count > 0}
+              >
                 <option value="WING_TSUN">Wing Tsun</option>
                 <option value="ESCRIMA">Escrima</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Tur</label>
-              <select value={form.lesson_type} onChange={(e) => update('lesson_type', e.target.value)} className="select-field">
+              <select
+                value={form.lesson_type}
+                onChange={(e) => update('lesson_type', e.target.value)}
+                className="select-field"
+                disabled={editingLesson && editingLesson.attendance_count > 0}
+              >
                 <option value="GROUP">Grup (2 saat)</option>
                 <option value="PRIVATE">Ozel (2 saat)</option>
               </select>
             </div>
           </div>
+          {editingLesson && editingLesson.attendance_count > 0 && (
+            <p className="text-xs text-amber-600">
+              Bu derse yoklama alindigi icin brans/tur degistirilemiyor.
+            </p>
+          )}
           <div>
             <label className="block text-sm font-medium mb-1">Tarih *</label>
             <input type="datetime-local" value={form.lesson_date} onChange={(e) => update('lesson_date', e.target.value)} className="input-field" required />
@@ -374,7 +466,7 @@ export default function Lessons() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">Olustur</button>
+            <button type="submit" className="btn-primary">{editingLesson ? 'Guncelle' : 'Olustur'}</button>
           </div>
         </form>
       </Modal>
@@ -465,7 +557,7 @@ export default function Lessons() {
       <Modal isOpen={attModalOpen} onClose={() => setAttModalOpen(false)} title="Yoklama" size="lg">
         <div className="space-y-4">
           <p className="text-sm text-dark-500">
-            Derse katilan ogrencileri secin. Her ogrenciye <strong>{selectedLesson?.duration_hours}h</strong> saat otomatik eklenecektir.
+            Derse katilan ogrencileri isaretleyin, katilmayanlarin isaretini kaldirin. Her isaretli ogrenciye <strong>{selectedLesson?.duration_hours}h</strong> saat eklenir, isareti kaldirilanlarin saati geri alinir.
           </p>
           <div className="max-h-72 overflow-y-auto border border-dark-200 rounded-lg divide-y">
             {students.map(s => (
@@ -477,15 +569,18 @@ export default function Lessons() {
                   className="w-4 h-4 text-primary-600 rounded"
                 />
                 <span className="text-sm font-medium">{s.user_name || 'Bilinmiyor'}</span>
+                {initialAttendance[s.id] && (
+                  <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Kayitli</span>
+                )}
               </label>
             ))}
             {students.length === 0 && <p className="text-sm text-dark-400 p-4">Bu okulda ogrenci yok</p>}
           </div>
           <div className="flex justify-between items-center pt-2">
-            <span className="text-sm text-dark-500">{selectedStudents.length} ogrenci secildi</span>
+            <span className="text-sm text-dark-500">{selectedStudents.length} ogrenci isaretli</span>
             <div className="flex gap-3">
               <button onClick={() => setAttModalOpen(false)} className="btn-secondary">Iptal</button>
-              <button onClick={handleAttendance} className="btn-primary" disabled={selectedStudents.length === 0}>Kaydet</button>
+              <button onClick={handleAttendance} className="btn-primary">Kaydet</button>
             </div>
           </div>
         </div>

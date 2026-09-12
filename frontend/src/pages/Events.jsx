@@ -7,6 +7,7 @@ import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 import { Plus, CalendarDays, Users, CheckCircle2, ClipboardList, AlertTriangle, Edit2, Trash2 } from 'lucide-react';
+import { parseServerDatetime, toDatetimeLocalInput } from '../utils/datetime';
 
 export default function Events() {
   const { isAdmin, isUser, hasPermission } = useAuth();
@@ -46,22 +47,7 @@ export default function Events() {
     location: '', capacity: '', scope: 'ALL_SCHOOLS', selected_school_ids: [], wt_fee: '', escrima_fee: '',
   };
 
-  // Backend NaiveDatetime alanlari UTC'yi tzinfo'suz (ornek: "2026-09-15T15:00:00")
-  // dondurur. "Z" eklenmezse tarayici bunu YEREL saat sanip yanlis yorumlar
-  // (ornek: Turkiye'de 3 saat kayar) - once dogru UTC olarak parse edip
-  // sonra yerel saat bilesenlerini okumak gerekiyor.
-  const parseServerDatetime = (iso) => {
-    if (!iso) return null;
-    const hasTimezone = /Z$|[+-]\d{2}:?\d{2}$/.test(iso);
-    return new Date(hasTimezone ? iso : `${iso}Z`);
-  };
-
-  const toDatetimeLocal = (iso) => {
-    const d = parseServerDatetime(iso);
-    if (!d) return '';
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
+  const toDatetimeLocal = toDatetimeLocalInput;
 
   const openCreate = () => {
     setEditing(null);

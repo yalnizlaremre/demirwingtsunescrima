@@ -44,8 +44,12 @@ class User(Base, UUIDMixin, TimestampMixin):
     extra_permissions: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, default=list)
 
     # Relationships
-    managed_schools = relationship("SchoolManager", back_populates="manager", lazy="selectin", passive_deletes=True)
-    student_profile = relationship("Student", back_populates="user", uselist=False, lazy="selectin", passive_deletes=True)
+    # NOT: passive_deletes=True (bool) yeterli degil - lazy="selectin" bu iliskiyi
+    # HER User sorgusunda onceden yukler, ve zaten yuklu bir koleksiyon icin SQLAlchemy
+    # yine de FK'yi NULL'a cekmeye calisir (bkz. lessons.py'deki attendances ayni bug).
+    # "all" string degeri bu nulling'i tamamen kapatip DB'nin ON DELETE CASCADE'ine birakiyor.
+    managed_schools = relationship("SchoolManager", back_populates="manager", lazy="selectin", passive_deletes="all")
+    student_profile = relationship("Student", back_populates="user", uselist=False, lazy="selectin", passive_deletes="all")
 
     @property
     def full_name(self) -> str:

@@ -1,9 +1,27 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-12 — **Etkinlik saat kayması bugu TAMAMLANDI, canliya alindi.** `main` ile `origin/main` ve prod aynı hizada. Açık iş yok.
+> Son güncelleme: 2026-09-13 — **Dersler/Yoklama incelemesi TAMAMLANDI: ders düzenleme+silme eklendi, yoklama gerçekten düzenlenebilir hale geldi, yoklama öğrenci listesi hiç yüklenmiyordu (limit=200 bug'ı) düzeltildi, İKİ KRİTİK cascade-delete bug'ı (öğrenci-kullanıcı silme + ders silme 500 veriyordu) bulunup düzeltildi.** `main` ile `origin/main` ve prod aynı hizada. Açık iş yok.
 
-## TAMAMLANDI (2026-09-12, ikinci tur): Etkinlik oluşturma/düzenlemede saat kayması bug'ı
+## TAMAMLANDI (2026-09-13): Dersler + Yoklama sistemi incelemesi
+
+Kullanıcı "Dersler kısmında düzenleme yapılamıyor, yoklama sistemi etkili değil, incele ve düzelt" dedi. İnceleme birden fazla gerçek bug ortaya çıkardı, hepsi test edilip düzeltildi:
+
+**1. Ders düzenleme/silme UI'da hiç yoktu:** Backend'de `LessonUpdate` şeması ve `DELETE /lessons/{id}` (yoklama saatlerini doğru geri alan) zaten vardı ama `PUT /lessons/{id}` route'u hiç tanımlanmamıştı (import edilen şema hiç kullanılmıyordu) ve `Lessons.jsx`'te ne düzenle ne sil butonu vardı. `PUT /lessons/{id}` eklendi (yoklama alınmışsa branş/tür GERÇEKTEN değişmeye çalışılırsa 400 döner, aynı değerin tekrar gönderilmesi engellenmez), `Lessons.jsx`'e düzenle+sil butonları eklendi (aynı modal create/edit arasında paylaşılıyor, `Events.jsx`'teki desenle aynı). Ayrıca `delete_lesson`'da eksik olan MANAGER'ın sadece kendi okulundaki dersi silebilmesi kontrolü eklendi (create/update'te vardı, delete'te unutulmuştu - bir MANAGER başka okulun dersini silebiliyordu).
+
+**2. Yoklama sistemi tek yönlüydü, düzenlenemiyordu:** `openAttendance` her açılışta seçili listeyi sıfırlıyordu - kimin zaten yoklamaya alındığını hiç göstermiyordu, yanlışlıkla işaretlenen biri asla kaldırılamıyordu (backend'de `GET /attendance/lesson/{id}` ve `DELETE /attendance/{id}` zaten vardı ama hiç kullanılmıyordu). Modal artık açılışta mevcut yoklamayı çekip ilgili öğrencileri işaretli+"Kayıtlı" rozetli gösteriyor; kaydet'e basınca yeni işaretlenenler için `POST`, işareti kaldırılanlar için `DELETE` çağrılıyor (saatler doğru ekleniyor/geri alınıyor).
+
+**3. Yoklama özelliği aslında HİÇ ÇALIŞMIYORDU:** `openAttendance` öğrenci listesini `/students/?school_id=...&limit=200` ile çekiyordu ama backend'in üst siniri 100 - bu istek HER ZAMAN 422 ile patlıyordu, hata sessizce yutuluyordu (`catch {}`), kullanıcıya "Bu okulda öğrenci yok" gibi yanıltıcı bir boş liste görünüyordu. `limit=100` yapıldı (bu proje daha önce Grades.jsx'te de aynı bug'ı yaşamıştı, bkz. 2026-07-21 notu) + artık hata sessizce yutulmuyor, toast ile gösteriliyor.
+
+**4. KRİTİK (canlıda aktif) bug - öğrenci/yönetici kullanıcı silme 500 veriyordu:** 28 Temmuz'daki `passive_deletes=True` düzeltmesi yetersizmiş. `User.student_profile`/`managed_schools` `lazy="selectin"` olduğundan HER kullanıcı sorgusunda önceden yükleniyor; SQLAlchemy zaten yüklü bir koleksiyon için `passive_deletes=True` (bool) olsa bile FK'yi NULL'a çekmeyi deniyor (yalnızca string `"all"` değeri bunu tamamen kapatıyor - SQLAlchemy dokümantasyonunda ayrıca belirtiliyor). Sonuç: `Kullanıcılar` sayfasından öğrenci profili olan ya da bir okulu yöneten bir kullanıcı silinmeye çalışıldığında `IntegrityError` ile 500 veriyordu. `Lesson.attendances` ilişkisinde AYNI bug'ı (ders silme de aynı şekilde 500 veriyordu) bulup ikisini de `passive_deletes="all"` ile düzelttim.
+
+**Test:** 4 yeni backend testi (lesson update/permission, 2'si de tam bu iki kritik cascade bug'ını hedefliyor), toplam **172/172 test geçiyor**. Gerçek tarayıcıda uçtan uca doğrulandı: local'de geçici okul/öğrenci/ders ile - ders oluşturuldu (saat doğru), düzenlendi (not güncellendi, doğrulandı), yoklama işaretlendi (öğrenci saati 10→12 arttı), tekrar açılıp işaret kaldırıldı (saat 12→10 geri alındı, "Kayıtlı" rozeti doğru göründü) - hepsi API üzerinden çapraz doğrulandı. Öğrenci profili olan bir kullanıcı `DELETE /users/{id}` ile başarıyla silindi (öncesinde 500 verirdi). Test verileri temizlendi.
+
+**Ayrıca (küçük, aynı taramada bulundu):** `Events.jsx`'teki saat kayması düzeltmesi (`parseServerDatetime`/`toDatetimeLocalInput`) `frontend/src/utils/datetime.js`'e taşınıp Lessons.jsx ile paylaşıldı (ders listesindeki tarih gösterimi de aynı bug'a sahipti, düzeltildi).
+
+---
+
+## Önceki oturum (2026-09-12, ikinci tur): Etkinlik oluşturma/düzenlemede saat kayması bug'ı
 
 Kullanıcı "etkinlik oluşturma ve düzenlemede değişiklikler yansımıyor" dedi. İnceleme + gerçek tarayıcı testiyle kök neden bulundu: **backend'in sakladığı naive-UTC datetime değerleri, frontend'de yanlış saat dilimiyle yorumlanıyordu.**
 
