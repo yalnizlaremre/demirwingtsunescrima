@@ -15,7 +15,7 @@ Detay: `NaiveDatetime` alanları (bkz. [[deployment_status]]'taki eski "tz-aware
 
 **Test:** 2 yeni backend testi (`test_update_response_includes_registration_count_and_schools`, `test_update_start_datetime_roundtrips_without_timezone_shift`), toplam **161/161 test geçiyor**. Gerçek tarayıcıda uçtan uca doğrulandı: local'de geçici admin ile 18:00 için bir etkinlik oluşturuldu → listede "18:00" doğru göründü (düzeltmeden önce "15:00" gösterirdi) → düzenle modalı açıldığında "18:00" doğru geldi → saat 20:30/22:00'a değiştirilip güncellendi → liste "20:30" olarak doğru güncellendi. Test verisi (etkinlik + geçici admin) API üzerinden temizlendi.
 
-**Deploy:** commit `[BURAYA_EKLENECEK]` → push → sunucuda `git pull` + `docker compose up -d --build`, migration gerekmedi (sadece response/frontend degisikligi).
+**Deploy:** commit `27b6b86` → push → sunucuda `git pull` + `docker compose up -d --build` (migration gerekmedi), `docker compose ps` tüm container `Up`, `/api/health` 200, canlıda Etkinlikler sayfası kontrol edildi.
 
 ---
 
