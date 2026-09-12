@@ -1,7 +1,7 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-12 — **Kayit botu tespiti + honeypot/rate-limit guvenligi + bekleyen uye reddetme TAMAMLANDI.** `main` ile `origin/main` ve prod aynı hizada. Açık iş yok.
+> Son güncelleme: 2026-09-12 — **Kayit botu tespiti + honeypot/rate-limit guvenligi + bekleyen uye reddetme TAMAMLANDI, canliya alindi, 5 bot kaydi silindi.** `main` ile `origin/main` ve prod aynı hizada (son commit `e0f9384`). Açık iş yok.
 
 ## TAMAMLANDI (2026-09-12): Bot kaydı tespiti + register güvenliği + bekleyen üye reddetme
 
@@ -20,9 +20,7 @@ Kullanıcı canlıda "Bekleyen Üyeler" listesine 5 şüpheli kayıt fark etti, 
 
 **Test:** Backend testleri (honeypot + zamanlama + mevcut regresyon) yeşil. Lokal'de tarayıcıdan gerçek bir kayıt formu doldurulup birkaç saniye beklenip gönderildi — normal kullanıcı akışı bozulmadığı doğrulandı ("Kayıt başarılı" toast'ı alındı). Honeypot dolu bir istek doğrudan API'ye gönderildiğinde 400 döndüğü doğrulandı. Frontend build hatasız.
 
-**Deploy:** [buraya deploy sonrası commit hash'i eklenecek] → push → sunucuda `git pull` + `docker compose up -d --build`, migration gerekmedi (sadece iki opsiyonel alan, DB şeması değişmedi).
-
-**Kalan iş:** Canlıdaki 5 bot kaydı, yeni "Reddet" butonuyla admin panelden silinecek (deploy sonrası).
+**Deploy:** commit `e0f9384` → push → sunucuda `git pull` + `docker compose up -d --build` (migration gerekmedi, sadece iki opsiyonel alan, DB şeması değişmedi), `docker compose ps` tüm container `Up`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com` hepsi 200 döndü. Canlıdaki 5 bot kaydı, yeni "Reddet" butonuyla admin panelden (Chrome'da gerçek admin oturumuyla) tek tek silindi — "Bekleyen Üyeler" listesi artık boş. Kalan iş yok.
 
 ---
 
