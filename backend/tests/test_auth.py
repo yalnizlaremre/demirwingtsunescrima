@@ -1,8 +1,9 @@
 import pytest
 from jose import jwt
+from sqlalchemy import select
 
 from app.config import settings
-from app.models.user import UserRole, UserStatus
+from app.models.user import User, UserRole, UserStatus
 from tests.conftest import auth_headers, make_user
 
 
@@ -58,6 +59,35 @@ class TestRegister:
             "/api/auth/login", json={"email": "waiting@test.com", "password": "secret123"}
         )
         assert resp.status_code == 403
+
+    async def test_register_honeypot_filled_rejected(self, client, db_session):
+        resp = await client.post(
+            "/api/auth/register",
+            json={
+                "email": "bot@test.com", "password": "secret123", "first_name": "A", "last_name": "B",
+                "website": "http://spam.example",
+            },
+        )
+        assert resp.status_code == 400
+        result = await db_session.execute(
+            select(User).where(User.email == "bot@test.com")
+        )
+        assert result.scalar_one_or_none() is None
+
+    async def test_register_submitted_too_fast_rejected(self, client, db_session):
+        import time
+        resp = await client.post(
+            "/api/auth/register",
+            json={
+                "email": "fastbot@test.com", "password": "secret123", "first_name": "A", "last_name": "B",
+                "form_rendered_at": int(time.time() * 1000),
+            },
+        )
+        assert resp.status_code == 400
+        result = await db_session.execute(
+            select(User).where(User.email == "fastbot@test.com")
+        )
+        assert result.scalar_one_or_none() is None
 
 
 class TestPendingUsersApproval:

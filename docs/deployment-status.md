@@ -1,7 +1,30 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-07-30 — **Brevo SMTP kurulumu TAMAMLANDI, uçtan uca doğrulandı.** `main` ile `origin/main` ve prod aynı hizada (son commit `e93c904`) — prod `.env` güncellendi, `.env.production.example`'a `FRONTEND_URL` eklendi (henüz commit edilmedi, küçük bir doc/template değişikliği, istenirse commit edilebilir).
+> Son güncelleme: 2026-09-12 — **Kayit botu tespiti + honeypot/rate-limit guvenligi + bekleyen uye reddetme TAMAMLANDI.** `main` ile `origin/main` ve prod aynı hizada. Açık iş yok.
+
+## TAMAMLANDI (2026-09-12): Bot kaydı tespiti + register güvenliği + bekleyen üye reddetme
+
+Kullanıcı canlıda "Bekleyen Üyeler" listesine 5 şüpheli kayıt fark etti, incelenmesi istendi. İnceleme sonucu hepsinin bot kaydı olduğu doğrulandı: ad/soyad rastgele karışık harf dizileri, telefon alanına da rastgele karakterler girilmiş, e-postalar Gmail'in noktaları yok saymasını kullanan klasik bir bot tekniğiyle (`p.u.v.o.d.oba.h.40.4@gmail.com` gibi) oluşturulmuş.
+
+**Kök neden — güvenlik açığı olarak değerlendirildi:** `/auth/register` ucunda hiçbir bot koruması (CAPTCHA, honeypot, zamanlama kontrolü) yoktu, sadece `5/dakika` rate limit vardı. Bu rate limit de aslında etkisizdi: backend Caddy reverse proxy arkasında (`docker-compose.yml`'de sadece `expose`, `ports` yok) ve `slowapi`'nin `get_remote_address`'i `request.client.host`'u okuyordu — bu da her zaman Caddy'nin container IP'siydi, gerçek ziyaretçi IP'si değil. Yani rate limit pratikte tüm siteyi tek bir paylaşılan kotaya sokuyordu (saldırganı IP'sine göre ayırt etmiyordu), bir bot dakikada bir istekle sınırsız kayıt açabiliyordu.
+
+**Yapılan (backend):**
+- `app/rate_limit.py`: `get_real_client_ip()` — Caddy'nin eklediği `X-Forwarded-For` başlığındaki SON değeri (güvenilir tek hop) okuyor, ilk değeri değil (istemci tarafından sahtelenebilir). Artık `5/dakika` gerçekten IP başına uygulanıyor.
+- `RegisterRequest`'e iki alan eklendi: `website` (honeypot — gerçek kullanıcı hiç görmez/doldurmaz, doluysa 400) ve `form_rendered_at` (formun render edildiği an, epoch ms — sunucuya ulaşana kadar 2 saniyeden az geçtiyse 400, botlar genelde formu render edip beklemeden hemen gönderir). İkisi de opsiyonel, eski API istemcileri (testler dahil) kırılmadı.
+- 2 yeni backend testi (`test_register_honeypot_filled_rejected`, `test_register_submitted_too_fast_rejected`), toplam **159/159 test geçiyor**.
+
+**Yapılan (frontend):**
+- `Register.jsx`: görünmez (`position:absolute; left:-9999px`, `aria-hidden`, `tabIndex=-1`) bir "website" honeypot alanı + sayfa render anını (`Date.now()`) `form_rendered_at` olarak gönderen state eklendi.
+- `PendingUsers.jsx`: kullanıcının fark ettiği eksik giderildi — "Onayla" butonunun yanına "Reddet" butonu eklendi, mevcut `DELETE /api/users/{id}` ucunu kullanıyor (yeni bir backend ucu gerekmedi, `Users.jsx`'teki silme deseniyle aynı `confirm()` + toast).
+
+**Test:** Backend testleri (honeypot + zamanlama + mevcut regresyon) yeşil. Lokal'de tarayıcıdan gerçek bir kayıt formu doldurulup birkaç saniye beklenip gönderildi — normal kullanıcı akışı bozulmadığı doğrulandı ("Kayıt başarılı" toast'ı alındı). Honeypot dolu bir istek doğrudan API'ye gönderildiğinde 400 döndüğü doğrulandı. Frontend build hatasız.
+
+**Deploy:** [buraya deploy sonrası commit hash'i eklenecek] → push → sunucuda `git pull` + `docker compose up -d --build`, migration gerekmedi (sadece iki opsiyonel alan, DB şeması değişmedi).
+
+**Kalan iş:** Canlıdaki 5 bot kaydı, yeni "Reddet" butonuyla admin panelden silinecek (deploy sonrası).
+
+---
 
 ## TAMAMLANDI (2026-07-30): Brevo SMTP kurulumu
 

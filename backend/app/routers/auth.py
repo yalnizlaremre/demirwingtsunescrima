@@ -28,8 +28,11 @@ from app.services.mail import send_email
 from jose import JWTError, jwt
 from app.config import settings
 import logging
+import time
 
 logger = logging.getLogger(__name__)
+
+MIN_REGISTER_FORM_SECONDS = 2
 
 router = APIRouter()
 
@@ -82,6 +85,17 @@ async def login(request: Request, data: LoginRequest, db: AsyncSession = Depends
 @router.post("/register", response_model=UserResponse)
 @limiter.limit("5/minute")
 async def register(request: Request, data: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    if data.website:
+        # Honeypot: gercek kullanicilar bu alani gormez, sadece botlar doldurur.
+        logger.info("Spam kaydi engellendi (honeypot): %s", data.email)
+        raise HTTPException(status_code=400, detail="Kayıt başarısız, lütfen tekrar deneyin")
+
+    if data.form_rendered_at is not None:
+        elapsed_seconds = (time.time() * 1000 - data.form_rendered_at) / 1000
+        if elapsed_seconds < MIN_REGISTER_FORM_SECONDS:
+            logger.info("Spam kaydi engellendi (cok hizli gonderim): %s", data.email)
+            raise HTTPException(status_code=400, detail="Kayıt başarısız, lütfen tekrar deneyin")
+
     existing = await db.execute(select(User).where(User.email == data.email))
     if existing.scalar_one_or_none():
         raise HTTPException(

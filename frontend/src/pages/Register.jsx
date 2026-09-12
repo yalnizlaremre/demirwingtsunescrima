@@ -5,9 +5,10 @@ import toast from 'react-hot-toast';
 
 export default function Register() {
   const [form, setForm] = useState({
-    email: '', password: '', first_name: '', last_name: '', phone: '',
+    email: '', password: '', first_name: '', last_name: '', phone: '', website: '',
   });
   const [loading, setLoading] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -15,7 +16,7 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     try {
-      await register(form);
+      await register({ ...form, form_rendered_at: renderedAt });
       toast.success('Kayit basarili! Hesabiniz onaylandiktan sonra giris yapabilirsiniz.');
       navigate('/login');
     } catch (err) {
@@ -94,6 +95,22 @@ export default function Register() {
               value={form.phone}
               onChange={(e) => update('phone', e.target.value)}
               className="input-field"
+            />
+          </div>
+
+          <div
+            aria-hidden="true"
+            style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, overflow: 'hidden' }}
+          >
+            <label htmlFor="website">Website</label>
+            <input
+              id="website"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={form.website}
+              onChange={(e) => update('website', e.target.value)}
             />
           </div>
 

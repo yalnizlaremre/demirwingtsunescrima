@@ -12,6 +12,9 @@ class RegisterRequest(BaseModel):
     first_name: str
     last_name: str
     phone: str | None = None
+    # Bot koruma alanlari: gercek kullanicilar bunlari hic gormez/doldurmaz.
+    website: str | None = None
+    form_rendered_at: int | None = None
 
 
 class TokenResponse(BaseModel):

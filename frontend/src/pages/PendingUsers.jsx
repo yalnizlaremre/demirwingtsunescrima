@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import PageHeader from '../components/PageHeader';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { UserCheck, UserPlus } from 'lucide-react';
+import { UserCheck, UserPlus, UserX } from 'lucide-react';
 
 export default function PendingUsers() {
   const [users, setUsers] = useState([]);
@@ -29,6 +29,17 @@ export default function PendingUsers() {
     }
   };
 
+  const handleReject = async (userId) => {
+    if (!confirm('Bu kaydi reddedip silmek istediginize emin misiniz?')) return;
+    try {
+      await api.delete(`/users/${userId}`);
+      toast.success('Kayit silindi');
+      fetchPending();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Hata olustu');
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -46,9 +57,14 @@ export default function PendingUsers() {
                 <p className="text-sm text-dark-400">{u.email}</p>
                 {u.phone && <p className="text-sm text-dark-500 mt-1">Tel: {u.phone}</p>}
               </div>
-              <button onClick={() => handleApprove(u.id)} className="btn-success btn-sm w-full">
-                <UserCheck size={16} /> Onayla
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => handleApprove(u.id)} className="btn-success btn-sm flex-1">
+                  <UserCheck size={16} /> Onayla
+                </button>
+                <button onClick={() => handleReject(u.id)} className="btn-danger btn-sm flex-1">
+                  <UserX size={16} /> Reddet
+                </button>
+              </div>
             </div>
           ))}
         </div>
