@@ -136,6 +136,37 @@ class TestUpdateAndDeleteEvent:
         assert body["event_type"] == "SEMINAR"
         assert body["location"] == "Yeni Yer"
 
+    async def test_update_response_includes_registration_count_and_schools(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        school = await make_school(db_session)
+        user, student = await make_student_user(db_session, school)
+        event = await make_event(db_session, admin, event_type=EventType.EVENT.value)
+        await client.post(
+            f"/api/events/{event.id}/register", json={"register_wt": True}, headers=auth_headers(user)
+        )
+
+        resp = await client.put(
+            f"/api/events/{event.id}",
+            json={"scope": "SELECTED_SCHOOLS", "selected_school_ids": [str(school.id)]},
+            headers=auth_headers(admin),
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["registration_count"] == 1
+        assert body["selected_school_ids"] == [str(school.id)]
+
+    async def test_update_start_datetime_roundtrips_without_timezone_shift(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        event = await make_event(db_session, admin, event_type=EventType.EVENT.value)
+
+        resp = await client.put(
+            f"/api/events/{event.id}",
+            json={"start_datetime": "2026-12-01T15:00:00Z"},
+            headers=auth_headers(admin),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["start_datetime"].startswith("2026-12-01T15:00:00")
+
     async def test_manager_without_permission_cannot_update_event(self, client, db_session):
         admin = await make_user(db_session, role=UserRole.ADMIN.value)
         manager = await make_user(db_session, role=UserRole.MANAGER.value)

@@ -1,7 +1,23 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-12 — **Kayit botu tespiti + honeypot/rate-limit guvenligi + bekleyen uye reddetme TAMAMLANDI, canliya alindi, 5 bot kaydi silindi.** `main` ile `origin/main` ve prod aynı hizada (son commit `e0f9384`). Açık iş yok.
+> Son güncelleme: 2026-09-12 — **Etkinlik saat kayması bugu TAMAMLANDI, canliya alindi.** `main` ile `origin/main` ve prod aynı hizada. Açık iş yok.
+
+## TAMAMLANDI (2026-09-12, ikinci tur): Etkinlik oluşturma/düzenlemede saat kayması bug'ı
+
+Kullanıcı "etkinlik oluşturma ve düzenlemede değişiklikler yansımıyor" dedi. İnceleme + gerçek tarayıcı testiyle kök neden bulundu: **backend'in sakladığı naive-UTC datetime değerleri, frontend'de yanlış saat dilimiyle yorumlanıyordu.**
+
+Detay: `NaiveDatetime` alanları (bkz. [[deployment_status]]'taki eski "tz-aware/naive" bug fix'i) backend'de kasıtlı olarak UTC'yi tzinfo'suz saklıyor (`"2026-10-01T15:00:00"`, "Z" veya offset yok). `Events.jsx`'teki `toDatetimeLocal()` ve liste görünümü bu string'i doğrudan `new Date(iso)`'ya veriyordu — JavaScript, saat dilimi belirtilmeyen ISO string'leri **yerel saat** sanip yorumluyor (ECMA-262'nin bilinen bir tuzağı). Sonuç: admin bir etkinliği 18:00 (Türkiye saati) için oluşturuyor → backend doğru şekilde 15:00 UTC olarak saklıyor → ama listede/düzenleme formunda "15:00" gösteriliyordu, admin sanki girdiği saat kaybolmuş/yanlış kaydedilmiş gibi görüyordu. Node ile (`TZ=Europe/Istanbul`) hem yazma hem okuma yönü ayrı ayrı doğrulanarak kök neden kesinleştirildi.
+
+**Düzeltme (`Events.jsx`):** `parseServerDatetime()` helper'ı eklendi — backend'den gelen tarih string'inde saat dilimi işareti yoksa sona `"Z"` ekleyip doğru şekilde UTC olarak parse ediyor, ardından yerel getter'lar (`getHours()` vb.) doğru yerel saati veriyor. Hem `toDatetimeLocal` (düzenleme formunu doldururken) hem de etkinlik kartındaki tarih/saat gösterimi bu helper'ı kullanacak şekilde güncellendi. Yazma yönü (`new Date(form.start_datetime).toISOString()`) zaten doğruydu, dokunulmadı.
+
+**Ayrıca (backend, küçük tutarsızlık):** `PUT /events/{id}` yanıtı `registration_count` ve `selected_school_ids` alanlarını hiç döndürmüyordu (şema varsayılanlarına - 0 ve [] - düşüyordu). Diğer event uçlarıyla tutarlı olacak şekilde eklendi; kullanıcı arayüzünü etkilemiyordu (frontend PUT sonrası zaten listeyi yeniden çekiyor) ama API tutarlılığı için düzeltildi.
+
+**Test:** 2 yeni backend testi (`test_update_response_includes_registration_count_and_schools`, `test_update_start_datetime_roundtrips_without_timezone_shift`), toplam **161/161 test geçiyor**. Gerçek tarayıcıda uçtan uca doğrulandı: local'de geçici admin ile 18:00 için bir etkinlik oluşturuldu → listede "18:00" doğru göründü (düzeltmeden önce "15:00" gösterirdi) → düzenle modalı açıldığında "18:00" doğru geldi → saat 20:30/22:00'a değiştirilip güncellendi → liste "20:30" olarak doğru güncellendi. Test verisi (etkinlik + geçici admin) API üzerinden temizlendi.
+
+**Deploy:** commit `[BURAYA_EKLENECEK]` → push → sunucuda `git pull` + `docker compose up -d --build`, migration gerekmedi (sadece response/frontend degisikligi).
+
+---
 
 ## TAMAMLANDI (2026-09-12): Bot kaydı tespiti + register güvenliği + bekleyen üye reddetme
 

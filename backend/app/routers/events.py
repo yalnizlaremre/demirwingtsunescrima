@@ -209,6 +209,8 @@ async def update_event(
         is_completed=event.is_completed,
         created_by=str(event.created_by) if event.created_by else None,
         created_at=event.created_at,
+        registration_count=len(event.registrations) if event.registrations else 0,
+        selected_school_ids=[str(es.school_id) for es in (event.selected_schools or [])],
     )
 
 

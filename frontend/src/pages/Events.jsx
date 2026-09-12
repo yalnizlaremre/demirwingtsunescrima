@@ -46,9 +46,19 @@ export default function Events() {
     location: '', capacity: '', scope: 'ALL_SCHOOLS', selected_school_ids: [], wt_fee: '', escrima_fee: '',
   };
 
+  // Backend NaiveDatetime alanlari UTC'yi tzinfo'suz (ornek: "2026-09-15T15:00:00")
+  // dondurur. "Z" eklenmezse tarayici bunu YEREL saat sanip yanlis yorumlar
+  // (ornek: Turkiye'de 3 saat kayar) - once dogru UTC olarak parse edip
+  // sonra yerel saat bilesenlerini okumak gerekiyor.
+  const parseServerDatetime = (iso) => {
+    if (!iso) return null;
+    const hasTimezone = /Z$|[+-]\d{2}:?\d{2}$/.test(iso);
+    return new Date(hasTimezone ? iso : `${iso}Z`);
+  };
+
   const toDatetimeLocal = (iso) => {
-    if (!iso) return '';
-    const d = new Date(iso);
+    const d = parseServerDatetime(iso);
+    if (!d) return '';
     const pad = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
@@ -213,7 +223,7 @@ export default function Events() {
                 </div>
               </div>
               <div className="text-sm text-dark-500 space-y-1 mb-4">
-                <p>{new Date(e.start_datetime).toLocaleDateString('tr-TR')} - {new Date(e.start_datetime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                <p>{parseServerDatetime(e.start_datetime).toLocaleDateString('tr-TR')} - {parseServerDatetime(e.start_datetime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
                 {e.location && <p>{e.location}</p>}
                 <p className="flex items-center gap-1"><Users size={14} /> {e.registration_count} kayit</p>
                 {e.wt_fee && <p>WT Ucret: {e.wt_fee} TL</p>}
