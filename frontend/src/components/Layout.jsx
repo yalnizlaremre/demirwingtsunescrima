@@ -69,15 +69,15 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-full w-64 bg-dark-900 text-white transform transition-transform duration-300 ease-in-out
+        className={`fixed top-0 left-0 z-40 h-full w-64 bg-dark-900 text-white flex flex-col transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
-        <div className="p-5 border-b border-dark-700">
+        <div className="p-5 border-b border-dark-700 shrink-0">
           <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-12 w-auto" />
           <p className="text-dark-400 text-xs mt-1">Okul Yonetim Sistemi</p>
         </div>
 
-        <nav className="p-3 space-y-1 flex-1 overflow-y-auto max-h-[calc(100vh-180px)]">
+        <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
           {filteredNav.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.to;
@@ -96,7 +96,7 @@ export default function Layout() {
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-dark-700">
+        <div className="shrink-0 p-4 border-t border-dark-700">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-sm font-bold overflow-hidden shrink-0">
               {user?.avatar_url ? (
