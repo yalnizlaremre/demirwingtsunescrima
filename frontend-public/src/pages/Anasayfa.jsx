@@ -4,6 +4,7 @@ import { ArrowRight, School, Users, GraduationCap, Image as ImageIcon } from 'lu
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
+import usePageMeta from '../hooks/usePageMeta';
 
 const ORG_NAME = 'Demir Wing Tsun Akademi';
 const DEFAULT_TAGLINE =
@@ -20,6 +21,11 @@ export default function Anasayfa() {
   const [slideshow, setSlideshow] = useState([]);
   const [slideIndex, setSlideIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  usePageMeta(
+    'Kadıköy & Tekirdağ Wing Tsun ve Escrima',
+    "Kadıköy ve Tekirdağ'da Wing Tsun ve Escrima eğitimi veren okullarımızı, eğitmenlerimizi ve derslerimizi keşfedin."
+  );
 
   useEffect(() => {
     Promise.all([

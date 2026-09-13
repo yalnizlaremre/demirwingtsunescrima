@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
+import usePageMeta from '../hooks/usePageMeta';
 
 export default function DemirWteo() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  usePageMeta('DemirWteo', 'Demir Wing Tsun Escrima sistemimiz ve eğitim felsefemiz hakkında bilgi alın.');
 
   useEffect(() => {
     api.get('/content/demirwteo')

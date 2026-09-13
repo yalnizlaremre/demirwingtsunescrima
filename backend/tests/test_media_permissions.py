@@ -1,5 +1,6 @@
 import os
 import pytest
+from unittest.mock import patch
 
 from app.config import settings
 from app.models.user import UserRole
@@ -166,5 +167,66 @@ class TestMediaIsPublic:
         assert resp.json()["is_public"] is True
 
         file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(upload_resp.json()["file_url"]))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+class TestVideoTranscode:
+    async def test_video_without_ffmpeg_keeps_original_format(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        with patch("app.routers.media.shutil.which", return_value=None):
+            resp = await client.post(
+                "/api/media/upload",
+                files={"file": ("clip.mov", b"fake-quicktime-bytes", "video/quicktime")},
+                headers=auth_headers(admin),
+            )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["media_type"] == "VIDEO"
+        assert data["file_url"].endswith(".mov")
+
+        file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(data["file_url"]))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+    async def test_video_is_transcoded_to_mp4_when_ffmpeg_available(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+
+        def fake_ffmpeg_run(cmd, **kwargs):
+            dst_path = cmd[-1]
+            with open(dst_path, "wb") as f:
+                f.write(b"fake-mp4-bytes")
+
+        with patch("app.routers.media.shutil.which", return_value="/usr/bin/ffmpeg"), \
+             patch("app.routers.media.subprocess.run", side_effect=fake_ffmpeg_run):
+            resp = await client.post(
+                "/api/media/upload",
+                files={"file": ("clip.mov", b"fake-quicktime-bytes", "video/quicktime")},
+                headers=auth_headers(admin),
+            )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["media_type"] == "VIDEO"
+        assert data["file_url"].endswith(".mp4")
+
+        file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(data["file_url"]))
+        assert os.path.exists(file_path)
+        os.remove(file_path)
+
+    async def test_video_upload_falls_back_to_original_when_ffmpeg_fails(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+
+        with patch("app.routers.media.shutil.which", return_value="/usr/bin/ffmpeg"), \
+             patch("app.routers.media.subprocess.run", side_effect=RuntimeError("boom")):
+            resp = await client.post(
+                "/api/media/upload",
+                files={"file": ("clip.mov", b"fake-quicktime-bytes", "video/quicktime")},
+                headers=auth_headers(admin),
+            )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["file_url"].endswith(".mov")
+
+        file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(data["file_url"]))
         if os.path.exists(file_path):
             os.remove(file_path)

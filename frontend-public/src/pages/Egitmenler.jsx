@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { Users, Instagram } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import usePageMeta from '../hooks/usePageMeta';
 
 const TITLE_LABELS = { SIFU: 'Sifu', SIHING: 'Sihing' };
 
 export default function Egitmenler() {
   const [instructors, setInstructors] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  usePageMeta('Eğitmenlerimiz', 'Demir Wing Tsun Akademi deneyimli ve sertifikalı eğitmen kadrosuyla tanışın.');
 
   useEffect(() => {
     api.get('/instructors')

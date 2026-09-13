@@ -3,6 +3,7 @@ import { Film, Play, X } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
+import usePageMeta from '../hooks/usePageMeta';
 
 const FILTERS = [
   { key: 'ALL', label: 'Tümü' },
@@ -23,6 +24,8 @@ export default function Medya() {
   const [filter, setFilter] = useState('ALL');
   const [lightbox, setLightbox] = useState(null);
   const [player, setPlayer] = useState(null);
+
+  usePageMeta('Medya', 'Demir Wing Tsun Akademi okullarımızdan fotoğraflar ve videolar.');
 
   useEffect(() => {
     setLoading(true);

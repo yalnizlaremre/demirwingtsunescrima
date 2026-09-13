@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import usePageMeta from '../hooks/usePageMeta';
 
 export default function Iletisim() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  usePageMeta('İletişim', 'Demir Wing Tsun Akademi ile iletişime geçin.');
 
   useEffect(() => {
     api.get('/content/iletisim')

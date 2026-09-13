@@ -3,11 +3,14 @@ import { School, MapPin, Phone, X } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
+import usePageMeta from '../hooks/usePageMeta';
 
 export default function Okullar() {
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lightbox, setLightbox] = useState(null);
+
+  usePageMeta('Okullarımız', "Kadıköy ve Tekirdağ'daki Wing Tsun ve Escrima okullarımızı, ders saatlerini ve iletişim bilgilerini inceleyin.");
 
   useEffect(() => {
     api.get('/schools')

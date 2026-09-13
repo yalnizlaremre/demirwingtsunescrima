@@ -1,5 +1,7 @@
 import uuid
 import os
+import shutil
+import subprocess
 import aiofiles
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from pydantic import BaseModel
@@ -17,6 +19,36 @@ router = APIRouter()
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/mpeg", "video/quicktime", "video/webm"}
+
+
+def _transcode_video_to_mp4(src_path: str) -> str | None:
+    """Telefonlardan (özellikle iPhone .mov/HEVC) yüklenen videoları tarayıcıda
+    her zaman oynayan bir formata (H.264/AAC mp4) çevirir. ffmpeg sunucuda
+    kurulu değilse (örn. yerel geliştirme ortamı) sessizce None döner, dosya
+    olduğu gibi (dönüştürülmeden) saklanmaya devam eder."""
+    if shutil.which("ffmpeg") is None:
+        return None
+
+    dst_path = f"{os.path.splitext(src_path)[0]}_{uuid.uuid4().hex[:8]}.mp4"
+    try:
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-i", src_path,
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-b:a", "128k",
+                "-movflags", "+faststart",
+                dst_path,
+            ],
+            check=True,
+            capture_output=True,
+            timeout=600,
+        )
+        return dst_path
+    except Exception:
+        if os.path.exists(dst_path):
+            os.remove(dst_path)
+        return None
 
 
 @router.post("/upload")
@@ -61,6 +93,19 @@ async def upload_media(
     async with aiofiles.open(file_path, "wb") as f:
         await f.write(content)
 
+    file_size = len(content)
+
+    # Videoyu tarayicida her zaman oynayan bir formata (H.264/AAC mp4) cevir.
+    # Telefondan gelen .mov/HEVC gibi dosyalar Chrome'da hic acilmiyordu.
+    if media_type == MediaType.VIDEO.value:
+        transcoded_path = _transcode_video_to_mp4(file_path)
+        if transcoded_path:
+            os.remove(file_path)
+            unique_name = os.path.basename(transcoded_path)
+            file_path = transcoded_path
+            content_type = "video/mp4"
+            file_size = os.path.getsize(file_path)
+
     # Create record
     media = Media(
         media_type=media_type,
@@ -68,7 +113,7 @@ async def upload_media(
         filename=unique_name,
         original_filename=file.filename or "unknown",
         file_url=f"/uploads/{unique_name}",
-        file_size=len(content),
+        file_size=file_size,
         mime_type=content_type,
         uploaded_by=current_user.id,
         school_id=school_id,
