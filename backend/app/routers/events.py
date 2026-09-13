@@ -46,6 +46,22 @@ async def list_events(
         query = query.where(Event.is_completed == is_completed)
         count_query = count_query.where(Event.is_completed == is_completed)
 
+    # Ogrenciler yalnizca tum okullara acik etkinlikleri ve kendi okullarinin
+    # secili oldugu etkinlikleri gorur; yonetim (admin/manager) her zaman hepsini gorur.
+    if current_user.role == UserRole.USER.value:
+        student_result = await db.execute(
+            select(Student).where(Student.user_id == current_user.id)
+        )
+        student = student_result.scalar_one_or_none()
+        school_scoped_event_ids = select(EventSchool.event_id).where(
+            EventSchool.school_id == (student.school_id if student else None)
+        )
+        scope_filter = (Event.scope == EventScope.ALL_SCHOOLS.value) | (
+            Event.id.in_(school_scoped_event_ids)
+        )
+        query = query.where(scope_filter)
+        count_query = count_query.where(scope_filter)
+
     total_result = await db.execute(count_query)
     total = total_result.scalar()
 
@@ -252,6 +268,16 @@ async def register_for_event(
         raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
     if event.is_completed:
         raise HTTPException(status_code=400, detail="Bu etkinlik tamamlanmis")
+
+    if event.scope == EventScope.SELECTED_SCHOOLS.value:
+        school_check = await db.execute(
+            select(EventSchool).where(
+                EventSchool.event_id == event.id,
+                EventSchool.school_id == student.school_id,
+            )
+        )
+        if not school_check.scalar_one_or_none():
+            raise HTTPException(status_code=403, detail="Bu etkinlik sizin okulunuza acik degil")
 
     existing = await db.execute(
         select(EventRegistration).where(

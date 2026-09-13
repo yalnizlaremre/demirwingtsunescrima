@@ -4,17 +4,17 @@ from sqlalchemy import select
 
 from app.models.user import UserRole
 from app.models.student import Branch, StudentProgress
-from app.models.event import Event, EventType, SeminarEvaluation
+from app.models.event import Event, EventSchool, EventType, SeminarEvaluation
 from tests.conftest import auth_headers, make_user, make_school, make_student
 
 
-async def make_event(db_session, creator, event_type=EventType.SEMINAR.value, is_completed=False):
+async def make_event(db_session, creator, event_type=EventType.SEMINAR.value, is_completed=False, scope="ALL_SCHOOLS"):
     event = Event(
         name="Test Seminar",
         event_type=event_type,
         start_datetime=datetime.now(timezone.utc) + timedelta(days=1),
         location="Test Location",
-        scope="ALL_SCHOOLS",
+        scope=scope,
         created_by=creator.id,
         is_completed=is_completed,
     )
@@ -361,3 +361,80 @@ class TestEvaluateSeminar:
         )
         assert resp.status_code == 200
         assert resp.json()["passed"] == 0
+
+
+class TestEventSchoolScope:
+    async def _make_selected_schools_event(self, db_session, admin, allowed_school):
+        event = await make_event(
+            db_session, admin, event_type=EventType.EVENT.value, scope="SELECTED_SCHOOLS"
+        )
+        db_session.add(EventSchool(event_id=event.id, school_id=allowed_school.id))
+        await db_session.commit()
+        return event
+
+    async def test_student_of_selected_school_sees_event(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        allowed_school = await make_school(db_session, name="Allowed School")
+        event = await self._make_selected_schools_event(db_session, admin, allowed_school)
+        user, student = await make_student_user(db_session, allowed_school)
+
+        resp = await client.get("/api/events/", headers=auth_headers(user))
+        assert resp.status_code == 200
+        assert event.id in [item["id"] for item in resp.json()["items"]]
+
+    async def test_student_of_other_school_does_not_see_event(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        allowed_school = await make_school(db_session, name="Allowed School")
+        other_school = await make_school(db_session, name="Other School")
+        event = await self._make_selected_schools_event(db_session, admin, allowed_school)
+        user, student = await make_student_user(db_session, other_school)
+
+        resp = await client.get("/api/events/", headers=auth_headers(user))
+        assert resp.status_code == 200
+        assert event.id not in [item["id"] for item in resp.json()["items"]]
+
+    async def test_all_schools_event_visible_to_every_student(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        school = await make_school(db_session)
+        event = await make_event(db_session, admin, event_type=EventType.EVENT.value, scope="ALL_SCHOOLS")
+        user, student = await make_student_user(db_session, school)
+
+        resp = await client.get("/api/events/", headers=auth_headers(user))
+        assert resp.status_code == 200
+        assert event.id in [item["id"] for item in resp.json()["items"]]
+
+    async def test_admin_sees_all_events_regardless_of_scope(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        allowed_school = await make_school(db_session, name="Allowed School")
+        event = await self._make_selected_schools_event(db_session, admin, allowed_school)
+
+        resp = await client.get("/api/events/", headers=auth_headers(admin))
+        assert resp.status_code == 200
+        assert event.id in [item["id"] for item in resp.json()["items"]]
+
+    async def test_student_of_other_school_cannot_register(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        allowed_school = await make_school(db_session, name="Allowed School")
+        other_school = await make_school(db_session, name="Other School")
+        event = await self._make_selected_schools_event(db_session, admin, allowed_school)
+        user, student = await make_student_user(db_session, other_school)
+
+        resp = await client.post(
+            f"/api/events/{event.id}/register",
+            json={"register_wt": True},
+            headers=auth_headers(user),
+        )
+        assert resp.status_code == 403
+
+    async def test_student_of_selected_school_can_register(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        allowed_school = await make_school(db_session, name="Allowed School")
+        event = await self._make_selected_schools_event(db_session, admin, allowed_school)
+        user, student = await make_student_user(db_session, allowed_school)
+
+        resp = await client.post(
+            f"/api/events/{event.id}/register",
+            json={"register_wt": True},
+            headers=auth_headers(user),
+        )
+        assert resp.status_code == 200

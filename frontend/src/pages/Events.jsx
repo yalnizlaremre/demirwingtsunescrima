@@ -6,7 +6,7 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Plus, CalendarDays, Users, CheckCircle2, ClipboardList, AlertTriangle, Edit2, Trash2 } from 'lucide-react';
+import { Plus, CalendarDays, Users, CheckCircle2, ClipboardList, AlertTriangle, Edit2, Trash2, Eye } from 'lucide-react';
 import { parseServerDatetime, toDatetimeLocalInput } from '../utils/datetime';
 
 export default function Events() {
@@ -19,8 +19,10 @@ export default function Events() {
   const [editing, setEditing] = useState(null);
   const [regModalOpen, setRegModalOpen] = useState(false);
   const [evalModalOpen, setEvalModalOpen] = useState(false);
+  const [regListModalOpen, setRegListModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [registrations, setRegistrations] = useState([]);
+  const [regListItems, setRegListItems] = useState([]);
   const [selectedPassed, setSelectedPassed] = useState([]);
   const [schools, setSchools] = useState([]);
   const [regForm, setRegForm] = useState({ register_wt: false, register_escrima: false, will_take_exam: false, exam_branch_wt: false, exam_branch_escrima: false });
@@ -175,6 +177,27 @@ export default function Events() {
     setSelectedPassed(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   };
 
+  const openRegistrantsList = async (event) => {
+    setSelectedEvent(event);
+    try {
+      const res = await api.get(`/events/${event.id}/registrations`);
+      setRegListItems(res.data);
+    } catch {
+      setRegListItems([]);
+    }
+    setRegListModalOpen(true);
+  };
+
+  const handleApproveExam = async (regId) => {
+    try {
+      await api.post(`/events/${selectedEvent.id}/registrations/${regId}/approve-exam`);
+      toast.success('Sinav katilimi onaylandi');
+      setRegListItems((prev) => prev.map((r) => (r.id === regId ? { ...r, manager_approved: true } : r)));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Onaylama basarisiz');
+    }
+  };
+
   const update = (f, v) => setForm(p => ({ ...p, [f]: v }));
 
   if (loading) return <LoadingSpinner />;
@@ -219,6 +242,11 @@ export default function Events() {
                 {isUser && !e.is_completed && (
                   <button onClick={() => openRegister(e)} className="btn-primary btn-sm flex-1">Kayit Ol</button>
                 )}
+                {canManageEvents && (
+                  <button onClick={() => openRegistrantsList(e)} className="btn-secondary btn-sm flex-1">
+                    <Eye size={14} /> Kayitlilar
+                  </button>
+                )}
                 {canManageEvents && e.event_type === 'SEMINAR' && !e.is_completed && (
                   <button onClick={() => openEvaluate(e)} className="btn-success btn-sm flex-1">
                     <ClipboardList size={14} /> Degerlendir
@@ -261,6 +289,40 @@ export default function Events() {
               <label className="block text-sm font-medium mb-1">Konum</label>
               <input value={form.location} onChange={(e) => update('location', e.target.value)} className="input-field" />
             </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-1">Kapsam</label>
+              <select value={form.scope} onChange={(e) => update('scope', e.target.value)} className="select-field">
+                <option value="ALL_SCHOOLS">Tum Okullar</option>
+                <option value="SELECTED_SCHOOLS">Secili Okullar</option>
+              </select>
+            </div>
+            {form.scope === 'SELECTED_SCHOOLS' && (
+              <div className="col-span-2">
+                <label className="block text-sm font-medium mb-1">Okullar</label>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-dark-200 rounded-lg p-3">
+                  {schools.map((s) => (
+                    <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.selected_school_ids.includes(s.id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setForm((p) => ({
+                            ...p,
+                            selected_school_ids: checked
+                              ? [...p.selected_school_ids, s.id]
+                              : p.selected_school_ids.filter((id) => id !== s.id),
+                          }));
+                        }}
+                        className="w-4 h-4"
+                      />
+                      {s.name}
+                    </label>
+                  ))}
+                  {schools.length === 0 && <p className="text-xs text-dark-400">Okul bulunamadi</p>}
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium mb-1">WT Ucret (TL)</label>
               <input type="number" step="0.01" value={form.wt_fee} onChange={(e) => update('wt_fee', e.target.value)} className="input-field" />
@@ -373,6 +435,40 @@ export default function Events() {
               <button onClick={handleEvaluate} className="btn-success">Degerlendir & Bitir</button>
             </div>
           </div>
+        </div>
+      </Modal>
+
+      {/* Registrants List Modal */}
+      <Modal isOpen={regListModalOpen} onClose={() => setRegListModalOpen(false)} title="Kayitlilar" size="lg">
+        <div className="max-h-96 overflow-y-auto border border-dark-200 rounded-lg divide-y">
+          {regListItems.map((r) => (
+            <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
+              <div>
+                <span className="text-sm font-medium">{r.student_name || r.student_id}</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {r.register_wt && <span className="badge badge-danger text-xs">Wing Tsun</span>}
+                  {r.register_escrima && <span className="badge badge-info text-xs">Escrima</span>}
+                  {r.will_take_exam && (
+                    <span className="badge badge-warning text-xs">
+                      Sinav{r.exam_branch_wt ? ' WT' : ''}{r.exam_branch_escrima ? ' ESC' : ''}
+                    </span>
+                  )}
+                  {r.needs_manager_approval && !r.manager_approved && (
+                    <span className="badge badge-warning text-xs flex items-center gap-1">
+                      <AlertTriangle size={10} /> Onay bekliyor
+                    </span>
+                  )}
+                  {r.needs_manager_approval && r.manager_approved && (
+                    <span className="badge badge-success text-xs">Onaylandi</span>
+                  )}
+                </div>
+              </div>
+              {r.needs_manager_approval && !r.manager_approved && (
+                <button onClick={() => handleApproveExam(r.id)} className="btn-primary btn-sm shrink-0">Onayla</button>
+              )}
+            </div>
+          ))}
+          {regListItems.length === 0 && <p className="text-sm text-dark-400 p-4">Henuz kayit yok</p>}
         </div>
       </Modal>
     </div>
