@@ -1,7 +1,26 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-13 (ikinci tur) — **Tanıtım sitesi incelemesi + sidebar bug'ı TAMAMLANDI: video otomatik mp4 dönüşümü, SEO/OG meta etiketleri, okul açıklama alanı tutarlılığı, sidebar'da Site İçeriği/kullanıcı bloğu örtüşmesi düzeltildi.** `main` ile `origin/main` ve prod aynı hizada. Açık iş: kullanıcının kendi hazırlayacağı içerikler (DemirWteo sayfası, eğitmen bio'ları) + kırık okul kapak görselleri (bkz. aşağıdaki not).
+> Son güncelleme: 2026-09-13 (üçüncü tur) — **Etkinlikler'de okul kapsamı gerçekten uygulanıyor + Kayıtlılar/sınav onay ekranı TAMAMLANDI.** `main` ile `origin/main` ve prod aynı hizada. Açık iş: kullanıcının kendi hazırlayacağı içerikler (DemirWteo sayfası, eğitmen bio'ları) + kırık okul kapak görselleri (bkz. aşağıdaki notlar).
+
+## TAMAMLANDI (2026-09-13, üçüncü tur): Etkinlikler — okul kapsamı + kayıtlılar/sınav onay ekranı
+
+Kullanıcı Etkinlikler sayfasıyla ilgili üç şey sordu: (1) öğrenci etkinliği görebiliyor mu, (2) Wing Tsun'a mı Escrima'ya mı kaydolduğunu nasıl anlayacağız, (3) seminer sonrası derece artışı otomatik mi yoksa admin onayı mı gerekiyor — ayrıca kendisi de "hangi okullarda olduğunu seçmeliyim" notunu ekledi.
+
+**Bulgular:** (1) öğrenci zaten görebiliyordu. (2) `register_wt`/`register_escrima` backend'de kayıtlıydı ama hiçbir ekranda gösterilmiyordu. (3) kullanıcıya soruldu, **mevcut haliyle (anında, ek onaysız) bırakılması** istendi — dokunulmadı. (4) `Event.scope`/`selected_school_ids` alanı DB'de ve API'de vardı ama hem hiçbir yerde **gerçekten uygulanmıyordu** (herhangi bir öğrenci herhangi bir etkinliğe kaydolabiliyordu) hem de oluşturma formunda hiç gösterilmiyordu.
+
+**Yapılan:**
+- `events.py`: `list_events` artık USER rolündeki öğrenciyi kendi okuluna gore filtreliyor (`ALL_SCHOOLS` + kendi okulunun secili oldugu etkinlikler), `register_for_event` `SELECTED_SCHOOLS` bir etkinlikte öğrencinin okulu listede değilse 403 dönüyor.
+- `Events.jsx` (admin): oluşturma/düzenleme formuna "Kapsam" (Tüm Okullar/Seçili Okullar) + okul checkbox listesi eklendi.
+- `Events.jsx`: her etkinlik için yeni **"Kayıtlılar"** modalı — kim WT/Escrima'ya kayıtlı, sınava girecek mi, onay bekliyor mu görünüyor.
+- Aynı taramada bulunan bağımsız bir bug: `POST .../approve-exam` ucu vardı ama hiçbir arayüzden çağrılmıyordu — "eğitmen onayı gerekiyor" durumuna düşen bir öğrenci sınava asla giremiyordu. Kayıtlılar modalına "Onayla" butonu eklendi.
+- 6 yeni backend testi (okul kapsamı filtreleme + kayıt reddi), toplam **181/181 test geçiyor**.
+
+**Test:** Chrome'da uçtan uca doğrulandı: local'de 2 geçici okul + 2 öğrenci ile bir "Seçili Okullar" etkinliği oluşturuldu → A okulundaki öğrenci etkinliği görüp kaydoldu (API ile doğrulandı) → B okulundaki öğrenci ne listede gördü ne kayıt olabildi (403) → admin panelde "Kayıtlılar" modalında "Wing Tsun" rozeti doğru göründü. Sonra tüm test verisi silindi.
+
+**Deploy:** commit `57afacf` → push → sunucuda `git pull` + `docker compose up -d --build` (migration gerekmedi), `docker compose ps` tüm container `Up`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com` hepsi 200 döndü.
+
+---
 
 ## TAMAMLANDI (2026-09-13, ikinci tur): Tanıtım sitesi incelemesi + sidebar örtüşme bug'ı
 
