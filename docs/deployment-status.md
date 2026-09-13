@@ -1,7 +1,32 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-13 — **Dersler/Yoklama incelemesi TAMAMLANDI: ders düzenleme+silme eklendi, yoklama gerçekten düzenlenebilir hale geldi, yoklama öğrenci listesi hiç yüklenmiyordu (limit=200 bug'ı) düzeltildi, İKİ KRİTİK cascade-delete bug'ı (öğrenci-kullanıcı silme + ders silme 500 veriyordu) bulunup düzeltildi.** `main` ile `origin/main` ve prod aynı hizada. Açık iş yok.
+> Son güncelleme: 2026-09-13 (ikinci tur) — **Tanıtım sitesi incelemesi + sidebar bug'ı TAMAMLANDI: video otomatik mp4 dönüşümü, SEO/OG meta etiketleri, okul açıklama alanı tutarlılığı, sidebar'da Site İçeriği/kullanıcı bloğu örtüşmesi düzeltildi.** `main` ile `origin/main` ve prod aynı hizada. Açık iş: kullanıcının kendi hazırlayacağı içerikler (DemirWteo sayfası, eğitmen bio'ları) + kırık okul kapak görselleri (bkz. aşağıdaki not).
+
+## TAMAMLANDI (2026-09-13, ikinci tur): Tanıtım sitesi incelemesi + sidebar örtüşme bug'ı
+
+Kullanıcı `/okullar` ve anasayfayı gezip bir rapor istedi. İnceleme sonucu bulunanlardan öncelikliler bu oturumda çözüldü:
+
+**1. Video oynatma (Medya sayfası):** iPhone'dan yüklenen bir `.mov` (HEVC/QuickTime) dosyası Chrome'da hiç oynamıyordu (player sonsuz buffering'de kalıyordu, network'te dosya isteği bile başlamıyordu). `media.py`'ye ffmpeg ile otomatik H.264/AAC mp4 dönüşümü eklendi (ffmpeg yoksa orijinal dosya korunuyor, upload kırılmıyor), `Dockerfile`'a ffmpeg kuruldu. Kullanıcı mevcut bozuk videoyu silmeyi tercih etti (kendisi sonra yeniden yükleyecek) — DB kaydı + `/app/uploads` dosyası prod'da silindi.
+
+**2. SEO/sosyal paylaşım meta etiketleri:** `frontend-public/index.html`'e statik `og:title/description/image`, `twitter:card` + zengin `<title>`/`meta description` eklendi; her sayfaya (`usePageMeta` hook'u) kendi başlığını basan bir mekanizma eklendi. Canlıda `curl` ile doğrulandı.
+
+**3. Okul açıklama alanı tutarsızlığı:** Kadıköy Okulu ders saatleri bilgisini yalnızca `long_description`'da tutuyordu, `description` (panel içi Okullar listesinde gösterilen alan) boştu — öğrenciler/üyeler uygulama içinde bu bilgiyi hiç göremiyordu. Migration (`f1a2b3c4d5e6`) ile `description` boş olan okullarda `long_description` içeriği kopyalandı. Prod'da migration loglarda doğrulandı, API'de Kadıköy'ün `description` alanı artık dolu.
+
+**4. Sidebar bug'ı (yönetim paneli):** Kullanıcı "sol menüde Site İçeriği, kullanıcı/çıkış bloğuyla üst üste geliyor" dedi. Kök neden: `Layout.jsx`'teki nav `max-h-[calc(100vh-180px)]` sabit bir piksel bütçesiyle sınırlıydı — bu değer, alttaki kullanıcı/çıkış bloğuna sonradan eklenen "Tanıtım sitesine dön" linkinden (bkz. `marketing_app_navigation_review_2026_07_25`) ÖNCE ayarlanmıştı, blok büyüdükçe üst üste binme oluştu. `aside` artık `flex flex-col`; nav `flex-1 overflow-y-auto`, alt blok normal akışta `shrink-0` — sihirli sayı tamamen kaldırıldı, gelecekte alt bloğa içerik eklense bile overlap oluşamaz (flexbox otomatik yer açıyor/nav'ı kendi içinde kaydırıyor). Yerel ortamda geçici bir SUPER_ADMIN hesabıyla gerçek tarayıcıda doğrulandı (tüm nav öğeleri + Site İçeriği + kullanıcı/çıkış bloğu net ayrık görünüyor), sonra hesap silindi.
+
+**Not — bu oturumda kod dışı bulunan, kullanıcının "sonra yapalım"/"ben hazırlarım" dediği açık işler (bkz. memory: `marketing_site_image_bugs_2026_09_13`, `marketing_content_review_2026_09_13`):**
+- Tekirdağ Okulu'nun kapak görseli hâlâ yerel bir Windows dosya yolu (`C:\Users\...`) olarak kayıtlı — panelden yeniden yüklenmesi gerekiyor.
+- Anasayfadaki "Tekirdağ Okulu" içerik bloğunun görseli sunucudan silinmiş (404) — panelden yeniden yüklenmesi gerekiyor.
+- Kadıköy Okulu'nun `/okullar` kartında hâlâ kapak fotoğrafı yok.
+- DemirWteo sayfası içeriği ("Bu içerik henüz eklenmedi.") ve eğitmen bio'ları — kullanıcı kendisi hazırlayacak.
+- İletişim sayfasındaki "Kadıköy Shaka Dans Okulu" başlığı **bug değil** — kullanıcının ders saatlerinde kiraladığı gerçek salonun adı, olduğu gibi kalabilir.
+
+**Test:** Backend 175/175 test geçti (3 yeni video-transcode testi eklendi, ffmpeg mock'landı). Her iki frontend build hatasız.
+
+**Deploy:** commit `f8eccd7` (video/SEO/migration) + `0cf32a0` (sidebar) → push → sunucuda `git pull` + `docker compose up -d --build` (iki ayrı deploy, ikisi de kullanıcı onayıyla), migration `f1a2b3c4d5e6` loglarda hatasız uygulandı, `docker compose ps` tüm container `Up`/`healthy`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com` hepsi 200 döndü.
+
+---
 
 ## TAMAMLANDI (2026-09-13): Dersler + Yoklama sistemi incelemesi
 
