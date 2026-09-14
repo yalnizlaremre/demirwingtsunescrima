@@ -1,7 +1,35 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-14 — **Sitedeki tüm fiyat alanları (Ürünler + Etkinlik WT/Escrima ücreti) veritabanı dahil tamamen kaldırıldı (vergi nedeniyle, kullanıcı onayladı).** `main` ile `origin/main` ve prod aynı hizada. Şu an tam sistem analizi (baştan sona backend/frontend taraması, eksik/bozuk noktalar) yapılıyor — bulgular ve bu turda düzeltilenler bir sonraki girdide.
+> Son güncelleme: 2026-09-14 (ikinci tur) — **Tam sistem denetimi TAMAMLANDI: kritik IDOR + cascade-delete bug'ı bulunup düzeltildi, 3 eksik özellik (askıya alma, eğitmen atama geri alma, derece gereksinimi düzenleme) tamamlandı. Commit `120a294` push edildi, PROD'A HENÜZ DEPLOY EDİLMEDİ — kullanıcı onayı bekleniyor.** `origin/main` prod'dan 1 commit ileride.
+
+## AÇIK IŞ (2026-09-14, ikinci tur): Tam sistem denetimi commit edildi, deploy bekliyor
+
+Kullanıcı "full bir yapıyı analiz et, bana sormadan detaylı bir analiz çıkart, saçma bir şey varsa hemen düzelt" dedi. İki ayrı denetim ajanı çalıştırıldı (ilki anlamlı bir rapor üretemeden bitti, ikincisi 45 tool-call ile tüm router'ları tarayıp kapsamlı bulgu listesi çıkardı). Bulunan gerçek bug'lar doğrulanıp (önce bug'ı reprodükte et, sonra düzelt yöntemiyle) hemen düzeltildi:
+
+**Kritik:**
+1. `School.managers/students/lessons` (lazy="selectin") `passive_deletes="all"` eksikti — en az bir eğitmeni/öğrencisi/dersi olan (yani prod'daki hemen her okul) bir okul silinmeye çalışılınca 500 veriyordu. Aynı bug ailesi daha önce `User` ve `Lesson` için bulunup düzeltilmişti (bkz. 28 Temmuz, 13 Eylül notları), `School`'a hiç uygulanmamıştı.
+2. `GET /students/{id}` hiçbir yetki kontrolü yapmıyordu — herhangi bir authenticated kullanıcı (MEMBER dahil) `student_id` tahmin ederek başka bir okulun öğrencisinin doğum tarihi/acil durum/notlarını okuyabiliyordu.
+
+**Orta (kardeş uçlarda okul-kapsamı kontrolü var, bunlarda yoktu):**
+3. `DELETE /attendance/{id}`, `GET /attendance/lesson/{id}`, `lesson_schedules` silme/uzatma uçları, `GET /events/{id}/registrations`, `GET /lessons/{id}` — hepsine eksik yetki/kapsam kontrolü eklendi.
+
+**Eksik özellik tamamlandı (backend hazırdı, arayüz hiç yoktu — bu projede tekrarlayan bir desen):**
+4. Öğrenci askıya alma/yeniden aktifleştirme → Students.jsx'e buton eklendi.
+5. Okul-eğitmen atamasını geri alma + atanmış eğitmenleri görme → Schools.jsx modaline eklendi, yeni `GET /{school_id}/managers` ucu.
+6. Derece gereksinimi düzenleme → Grades.jsx'e Düzenle butonu eklendi.
+
+**Test:** 25 yeni backend testi (hepsi önce bug'ı/eksiği reprodükte edip sonra düzeltmeyi doğruluyor — School silme testinde düzeltme geçici olarak geri alınıp testin gerçekten IntegrityError'ı yakaladığı kanıtlandı), toplam **206/206 test geçiyor**. Chrome'da gerçek tarayıcıda uçtan uca doğrulandı (askıya alma/aktifleştirme API üzerinden — native `window.confirm` CDP otomasyonunu kilitlediği için; eğitmen atama/kaldırma ve derece gereksinimi düzenleme tarayıcıda tıklanarak).
+
+**Tartışmaya değer, dokunulmadı (kullanıcıyla konuşulacak):**
+- `GET /media` (admin panel) herhangi bir authenticated kullanıcıya (MEMBER dahil) tüm okulların özel medyasını gösteriyor — okul bazlı kısıtlama eklemek bir ürün kararı, henüz yapılmadı.
+- İki paralel öğrenci başvuru sistemi var: `Student.apply/pending/approve` (backend'de duruyor ama hiçbir arayüzden çağrılmıyor) ile gerçek akış olan `Enrollment` sistemi. Ölü olan API üzerinden hâlâ erişilebilir, onay sürecini atlama riski taşıyor — kaldırılması mı yoksa öylece mi bırakılması gerektiği konuşulmalı.
+- `GET /public/stats` ve birkaç tekil-GET ucu (`GET /users/{id}`, `GET /schools/{id}` admin, vb.) hiç kullanılmıyor — güvenlik riski yok, sadece kullanılmayan yüzey alanı.
+- Test kapsamı yoktu (şimdi bazıları eklendi): `products.py`, `requests.py`, `mail.py`, `dashboard.py`, `enrollments.py`, `site_content.py` router'ları hâlâ hiç test edilmiyor.
+
+**Deploy:** commit `120a294` → push edildi → **sunucuya henüz alınmadı, kullanıcı onayı bekleniyor** (üretim deploy izni her seferinde ayrı isteniyor).
+
+---
 
 ## TAMAMLANDI (2026-09-14): Fiyat alanları tamamen kaldırıldı (vergi nedeniyle)
 
