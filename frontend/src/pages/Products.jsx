@@ -18,7 +18,7 @@ export default function Products() {
   const [modalOpen, setModalOpen] = useState(false);
   const [catModalOpen, setCatModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', category_id: '', description: '', sizes: '', image_url: '', price: '' });
+  const [form, setForm] = useState({ name: '', category_id: '', description: '', sizes: '', image_url: '' });
   const [catName, setCatName] = useState('');
 
   useEffect(() => {
@@ -43,13 +43,13 @@ export default function Products() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', category_id: '', description: '', sizes: '', image_url: '', price: '' });
+    setForm({ name: '', category_id: '', description: '', sizes: '', image_url: '' });
     setModalOpen(true);
   };
 
   const openEdit = (p) => {
     setEditing(p);
-    setForm({ name: p.name, category_id: p.category_id || '', description: p.description || '', sizes: p.sizes || '', image_url: p.image_url || '', price: p.price != null ? String(p.price) : '' });
+    setForm({ name: p.name, category_id: p.category_id || '', description: p.description || '', sizes: p.sizes || '', image_url: p.image_url || '' });
     setModalOpen(true);
   };
 
@@ -59,7 +59,6 @@ export default function Products() {
       const payload = {
         ...form,
         category_id: form.category_id || null,
-        price: form.price !== '' ? parseFloat(form.price) : null,
       };
       if (editing) {
         await api.put(`/products/${editing.id}`, payload);
@@ -122,9 +121,6 @@ export default function Products() {
               <h3 className="font-semibold">{p.name}</h3>
               {p.category_name && <span className="badge badge-info mt-1">{p.category_name}</span>}
               {p.description && <p className="text-sm text-dark-500 mt-2">{p.description}</p>}
-              {p.price != null && (
-                <p className="text-sm font-semibold text-primary-600 mt-2">{p.price.toFixed(2)} ₺</p>
-              )}
               {p.sizes && <p className="text-xs text-dark-400 mt-1">Bedenler: {p.sizes}</p>}
               {canManageProducts && (
                 <div className="flex gap-2 mt-3 pt-3 border-t border-dark-100">
@@ -161,18 +157,6 @@ export default function Products() {
           <div>
             <label className="block text-sm font-medium mb-1">Gorsel URL</label>
             <input value={form.image_url} onChange={(e) => update('image_url', e.target.value)} className="input-field" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Fiyat (₺)</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.price}
-              onChange={(e) => update('price', e.target.value)}
-              className="input-field"
-              placeholder="0.00"
-            />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>

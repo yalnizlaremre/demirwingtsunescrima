@@ -1,7 +1,7 @@
 import uuid
 import enum
 from datetime import datetime
-from sqlalchemy import String, Text, Integer, Numeric, Boolean, DateTime, ForeignKey, UniqueConstraint, func
+from sqlalchemy import String, Text, Integer, Boolean, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin, UUIDMixin
 
@@ -27,8 +27,6 @@ class Event(Base, UUIDMixin, TimestampMixin):
     location: Mapped[str] = mapped_column(String(300), nullable=False)
     capacity: Mapped[int | None] = mapped_column(Integer, nullable=True)
     scope: Mapped[str] = mapped_column(String(30), nullable=False, default="ALL_SCHOOLS")
-    wt_fee: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
-    escrima_fee: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 

@@ -14,8 +14,6 @@ class EventCreate(BaseModel):
     capacity: int | None = None
     scope: str = "ALL_SCHOOLS"
     selected_school_ids: list[str] = []
-    wt_fee: float | None = None
-    escrima_fee: float | None = None
 
 
 class EventUpdate(BaseModel):
@@ -28,8 +26,6 @@ class EventUpdate(BaseModel):
     capacity: int | None = None
     scope: str | None = None
     selected_school_ids: list[str] | None = None
-    wt_fee: float | None = None
-    escrima_fee: float | None = None
 
 
 class EventResponse(BaseModel):
@@ -42,8 +38,6 @@ class EventResponse(BaseModel):
     location: str | None
     capacity: int | None
     scope: str
-    wt_fee: float | None
-    escrima_fee: float | None
     is_completed: bool
     created_by: str | None
     created_at: datetime

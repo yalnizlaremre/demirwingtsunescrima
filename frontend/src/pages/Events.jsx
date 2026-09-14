@@ -28,7 +28,7 @@ export default function Events() {
   const [regForm, setRegForm] = useState({ register_wt: false, register_escrima: false, will_take_exam: false, exam_branch_wt: false, exam_branch_escrima: false });
   const [form, setForm] = useState({
     name: '', description: '', event_type: 'EVENT', start_datetime: '', end_datetime: '',
-    location: '', capacity: '', scope: 'ALL_SCHOOLS', selected_school_ids: [], wt_fee: '', escrima_fee: '',
+    location: '', capacity: '', scope: 'ALL_SCHOOLS', selected_school_ids: [],
   });
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function Events() {
 
   const emptyForm = {
     name: '', description: '', event_type: 'EVENT', start_datetime: '', end_datetime: '',
-    location: '', capacity: '', scope: 'ALL_SCHOOLS', selected_school_ids: [], wt_fee: '', escrima_fee: '',
+    location: '', capacity: '', scope: 'ALL_SCHOOLS', selected_school_ids: [],
   };
 
   const toDatetimeLocal = toDatetimeLocalInput;
@@ -69,8 +69,6 @@ export default function Events() {
       capacity: event.capacity || '',
       scope: event.scope,
       selected_school_ids: event.selected_school_ids || [],
-      wt_fee: event.wt_fee || '',
-      escrima_fee: event.escrima_fee || '',
     });
     setModalOpen(true);
   };
@@ -83,8 +81,6 @@ export default function Events() {
         start_datetime: new Date(form.start_datetime).toISOString(),
         end_datetime: form.end_datetime ? new Date(form.end_datetime).toISOString() : new Date(form.start_datetime).toISOString(),
         capacity: form.capacity ? parseInt(form.capacity) : null,
-        wt_fee: form.wt_fee ? parseFloat(form.wt_fee) : null,
-        escrima_fee: form.escrima_fee ? parseFloat(form.escrima_fee) : null,
       };
       if (editing) {
         await api.put(`/events/${editing.id}`, payload);
@@ -235,8 +231,6 @@ export default function Events() {
                 <p>{parseServerDatetime(e.start_datetime).toLocaleDateString('tr-TR')} - {parseServerDatetime(e.start_datetime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
                 {e.location && <p>{e.location}</p>}
                 <p className="flex items-center gap-1"><Users size={14} /> {e.registration_count} kayit</p>
-                {e.wt_fee && <p>WT Ucret: {e.wt_fee} TL</p>}
-                {e.escrima_fee && <p>Escrima Ucret: {e.escrima_fee} TL</p>}
               </div>
               <div className="flex gap-2">
                 {isUser && !e.is_completed && (
@@ -323,14 +317,6 @@ export default function Events() {
                 </div>
               </div>
             )}
-            <div>
-              <label className="block text-sm font-medium mb-1">WT Ucret (TL)</label>
-              <input type="number" step="0.01" value={form.wt_fee} onChange={(e) => update('wt_fee', e.target.value)} className="input-field" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Escrima Ucret (TL)</label>
-              <input type="number" step="0.01" value={form.escrima_fee} onChange={(e) => update('escrima_fee', e.target.value)} className="input-field" />
-            </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium mb-1">Aciklama</label>
               <textarea value={form.description} onChange={(e) => update('description', e.target.value)} className="input-field" rows={2} />
@@ -350,11 +336,11 @@ export default function Events() {
           <div className="space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={regForm.register_wt} onChange={(e) => setRegForm(p => ({ ...p, register_wt: e.target.checked }))} className="w-4 h-4" />
-              <span>Wing Tsun {selectedEvent?.wt_fee ? `(${selectedEvent.wt_fee} TL)` : ''}</span>
+              <span>Wing Tsun</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={regForm.register_escrima} onChange={(e) => setRegForm(p => ({ ...p, register_escrima: e.target.checked }))} className="w-4 h-4" />
-              <span>Escrima {selectedEvent?.escrima_fee ? `(${selectedEvent.escrima_fee} TL)` : ''}</span>
+              <span>Escrima</span>
             </label>
             {selectedEvent?.event_type === 'SEMINAR' && (canTakeExam('wt') || canTakeExam('escrima')) && (
               <>
