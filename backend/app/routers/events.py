@@ -348,7 +348,7 @@ async def register_for_event(
 @router.get("/{event_id}/registrations", response_model=list[EventRegistrationResponse])
 async def list_event_registrations(
     event_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_manage_events),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

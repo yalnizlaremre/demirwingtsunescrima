@@ -64,6 +64,7 @@ class StudentResponse(BaseModel):
     created_at: datetime
     user_name: str | None = None
     user_email: str | None = None
+    user_role: str | None = None
     school_name: str | None = None
     progress: list[StudentProgressResponse] = []
 

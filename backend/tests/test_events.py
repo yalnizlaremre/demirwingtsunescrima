@@ -438,3 +438,24 @@ class TestEventSchoolScope:
             headers=auth_headers(user),
         )
         assert resp.status_code == 200
+
+
+class TestEventRegistrationsListPermission:
+    """Regression: GET /{event_id}/registrations had no permission check at all -
+    any authenticated student could read every other student's WT/Escrima
+    registration and exam-approval status for an event by id."""
+
+    async def test_plain_user_cannot_list_registrations(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        event = await make_event(db_session, admin, event_type=EventType.EVENT.value)
+        user = await make_user(db_session, role=UserRole.USER.value)
+
+        resp = await client.get(f"/api/events/{event.id}/registrations", headers=auth_headers(user))
+        assert resp.status_code == 403
+
+    async def test_admin_can_list_registrations(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        event = await make_event(db_session, admin, event_type=EventType.EVENT.value)
+
+        resp = await client.get(f"/api/events/{event.id}/registrations", headers=auth_headers(admin))
+        assert resp.status_code == 200

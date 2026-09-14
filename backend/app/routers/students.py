@@ -47,6 +47,7 @@ def _student_to_response(student: Student) -> StudentResponse:
         created_at=student.created_at,
         user_name=student.user.full_name if student.user else None,
         user_email=student.user.email if student.user else None,
+        user_role=student.user.role if student.user else None,
         school_name=student.school.name if student.school else None,
         progress=[
             StudentProgressResponse(
@@ -416,6 +417,19 @@ async def get_student(
     student = result.scalar_one_or_none()
     if not student:
         raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+
+    if current_user.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
+        pass
+    elif current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        if student.school_id not in [row[0] for row in manager_schools.all()]:
+            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
+    elif current_user.role == UserRole.USER.value and student.user_id == current_user.id:
+        pass
+    else:
+        raise HTTPException(status_code=403, detail="Bu ogrenci profiline erisim yetkiniz yok")
 
     return _student_to_response(student)
 

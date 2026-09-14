@@ -6,10 +6,10 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { GraduationCap, Search, Award, Edit2, Trash2 } from 'lucide-react';
+import { GraduationCap, Search, Award, Edit2, Trash2, UserX, UserCheck } from 'lucide-react';
 
 export default function Students() {
-  const { isAdmin, hasPermission } = useAuth();
+  const { isAdmin, isManagerOrAbove, hasPermission } = useAuth();
   const canDelete = isAdmin || hasPermission('manage_users');
   const [students, setStudents] = useState([]);
   const [total, setTotal] = useState(0);
@@ -77,6 +77,27 @@ export default function Students() {
     }
   };
 
+  const handleSuspend = async (s) => {
+    if (!window.confirm(`${s.user_name || 'Bu ogrenci'} askiya alinsin mi? Giris yapabilir ama okula ozel icerik goremez.`)) return;
+    try {
+      await api.post(`/students/${s.id}/suspend`);
+      toast.success('Ogrenci askiya alindi');
+      fetchStudents(search, schoolFilter);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Islem basarisiz');
+    }
+  };
+
+  const handleReactivate = async (s) => {
+    try {
+      await api.post(`/students/${s.id}/reactivate`);
+      toast.success('Ogrenci yeniden aktiflestirildi');
+      fetchStudents(search, schoolFilter);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Islem basarisiz');
+    }
+  };
+
   const getGrade = (progress, branch) => {
     const p = progress?.find(pr => pr.branch === branch);
     return p ? p.current_grade : '-';
@@ -133,7 +154,10 @@ export default function Students() {
                 <tr key={s.id}>
                   <td>
                     <div>
-                      <p className="font-medium">{s.user_name || '-'}</p>
+                      <p className="font-medium flex items-center gap-2">
+                        {s.user_name || '-'}
+                        {s.user_role === 'MEMBER' && <span className="badge badge-danger text-xs">Askida</span>}
+                      </p>
                       <p className="text-xs text-dark-400">{s.user_email}</p>
                     </div>
                   </td>
@@ -155,6 +179,12 @@ export default function Students() {
                   <td>
                     <div className="flex items-center gap-3">
                       <button onClick={() => openEdit(s)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
+                      {isManagerOrAbove && s.user_role === 'MEMBER' && (
+                        <button onClick={() => handleReactivate(s)} className="text-emerald-600 hover:text-emerald-800" title="Yeniden Aktiflestir"><UserCheck size={16} /></button>
+                      )}
+                      {isManagerOrAbove && s.user_role === 'USER' && (
+                        <button onClick={() => handleSuspend(s)} className="text-amber-600 hover:text-amber-800" title="Askiya Al"><UserX size={16} /></button>
+                      )}
                       {canDelete && (
                         <button onClick={() => handleDelete(s)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
                       )}

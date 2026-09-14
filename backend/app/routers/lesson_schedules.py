@@ -240,6 +240,14 @@ async def delete_schedule(
     if not schedule:
         raise HTTPException(status_code=404, detail="Program bulunamadi")
 
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        school_ids = [row[0] for row in manager_schools.all()]
+        if schedule.school_id not in school_ids:
+            raise HTTPException(status_code=403, detail="Bu program sizin okulunuzda degil")
+
     # Deactivate schedule
     schedule.is_active = False
 
@@ -276,6 +284,14 @@ async def extend_schedule(
     schedule = result.scalar_one_or_none()
     if not schedule:
         raise HTTPException(status_code=404, detail="Program bulunamadi")
+
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        school_ids = [row[0] for row in manager_schools.all()]
+        if schedule.school_id not in school_ids:
+            raise HTTPException(status_code=403, detail="Bu program sizin okulunuzda degil")
 
     if not schedule.is_active:
         raise HTTPException(status_code=400, detail="Program aktif degil")

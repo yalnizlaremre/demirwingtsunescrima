@@ -19,6 +19,7 @@ export default function Schools() {
   const [form, setForm] = useState({ name: '', address: '', description: '', phone: '', email: '', cover_image_url: '', long_description: '', youtube_url: '' });
   const [managerUserId, setManagerUserId] = useState('');
   const [managers, setManagers] = useState([]);
+  const [assignedManagers, setAssignedManagers] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [galleryImages, setGalleryImages] = useState([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
@@ -155,7 +156,17 @@ export default function Schools() {
       const res = await api.get('/schools/managers/available');
       setManagers(res.data);
     } catch {}
+    await fetchAssignedManagers(school.id);
     setManagerModalOpen(true);
+  };
+
+  const fetchAssignedManagers = async (schoolId) => {
+    try {
+      const res = await api.get(`/schools/${schoolId}/managers`);
+      setAssignedManagers(res.data);
+    } catch {
+      setAssignedManagers([]);
+    }
   };
 
   const assignManager = async () => {
@@ -163,7 +174,20 @@ export default function Schools() {
     try {
       await api.post(`/schools/${selectedSchool.id}/managers`, { user_id: managerUserId });
       toast.success('Egitmen atandi');
-      setManagerModalOpen(false);
+      setManagerUserId('');
+      fetchAssignedManagers(selectedSchool.id);
+      fetchSchools();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Hata olustu');
+    }
+  };
+
+  const removeManager = async (userId) => {
+    if (!window.confirm('Bu egitmenin okul atamasi kaldirilsin mi?')) return;
+    try {
+      await api.delete(`/schools/${selectedSchool.id}/managers/${userId}`);
+      toast.success('Egitmen atamasi kaldirildi');
+      fetchAssignedManagers(selectedSchool.id);
       fetchSchools();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Hata olustu');
@@ -387,14 +411,35 @@ export default function Schools() {
           <p className="text-sm text-dark-500">
             <strong>{selectedSchool?.name}</strong> okuluna egitmen atayin.
           </p>
-          <select value={managerUserId} onChange={(e) => setManagerUserId(e.target.value)} className="select-field">
-            <option value="">Egitmen secin...</option>
-            {managers.map((m) => (
-              <option key={m.id} value={m.id}>{m.first_name} {m.last_name} ({m.email})</option>
-            ))}
-          </select>
+
+          {assignedManagers.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Atanmis Egitmenler</p>
+              <div className="space-y-2">
+                {assignedManagers.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between px-3 py-2 bg-dark-50 rounded-lg">
+                    <span className="text-sm">{m.first_name} {m.last_name} ({m.email})</span>
+                    <button onClick={() => removeManager(m.id)} className="text-red-500 hover:text-red-700" title="Atamayi Kaldir">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Yeni Egitmen Ata</p>
+            <select value={managerUserId} onChange={(e) => setManagerUserId(e.target.value)} className="select-field">
+              <option value="">Egitmen secin...</option>
+              {managers.map((m) => (
+                <option key={m.id} value={m.id}>{m.first_name} {m.last_name} ({m.email})</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex justify-end gap-3">
-            <button onClick={() => setManagerModalOpen(false)} className="btn-secondary">Iptal</button>
+            <button onClick={() => setManagerModalOpen(false)} className="btn-secondary">Kapat</button>
             <button onClick={assignManager} className="btn-primary" disabled={!managerUserId}>Ata</button>
           </div>
         </div>

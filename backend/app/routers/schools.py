@@ -267,6 +267,24 @@ async def delete_school(
     return {"message": "Okul silindi"}
 
 
+@router.get("/{school_id}/managers")
+async def list_school_managers(
+    school_id: str,
+    current_user: User = Depends(require_manage_schools),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(User)
+        .join(SchoolManager, SchoolManager.user_id == User.id)
+        .where(SchoolManager.school_id == school_id)
+        .order_by(User.first_name)
+    )
+    return [
+        {"id": str(m.id), "first_name": m.first_name, "last_name": m.last_name, "email": m.email}
+        for m in result.scalars().all()
+    ]
+
+
 @router.post("/{school_id}/managers")
 async def assign_manager(
     school_id: str,

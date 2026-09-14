@@ -139,6 +139,13 @@ async def get_lesson(
     if not lesson:
         raise HTTPException(status_code=404, detail="Ders bulunamadı")
 
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        if lesson.school_id not in [row[0] for row in manager_schools.all()]:
+            raise HTTPException(status_code=403, detail="Bu ders sizin okulunuzda değil")
+
     return LessonResponse(
         id=str(lesson.id),
         school_id=str(lesson.school_id),

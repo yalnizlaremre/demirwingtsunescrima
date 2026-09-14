@@ -118,9 +118,21 @@ async def create_attendance(
 @router.get("/lesson/{lesson_id}", response_model=AttendanceListResponse)
 async def get_lesson_attendance(
     lesson_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_manager_or_above),
     db: AsyncSession = Depends(get_db),
 ):
+    lesson_result = await db.execute(select(Lesson).where(Lesson.id == lesson_id))
+    lesson = lesson_result.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Ders bulunamadı")
+
+    if current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        if lesson.school_id not in [row[0] for row in manager_schools.all()]:
+            raise HTTPException(status_code=403, detail="Bu ders sizin okulunuzda değil")
+
     result = await db.execute(
         select(Attendance)
         .options(selectinload(Attendance.student).selectinload(Student.user))
@@ -160,6 +172,13 @@ async def delete_attendance(
     # Get lesson for branch info
     lesson_result = await db.execute(select(Lesson).where(Lesson.id == att.lesson_id))
     lesson = lesson_result.scalar_one_or_none()
+
+    if lesson and current_user.role == UserRole.MANAGER.value:
+        manager_schools = await db.execute(
+            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+        )
+        if lesson.school_id not in [row[0] for row in manager_schools.all()]:
+            raise HTTPException(status_code=403, detail="Bu ders sizin okulunuzda değil")
 
     # Revert hours from student progress (completed + remaining)
     if lesson:

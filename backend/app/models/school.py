@@ -18,9 +18,14 @@ class School(Base, UUIDMixin, TimestampMixin):
     long_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     youtube_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
-    managers = relationship("SchoolManager", back_populates="school", lazy="selectin")
-    students = relationship("Student", back_populates="school", lazy="selectin")
-    lessons = relationship("Lesson", back_populates="school", lazy="selectin")
+    # NOT: passive_deletes=True (bool) yeterli degil - lazy="selectin" bu iliskiyi
+    # onceden yukledigi icin SQLAlchemy silme sirasinda yine de NOT NULL FK'yi
+    # NULL'a cekmeye calisiyor, sadece string "all" bunu tamamen DB'nin
+    # ON DELETE CASCADE'ine birakiyor (bkz. User.managed_schools/student_profile,
+    # Lesson.attendances - ayni bug ailesi).
+    managers = relationship("SchoolManager", back_populates="school", lazy="selectin", passive_deletes="all")
+    students = relationship("Student", back_populates="school", lazy="selectin", passive_deletes="all")
+    lessons = relationship("Lesson", back_populates="school", lazy="selectin", passive_deletes="all")
 
 
 class SchoolManager(Base, UUIDMixin):

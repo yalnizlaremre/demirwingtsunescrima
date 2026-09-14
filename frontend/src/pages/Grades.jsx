@@ -6,7 +6,7 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Plus, ArrowUpDown, Award, Check, X, ClipboardList } from 'lucide-react';
+import { Plus, ArrowUpDown, Award, Check, X, ClipboardList, Edit2 } from 'lucide-react';
 
 export default function Grades() {
   const { isAdmin, isManagerOrAbove, hasPermission } = useAuth();
@@ -14,6 +14,7 @@ export default function Grades() {
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reqModalOpen, setReqModalOpen] = useState(false);
+  const [editingReq, setEditingReq] = useState(null);
   const [changeModalOpen, setChangeModalOpen] = useState(false);
   const [tab, setTab] = useState('WING_TSUN');
   const [students, setStudents] = useState([]);
@@ -49,11 +50,31 @@ export default function Grades() {
     } catch {}
   };
 
-  const handleCreateReq = async (e) => {
+  const openCreateReq = () => {
+    setEditingReq(null);
+    setReqForm({ branch: 'WING_TSUN', grade: 1, grade_name: '', required_hours: 0 });
+    setReqModalOpen(true);
+  };
+
+  const openEditReq = (r) => {
+    setEditingReq(r);
+    setReqForm({ branch: r.branch, grade: r.grade, grade_name: r.grade_name, required_hours: r.required_hours });
+    setReqModalOpen(true);
+  };
+
+  const handleSubmitReq = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/grades/requirements', { ...reqForm, grade: parseInt(reqForm.grade), required_hours: parseFloat(reqForm.required_hours) });
-      toast.success('Derece gereksinimi eklendi');
+      if (editingReq) {
+        await api.put(`/grades/requirements/${editingReq.id}`, {
+          grade_name: reqForm.grade_name,
+          required_hours: parseFloat(reqForm.required_hours),
+        });
+        toast.success('Derece gereksinimi guncellendi');
+      } else {
+        await api.post('/grades/requirements', { ...reqForm, grade: parseInt(reqForm.grade), required_hours: parseFloat(reqForm.required_hours) });
+        toast.success('Derece gereksinimi eklendi');
+      }
       setReqModalOpen(false);
       fetchRequirements();
     } catch (err) {
@@ -136,7 +157,7 @@ export default function Grades() {
           </button>
         )}
         {canManageGrades && (
-          <button onClick={() => setReqModalOpen(true)} className="btn-secondary"><Plus size={18} /> Gereksinim Ekle</button>
+          <button onClick={openCreateReq} className="btn-secondary"><Plus size={18} /> Gereksinim Ekle</button>
         )}
       </PageHeader>
 
@@ -211,6 +232,7 @@ export default function Grades() {
                   <th>Ad</th>
                   <th>Gereken Saat</th>
                   <th>Tur</th>
+                  <th>Islemler</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,10 +246,13 @@ export default function Grades() {
                         {r.grade <= 12 ? 'Ogrenci' : 'Usta'}
                       </span>
                     </td>
+                    <td>
+                      <button onClick={() => openEditReq(r)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
+                    </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={4} className="text-center text-dark-400 py-8">Henuz gereksinim eklenmemis</td></tr>
+                  <tr><td colSpan={5} className="text-center text-dark-400 py-8">Henuz gereksinim eklenmemis</td></tr>
                 )}
               </tbody>
             </table>
@@ -295,20 +320,20 @@ export default function Grades() {
         </div>
       )}
 
-      {/* Add Requirement Modal */}
-      <Modal isOpen={reqModalOpen} onClose={() => setReqModalOpen(false)} title="Derece Gereksinimi Ekle">
-        <form onSubmit={handleCreateReq} className="space-y-4">
+      {/* Add/Edit Requirement Modal */}
+      <Modal isOpen={reqModalOpen} onClose={() => setReqModalOpen(false)} title={editingReq ? 'Derece Gereksinimi Duzenle' : 'Derece Gereksinimi Ekle'}>
+        <form onSubmit={handleSubmitReq} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1">Brans</label>
-              <select value={reqForm.branch} onChange={(e) => setReqForm(p => ({ ...p, branch: e.target.value }))} className="select-field">
+              <select value={reqForm.branch} onChange={(e) => setReqForm(p => ({ ...p, branch: e.target.value }))} className="select-field" disabled={!!editingReq}>
                 <option value="WING_TSUN">Wing Tsun</option>
                 <option value="ESCRIMA">Escrima</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Derece (1-17)</label>
-              <input type="number" min={1} max={17} value={reqForm.grade} onChange={(e) => setReqForm(p => ({ ...p, grade: e.target.value }))} className="input-field" required />
+              <input type="number" min={1} max={17} value={reqForm.grade} onChange={(e) => setReqForm(p => ({ ...p, grade: e.target.value }))} className="input-field" required disabled={!!editingReq} />
             </div>
           </div>
           <div>
@@ -321,7 +346,7 @@ export default function Grades() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setReqModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">Ekle</button>
+            <button type="submit" className="btn-primary">{editingReq ? 'Guncelle' : 'Ekle'}</button>
           </div>
         </form>
       </Modal>
