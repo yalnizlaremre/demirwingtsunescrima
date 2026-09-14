@@ -19,11 +19,9 @@ from app.schemas.student import (
     StudentResponse,
     StudentProgressResponse,
     StudentListResponse,
-    ApproveStudentRequest,
     StudentProfileResponse,
     BranchProgressDetail,
     UserProfileUpdate,
-    StudentApplyRequest,
     StudentCreate,
     StudentUpdate,
 )
@@ -170,72 +168,6 @@ async def update_my_profile(
     }
 
 
-@router.post("/apply", response_model=StudentResponse)
-async def apply_to_school(
-    data: StudentApplyRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Giris yapmis kullanicinin bir okula ogrenci olarak basvurmasi.
-    - Kullanicinin zaten bir Student kaydi varsa 409 doner.
-    - School_id gecersizse 404 doner.
-    - Basvuru sonrasi kullanici statusu PENDING olur; manager onayi bekler.
-    """
-    from app.models.school import School
-
-    existing_student = await db.execute(
-        select(Student).where(Student.user_id == current_user.id)
-    )
-    if existing_student.scalar_one_or_none():
-        raise HTTPException(
-            status_code=409,
-            detail="Zaten bir okula basvurmus veya kayitlisiniz.",
-        )
-
-    school_result = await db.execute(
-        select(School).where(School.id == data.school_id, School.is_active == True)
-    )
-    if not school_result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Okul bulunamadi veya aktif degil")
-
-    student = Student(
-        user_id=current_user.id,
-        school_id=data.school_id,
-        date_of_birth=data.date_of_birth,
-        emergency_contact=data.emergency_contact,
-        emergency_phone=data.emergency_phone,
-        notes=data.notes,
-    )
-    db.add(student)
-
-    current_user.status = UserStatus.PENDING.value
-
-    await create_audit_log(
-        db,
-        action=AuditAction.STUDENT_APPLIED,
-        entity_type="Student",
-        entity_id=current_user.id,
-        performed_by=current_user.id,
-        details=f"Okul basvurusu yapildi: school_id={data.school_id}",
-    )
-
-    await db.commit()
-    await db.refresh(student)
-
-    result = await db.execute(
-        select(Student)
-        .options(
-            selectinload(Student.user),
-            selectinload(Student.school),
-            selectinload(Student.progress),
-        )
-        .where(Student.id == student.id)
-    )
-    student = result.scalar_one()
-    return _student_to_response(student)
-
-
 @router.post("/", response_model=StudentResponse)
 async def create_student(
     data: StudentCreate,
@@ -245,8 +177,7 @@ async def create_student(
     """
     Admin/super admin'in (ya da manage_users izinli MANAGER'in) var olan bir
     kullaniciyi (henuz ogrenci olmayan) secip dogrudan bir okula ogrenci olarak
-    atamasi. Kullanicinin kendi basvurusuna (POST /apply) ya da enrollment
-    onayina gerek kalmadan tek adimda tamamlanir.
+    atamasi. Kullanicinin enrollment onayina gerek kalmadan tek adimda tamamlanir.
     """
     from app.models.school import School
 
@@ -365,37 +296,6 @@ async def list_students(
     return StudentListResponse(
         items=[_student_to_response(s) for s in students],
         total=total,
-    )
-
-
-@router.get("/pending", response_model=StudentListResponse)
-async def list_pending_students(
-    current_user: User = Depends(require_manager_or_above),
-    db: AsyncSession = Depends(get_db),
-):
-    query = (
-        select(Student)
-        .options(
-            selectinload(Student.user),
-            selectinload(Student.school),
-            selectinload(Student.progress),
-        )
-        .join(Student.user)
-        .where(User.status == UserStatus.PENDING.value)
-    )
-
-    if current_user.role == UserRole.MANAGER.value:
-        school_ids_q = select(SchoolManager.school_id).where(
-            SchoolManager.user_id == current_user.id
-        )
-        query = query.where(Student.school_id.in_(school_ids_q))
-
-    result = await db.execute(query.order_by(Student.created_at.desc()))
-    students = result.scalars().unique().all()
-
-    return StudentListResponse(
-        items=[_student_to_response(s) for s in students],
-        total=len(students),
     )
 
 
@@ -543,74 +443,6 @@ async def update_student(
     student = result.scalar_one()
     return _student_to_response(student)
 
-
-@router.post("/{student_id}/approve")
-async def approve_student(
-    student_id: str,
-    data: ApproveStudentRequest,
-    current_user: User = Depends(require_manager_or_above),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Student).options(selectinload(Student.user)).where(Student.id == student_id)
-    )
-    student = result.scalar_one_or_none()
-    if not student:
-        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
-
-    if student.user.status != UserStatus.PENDING.value:
-        raise HTTPException(status_code=400, detail="Bu ogrenci zaten islenmis")
-
-    if current_user.role == UserRole.MANAGER.value:
-        manager_schools = await db.execute(
-            select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
-        )
-        school_ids = [row[0] for row in manager_schools.all()]
-        if student.school_id not in school_ids:
-            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
-
-    if data.approved:
-        student.user.status = UserStatus.ACTIVE.value
-        student.user.role = UserRole.USER.value  # MEMBER'dan USER'a yukselт
-        for branch in Branch:
-            existing = await db.execute(
-                select(StudentProgress).where(
-                    StudentProgress.student_id == student.id,
-                    StudentProgress.branch == branch.value,
-                )
-            )
-            if not existing.scalar_one_or_none():
-                initial_hours = get_hours_for_grade(1)
-                progress = StudentProgress(
-                    student_id=student.id,
-                    branch=branch.value,
-                    current_grade=1,
-                    completed_hours=0,
-                    remaining_hours=initial_hours["required"],
-                )
-                db.add(progress)
-
-        await create_audit_log(
-            db,
-            action=AuditAction.STUDENT_APPROVED,
-            entity_type="Student",
-            entity_id=student.id,
-            performed_by=current_user.id,
-            details=f"Ogrenci onaylandi: {student.user.full_name}",
-        )
-    else:
-        student.user.status = UserStatus.INACTIVE.value
-        await create_audit_log(
-            db,
-            action=AuditAction.STUDENT_REJECTED,
-            entity_type="Student",
-            entity_id=student.id,
-            performed_by=current_user.id,
-            details=f"Ogrenci reddedildi: {student.user.full_name}",
-        )
-
-    await db.commit()
-    return {"message": "Ogrenci onaylandi" if data.approved else "Ogrenci reddedildi"}
 
 @router.post("/{student_id}/suspend")
 async def suspend_student(

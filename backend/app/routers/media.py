@@ -13,6 +13,8 @@ from app.auth import get_current_user
 from app.config import settings
 from app.models.user import User, UserRole
 from app.models.media import Media, MediaType
+from app.models.school import SchoolManager
+from app.models.student import Student
 from app.permissions import Permission, user_has_permission
 
 router = APIRouter()
@@ -195,6 +197,31 @@ async def list_media(
     db: AsyncSession = Depends(get_db),
 ):
     query = select(Media).order_by(Media.created_at.desc())
+
+    # ADMIN/SUPER_ADMIN her seyi gorur. Digerleri yalnizca genel (okula
+    # baglanmamis), herkese acik (is_public) veya kendi okuluna ait medyayi
+    # gorur - onceden hicbir kisitlama yoktu, henuz onaylanmamis bir MEMBER
+    # bile tum okullarin ozel medyasini listeleyebiliyordu.
+    if current_user.role not in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
+        own_school_ids: list[str] = []
+        if current_user.role == UserRole.MANAGER.value:
+            manager_schools = await db.execute(
+                select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
+            )
+            own_school_ids = [row[0] for row in manager_schools.all()]
+        elif current_user.role == UserRole.USER.value:
+            student_result = await db.execute(
+                select(Student).where(Student.user_id == current_user.id)
+            )
+            student = student_result.scalar_one_or_none()
+            if student:
+                own_school_ids = [student.school_id]
+
+        visibility = (Media.is_public == True) | (Media.school_id.is_(None))
+        if own_school_ids:
+            visibility = visibility | (Media.school_id.in_(own_school_ids))
+        query = query.where(visibility)
+
     if school_id:
         query = query.where(Media.school_id == school_id)
     if media_type:

@@ -4,8 +4,9 @@ from unittest.mock import patch
 
 from app.config import settings
 from app.models.user import UserRole
+from app.models.media import Media
 
-from tests.conftest import make_user, auth_headers
+from tests.conftest import make_user, auth_headers, make_school, make_school_manager, make_student
 
 pytestmark = pytest.mark.asyncio
 
@@ -230,3 +231,79 @@ class TestVideoTranscode:
         file_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(data["file_url"]))
         if os.path.exists(file_path):
             os.remove(file_path)
+
+
+class TestMediaListVisibility:
+    """Regression: GET /media had no visibility scoping at all - any authenticated
+    user (including a MEMBER with no school) could list every school's private
+    (is_public=False) media by just calling the endpoint."""
+
+    async def _make_media(self, db_session, school_id, is_public):
+        m = Media(
+            media_type="IMAGE",
+            filename="x.jpg",
+            original_filename="x.jpg",
+            file_url="/uploads/x.jpg",
+            file_size=1,
+            mime_type="image/jpeg",
+            is_public=is_public,
+            school_id=school_id,
+        )
+        db_session.add(m)
+        await db_session.commit()
+        await db_session.refresh(m)
+        return m
+
+    async def test_member_only_sees_public_and_schoolless_media(self, client, db_session):
+        school = await make_school(db_session)
+        public_general = await self._make_media(db_session, None, True)
+        private_school = await self._make_media(db_session, school.id, False)
+        public_school = await self._make_media(db_session, school.id, True)
+
+        member = await make_user(db_session, role=UserRole.MEMBER.value)
+        resp = await client.get("/api/media/", headers=auth_headers(member))
+        assert resp.status_code == 200
+        ids = {m["id"] for m in resp.json()}
+        assert str(public_general.id) in ids
+        assert str(public_school.id) in ids
+        assert str(private_school.id) not in ids
+
+    async def test_student_sees_own_school_private_media_but_not_other_schools(self, client, db_session):
+        own_school = await make_school(db_session, name="Own School")
+        other_school = await make_school(db_session, name="Other School")
+        own_private = await self._make_media(db_session, own_school.id, False)
+        other_private = await self._make_media(db_session, other_school.id, False)
+
+        user = await make_user(db_session, role=UserRole.USER.value)
+        await make_student(db_session, own_school, user=user)
+
+        resp = await client.get("/api/media/", headers=auth_headers(user))
+        assert resp.status_code == 200
+        ids = {m["id"] for m in resp.json()}
+        assert str(own_private.id) in ids
+        assert str(other_private.id) not in ids
+
+    async def test_manager_sees_own_school_private_media_but_not_other_schools(self, client, db_session):
+        own_school = await make_school(db_session, name="Own School")
+        other_school = await make_school(db_session, name="Other School")
+        own_private = await self._make_media(db_session, own_school.id, False)
+        other_private = await self._make_media(db_session, other_school.id, False)
+
+        manager = await make_user(db_session, role=UserRole.MANAGER.value)
+        await make_school_manager(db_session, own_school, manager)
+
+        resp = await client.get("/api/media/", headers=auth_headers(manager))
+        assert resp.status_code == 200
+        ids = {m["id"] for m in resp.json()}
+        assert str(own_private.id) in ids
+        assert str(other_private.id) not in ids
+
+    async def test_admin_sees_everything(self, client, db_session):
+        school = await make_school(db_session)
+        private_school = await self._make_media(db_session, school.id, False)
+
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        resp = await client.get("/api/media/", headers=auth_headers(admin))
+        assert resp.status_code == 200
+        ids = {m["id"] for m in resp.json()}
+        assert str(private_school.id) in ids
