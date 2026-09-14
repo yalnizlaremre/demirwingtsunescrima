@@ -1,9 +1,22 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-14 (ikinci tur) — **Tam sistem denetimi TAMAMLANDI: kritik IDOR + cascade-delete bug'ı bulunup düzeltildi, 3 eksik özellik (askıya alma, eğitmen atama geri alma, derece gereksinimi düzenleme) tamamlandı. Commit `120a294` push edildi, PROD'A HENÜZ DEPLOY EDİLMEDİ — kullanıcı onayı bekleniyor.** `origin/main` prod'dan 1 commit ileride.
+> Son güncelleme: 2026-09-14 (üçüncü tur) — **Tam sistem denetimi TAMAMEN CANLIYA ALINDI: kritik IDOR + cascade-delete bug'ı, 3 eksik özellik, Medya görünürlük kısıtı ve ölü paralel öğrenci başvuru sisteminin kaldırılması dahil hepsi deploy edildi.** `main`, `origin/main` ve prod aynı hizada. Açık iş yok.
 
-## AÇIK IŞ (2026-09-14, ikinci tur): Tam sistem denetimi commit edildi, deploy bekliyor
+## TAMAMLANDI (2026-09-14, üçüncü tur): Denetimdeki 2 tartışmalı madde de karara bağlanıp canlıya alındı
+
+Kullanıcı önceki turdaki iki "tartışmaya değer" maddeye de "yap, commit'le, push'la, deploy et" dedi:
+
+1. **`GET /media` artık okul bazlı kısıtlı.** ADMIN/SUPER_ADMIN hâlâ her şeyi görüyor; MANAGER/USER yalnızca genel (okula bağlanmamış), herkese açık (`is_public`) veya kendi okuluna ait medyayı görüyor. Önceden herhangi bir authenticated kullanıcı (onaylanmamış bir MEMBER dahil) tüm okulların özel medyasını listeleyebiliyordu.
+2. **Ölü paralel öğrenci başvuru sistemi kaldırıldı.** `POST /students/apply`, `GET /students/pending`, `POST /students/{id}/approve` — gerçekte kullanılan `Enrollment` sisteminden tamamen ayrı, hiçbir frontend sayfasından çağrılmayan bir akıştı. Ciddi olan kısım: `/apply` çağrıldığı an gerçek bir `Student` kaydı hemen oluşuyordu (sadece `User.status` PENDING kalıyordu) - yani enrollment onay sürecini tamamen atlayıp bir okula "yarı kayıtlı" olmanın açık bir yolu vardı, ve bu kayıtlar `PendingStudents.jsx`'in okuduğu `/enrollments/` listesinde hiç görünmüyordu. Deploy öncesi prod'da bu yoldan oluşmuş kayıt olmadığı doğrulandı (`User.status=PENDING` + `Student` kaydı olan 0 kullanıcı), uçlar + kullanılmayan şema/importlar tamamen kaldırıldı.
+
+**Test:** 4 yeni Media görünürlük testi, toplam **210/210 test geçiyor**. Frontend build hatasız (bu iki değişiklik hiçbir frontend kodunu etkilemiyordu, sadece backend).
+
+**Deploy:** commit `ebfd07f` → push → sunucuda `git pull` + `docker compose up -d --build` (migration gerekmedi), `docker compose ps` tüm container `Up`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com` hepsi 200 döndü.
+
+---
+
+## TAMAMLANDI (2026-09-14, ikinci tur): Tam sistem denetimi — kritik bug'lar + eksik özellikler
 
 Kullanıcı "full bir yapıyı analiz et, bana sormadan detaylı bir analiz çıkart, saçma bir şey varsa hemen düzelt" dedi. İki ayrı denetim ajanı çalıştırıldı (ilki anlamlı bir rapor üretemeden bitti, ikincisi 45 tool-call ile tüm router'ları tarayıp kapsamlı bulgu listesi çıkardı). Bulunan gerçek bug'lar doğrulanıp (önce bug'ı reprodükte et, sonra düzelt yöntemiyle) hemen düzeltildi:
 
@@ -27,7 +40,7 @@ Kullanıcı "full bir yapıyı analiz et, bana sormadan detaylı bir analiz çı
 - `GET /public/stats` ve birkaç tekil-GET ucu (`GET /users/{id}`, `GET /schools/{id}` admin, vb.) hiç kullanılmıyor — güvenlik riski yok, sadece kullanılmayan yüzey alanı.
 - Test kapsamı yoktu (şimdi bazıları eklendi): `products.py`, `requests.py`, `mail.py`, `dashboard.py`, `enrollments.py`, `site_content.py` router'ları hâlâ hiç test edilmiyor.
 
-**Deploy:** commit `120a294` → push edildi → **sunucuya henüz alınmadı, kullanıcı onayı bekleniyor** (üretim deploy izni her seferinde ayrı isteniyor).
+**Deploy:** commit `120a294` → push → sunucuda `git pull` + `docker compose up -d --build` (migration gerekmedi), tüm container `Up`, `/api/health` ve her iki domain 200 döndü (bkz. yukarıdaki üçüncü tur notu — deploy sonraki oturumda tamamlandı).
 
 ---
 
