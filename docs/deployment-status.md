@@ -1,7 +1,21 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-13 (üçüncü tur) — **Etkinlikler'de okul kapsamı gerçekten uygulanıyor + Kayıtlılar/sınav onay ekranı TAMAMLANDI.** `main` ile `origin/main` ve prod aynı hizada. Açık iş: kullanıcının kendi hazırlayacağı içerikler (DemirWteo sayfası, eğitmen bio'ları) + kırık okul kapak görselleri (bkz. aşağıdaki notlar).
+> Son güncelleme: 2026-09-14 — **Sitedeki tüm fiyat alanları (Ürünler + Etkinlik WT/Escrima ücreti) veritabanı dahil tamamen kaldırıldı (vergi nedeniyle, kullanıcı onayladı).** `main` ile `origin/main` ve prod aynı hizada. Şu an tam sistem analizi (baştan sona backend/frontend taraması, eksik/bozuk noktalar) yapılıyor — bulgular ve bu turda düzeltilenler bir sonraki girdide.
+
+## TAMAMLANDI (2026-09-14): Fiyat alanları tamamen kaldırıldı (vergi nedeniyle)
+
+Kullanıcı vergi sorunu yaşamamak için sitede fiyat gösterilen/girilen her yerin **veritabanı dahil kalıcı olarak** kaldırılmasını istedi.
+
+**Bulunan yerler:** Ürünler sayfasında `Product.price` (form + kart gösterimi), Etkinliklerde `Event.wt_fee`/`escrima_fee` (oluşturma/düzenleme formu + etkinlik kartı + öğrenci kayıt modalındaki "(X TL)" ek metni).
+
+**Yapılan:** Model/schema/router'dan alanlar tamamen çıkarıldı, migration `a1b2c3d4e5f7` ile `products.price`, `events.wt_fee`, `events.escrima_fee` kolonları veritabanından silindi (downgrade'i var ama veri geri gelmez, sadece kolonu boş olarak geri ekler). Deploy öncesi prod'da gerçek veri olup olmadığı kontrol edildi: **"Tekirdağ Derece Semineri" etkinliğinde WT/Escrima ücreti 3500 TL olarak girilmişti** — kullanıcıya bildirildi, "tamamen kaldır" kararını (vergi gerekçesiyle) teyit etti, bu veri kalıcı olarak silindi. Ürünlerde henüz veri yoktu.
+
+**Test:** 181/181 backend testi geçiyor, iki frontend de hatasız build oluyor, Chrome'da gerçek tarayıcıda hem Ürünler hem Etkinlik formunda fiyat alanının tamamen kalktığı doğrulandı.
+
+**Deploy:** commit `2c0a61d` → push → sunucuda `git pull` + `docker compose up -d --build`, migration `a1b2c3d4e5f7` loglarda hatasız uygulandı, `docker compose ps` tüm container `Up`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com` hepsi 200 döndü.
+
+---
 
 ## TAMAMLANDI (2026-09-13, üçüncü tur): Etkinlikler — okul kapsamı + kayıtlılar/sınav onay ekranı
 
