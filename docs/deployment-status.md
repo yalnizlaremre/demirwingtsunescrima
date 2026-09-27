@@ -1,7 +1,27 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-14 (üçüncü tur) — **Tam sistem denetimi TAMAMEN CANLIYA ALINDI: kritik IDOR + cascade-delete bug'ı, 3 eksik özellik, Medya görünürlük kısıtı ve ölü paralel öğrenci başvuru sisteminin kaldırılması dahil hepsi deploy edildi.** `main`, `origin/main` ve prod aynı hizada. Açık iş yok.
+> Son güncelleme: 2026-09-27 — **Sifre goster/gizle + "0. derece" ozellikleri CANLIYA ALINDI.** `main`, `origin/main` ve prod aynı hizada. Açık iş yok.
+
+## TAMAMLANDI (2026-09-27): Sifre goster/gizle + yeni baslayan ogrenciler icin acik "0" derece durumu
+
+Kullanıcı iki iyileştirme istedi: (1) giriş ekranında şifre alanına göz ikonuyla göster/gizle, (2) henüz 1. dereceyi almamış yeni başlayan öğrencilerin sistemde açıkça "0" olarak görünmesi, 1. dereceyi alanlara "1" atanabilmesi.
+
+**1. Şifre göster/gizle:** Yeniden kullanılabilir `PasswordInput` bileşeni (`frontend/src/components/PasswordInput.jsx`, lucide-react `Eye`/`EyeOff`, varsayılan gizli) eklendi. Sadece login değil, tutarlılık için tüm şifre alanlarına uygulandı: Login, Register, ResetPassword, Profile (şifre değiştir), Users (admin yeni kullanıcı oluşturma).
+
+**2. "0. Derece" durumu:** Kök tasarım kararı — `current_grade=0` artık "henüz 1. dereceyi almamış" anlamına geliyor (önceden her yeni öğrenci doğrudan grade=1 ile başlıyordu, bu da henüz sınava girmemiş birinin sanki derecesi varmış gibi görünmesine yol açıyordu).
+
+- `StudentProgress.current_grade` varsayılanı 0 yapıldı; hem admin'in bir kullanıcıyı doğrudan öğrenci atadığı (`POST /students/`) hem de okula katılma talebinin onaylandığı (`POST /enrollments/{id}/approve`) akış artık 0 ile başlatıyor.
+- `GRADE_HOURS_MAP`'e grade 0, grade 1-3 ile aynı 54/44 saatlik bariyerle eklendi — böylece ilk dereceyi almak için de gerçek bir saat şartı var (öncesinde "tanımsız derece = otomatik sınava uygun" gibi hiç kullanılmayan bir edge-case vardı, testte belgelenmişti; artık grade 0 gerçek bir durum olduğu için bu davranış kapatıldı).
+- Manuel derece değiştirme / derece gereksinimi / toplu mail derece filtresi gibi tüm derece giriş alanlarına 0 sınır değeri + backend'de `ge=0, le=17` doğrulaması eklendi (öncesinde backend'de hiç aralık doğrulaması yoktu).
+- Öğrenci/derece listeleme ekranlarında (Öğrenciler, Dereceler, Dashboard, Profil) grade=0 için ayırt edici "Derece Yok" rozeti/etiketi eklendi (`GradeBadge`, `formatGrade` yardımcıları).
+- Seminer sınavını geçme akışı (`events.py`, `new_grade = old_grade + 1`) zaten grade+1 mantığıyla çalıştığından değişiklik gerektirmedi — 0'dan geçen bir öğrenci otomatik olarak 1 oluyor.
+
+**Test:** 211/211 backend testi geçiyor (grade_hours testleri grade 0'ı "tanımsız" kategorisinden çıkarıp gerçek 54/44 saat bariyerine taşıyacak şekilde güncellendi, permissions testindeki alakasız grade=99 payload'ı yeni 0-17 sınırına uyacak şekilde düzeltildi). Frontend build hatasız. Yerel dev DB'de (SQLite) geçici admin+öğrenci hesabıyla API üzerinden uçtan uca doğrulandı: yeni öğrenci grade=0 ile oluşuyor, manuel değişiklikle 1'e yükseltilebiliyor, -1/18 gibi geçersiz değerler 422 dönüyor. Test verileri temizlendi. Chrome tarayıcı otomasyonu bu oturumda bağlı değildi, görsel doğrulama yapılamadı — kullanıcının kendi tarayıcısından bakması önerilir.
+
+**Deploy:** commit `e8ff4e1` (şifre göster/gizle) + `6122b4d` (0. derece) → push → sunucuda `git pull` + `docker compose up -d --build` (migration gerekmedi, sadece varsayılan değer/doğrulama değişikliği), `docker compose ps` tüm container `Up`/`healthy`, `/api/health`, `app.demirwingtsun.com`, `demirwingtsun.com`, `api.demirwingtsun.com` hepsi 200 döndü.
+
+---
 
 ## TAMAMLANDI (2026-09-14, üçüncü tur): Denetimdeki 2 tartışmalı madde de karara bağlanıp canlıya alındı
 
