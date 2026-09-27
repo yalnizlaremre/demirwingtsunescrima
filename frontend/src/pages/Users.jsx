@@ -5,6 +5,7 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
+import PasswordInput from '../components/PasswordInput';
 import { Plus, Edit2, Trash2, Users as UsersIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -207,7 +208,7 @@ export default function Users() {
           {!editing && (
             <div>
               <label className="block text-sm font-medium mb-1">Sifre *</label>
-              <input type="password" value={form.password} onChange={(e) => update('password', e.target.value)} className="input-field" required minLength={6} />
+              <PasswordInput value={form.password} onChange={(e) => update('password', e.target.value)} className="input-field" required minLength={6} />
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">

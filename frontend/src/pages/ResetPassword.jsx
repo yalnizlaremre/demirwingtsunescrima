@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import PasswordInput from '../components/PasswordInput';
 import toast from 'react-hot-toast';
 
 export default function ResetPassword() {
@@ -48,8 +49,7 @@ export default function ResetPassword() {
 
           <div>
             <label className="block text-sm font-medium text-dark-700 mb-1.5">Yeni Sifre</label>
-            <input
-              type="password"
+            <PasswordInput
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="input-field"
@@ -60,8 +60,7 @@ export default function ResetPassword() {
 
           <div>
             <label className="block text-sm font-medium text-dark-700 mb-1.5">Yeni Sifre (Tekrar)</label>
-            <input
-              type="password"
+            <PasswordInput
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="input-field"

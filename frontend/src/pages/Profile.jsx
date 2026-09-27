@@ -4,8 +4,10 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
+import PasswordInput from '../components/PasswordInput';
 import { Award, Clock, Target, AlertTriangle, CheckCircle2, User, Camera, Upload, School, Shield, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatGrade, isNoGrade } from '../utils/grade';
 
 export default function Profile() {
   const { user, fetchUser } = useAuth();
@@ -246,8 +248,7 @@ export default function Profile() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Mevcut Sifre</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={pwForm.current_password}
                 onChange={(e) => setPwForm(f => ({ ...f, current_password: e.target.value }))}
                 className="input-field"
@@ -256,8 +257,7 @@ export default function Profile() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Yeni Sifre</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={pwForm.new_password}
                 onChange={(e) => setPwForm(f => ({ ...f, new_password: e.target.value }))}
                 className="input-field"
@@ -267,8 +267,7 @@ export default function Profile() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Yeni Sifre (Tekrar)</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={pwForm.confirm_password}
                 onChange={(e) => setPwForm(f => ({ ...f, confirm_password: e.target.value }))}
                 className="input-field"
@@ -307,7 +306,7 @@ export default function Profile() {
                     {/* Derece */}
                     <div className="flex justify-between items-center">
                       <span className="text-dark-500">Derece</span>
-                      <span className="font-bold text-2xl">{p.current_grade}. Derece</span>
+                      <span className={`font-bold text-2xl ${isNoGrade(p.current_grade) ? 'text-amber-600' : ''}`}>{formatGrade(p.current_grade)}</span>
                     </div>
 
                     {/* Ilerleme Cubugu */}
