@@ -102,11 +102,11 @@ export default function Mail() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Min Derece</label>
-                <input type="number" min={1} max={17} value={form.grade_min} onChange={(e) => update('grade_min', e.target.value)} className="input-field" />
+                <input type="number" min={0} max={17} value={form.grade_min} onChange={(e) => update('grade_min', e.target.value)} className="input-field" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Max Derece</label>
-                <input type="number" min={1} max={17} value={form.grade_max} onChange={(e) => update('grade_max', e.target.value)} className="input-field" />
+                <input type="number" min={0} max={17} value={form.grade_max} onChange={(e) => update('grade_max', e.target.value)} className="input-field" />
               </div>
             </div>
 

@@ -12,6 +12,7 @@ class TestGetHoursForGrade:
     @pytest.mark.parametrize(
         "grade,expected",
         [
+            (0, {"required": 54, "minimum": 44}),
             (1, {"required": 54, "minimum": 44}),
             (3, {"required": 54, "minimum": 44}),
             (4, {"required": 60, "minimum": 52}),
@@ -23,9 +24,10 @@ class TestGetHoursForGrade:
         ],
     )
     def test_known_grade_ranges(self, grade, expected):
+        # grade 0 = henuz 1. dereceyi almamis ogrenci; ayni saat bariyerini kullanir
         assert get_hours_for_grade(grade) == expected
 
-    @pytest.mark.parametrize("grade", [0, -1, 13, 100])
+    @pytest.mark.parametrize("grade", [-1, 13, 100])
     def test_grade_outside_map_returns_zeros(self, grade):
         assert get_hours_for_grade(grade) == {"required": 0, "minimum": 0}
 
@@ -52,7 +54,14 @@ class TestCheckExamEligibility:
     def test_zero_hours_not_eligible(self):
         assert check_exam_eligibility(1, 0) == "NOT_ELIGIBLE"
 
-    @pytest.mark.parametrize("grade", [0, -1, 13, 100])
+    def test_grade_zero_follows_same_rules_as_grade_one(self):
+        # grade 0 = henuz 1. dereceyi almamis ogrenci; ilk derece icin de ayni
+        # saat bariyeri (grade 1 ile ayni) uygulanir, otomatik ELIGIBLE degildir.
+        assert check_exam_eligibility(0, 0) == "NOT_ELIGIBLE"
+        assert check_exam_eligibility(0, 44) == "NEEDS_APPROVAL"
+        assert check_exam_eligibility(0, 54) == "ELIGIBLE"
+
+    @pytest.mark.parametrize("grade", [-1, 13, 100])
     def test_grade_outside_map_is_always_eligible(self, grade):
         # Surprising behavior: grade_hours.py treats any grade without a defined
         # required-hours bucket as automatically ELIGIBLE, regardless of hours.
@@ -93,8 +102,15 @@ class TestUpdateProgressHours:
         assert progress.completed_hours == 70
         assert progress.remaining_hours == 0
 
-    def test_grade_outside_map_remaining_hours_always_zero(self):
+    def test_grade_zero_uses_grade_one_requirement(self):
+        # grade 0 = henuz 1. dereceyi almamis ogrenci; 54 saatlik bariyeri kullanir
         progress = self._progress(current_grade=0, completed_hours=5)
+        update_progress_hours(progress, 10)
+        assert progress.completed_hours == 15
+        assert progress.remaining_hours == 54 - 15
+
+    def test_grade_outside_map_remaining_hours_always_zero(self):
+        progress = self._progress(current_grade=-1, completed_hours=5)
         update_progress_hours(progress, 10)
         assert progress.completed_hours == 15
         assert progress.remaining_hours == 0

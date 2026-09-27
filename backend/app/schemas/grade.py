@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class GradeRequirementCreate(BaseModel):
     branch: str
-    grade: int
+    grade: int = Field(ge=0, le=17)
     grade_name: str
     required_hours: float
 
@@ -26,5 +26,5 @@ class GradeRequirementResponse(BaseModel):
 class ManualGradeChangeRequest(BaseModel):
     student_id: str
     branch: str
-    new_grade: int
+    new_grade: int = Field(ge=0, le=17)
     note: str

@@ -1,8 +1,10 @@
 """Derece bazli saat gereksinimleri ve sinav uygunluk kontrolu."""
 
 # (min_grade, max_grade): {"required": tam saat, "minimum": alt sinir}
+# 0 = henuz 1. dereceyi almamis ogrenci; ilk dereceyi almak icin de ayni saat
+# bariyeri (1-3 araligiyla ayni) uygulanir.
 GRADE_HOURS_MAP = {
-    (1, 3): {"required": 54, "minimum": 44},
+    (0, 3): {"required": 54, "minimum": 44},
     (4, 8): {"required": 60, "minimum": 52},
     (9, 10): {"required": 96, "minimum": 80},
     (11, 12): {"required": 128, "minimum": 110},

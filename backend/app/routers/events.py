@@ -294,7 +294,7 @@ async def register_for_event(
         if exam_branch_wt:
             wt_progress = progress_map.get(Branch.WING_TSUN.value)
             wt_hours = float(wt_progress.completed_hours) if wt_progress else 0
-            wt_grade = wt_progress.current_grade if wt_progress else 1
+            wt_grade = wt_progress.current_grade if wt_progress else 0
             wt_elig = check_exam_eligibility(wt_grade, wt_hours)
             if wt_elig == "NOT_ELIGIBLE":
                 exam_branch_wt = False
@@ -304,7 +304,7 @@ async def register_for_event(
         if exam_branch_escrima:
             esc_progress = progress_map.get(Branch.ESCRIMA.value)
             esc_hours = float(esc_progress.completed_hours) if esc_progress else 0
-            esc_grade = esc_progress.current_grade if esc_progress else 1
+            esc_grade = esc_progress.current_grade if esc_progress else 0
             esc_elig = check_exam_eligibility(esc_grade, esc_hours)
             if esc_elig == "NOT_ELIGIBLE":
                 exam_branch_escrima = False
@@ -401,11 +401,11 @@ async def get_my_eligibility(
     wt_p = progress_map.get(Branch.WING_TSUN.value)
     esc_p = progress_map.get(Branch.ESCRIMA.value)
 
-    wt_grade = wt_p.current_grade if wt_p else 1
+    wt_grade = wt_p.current_grade if wt_p else 0
     wt_hours = float(wt_p.completed_hours) if wt_p else 0
     wt_hr = get_hours_for_grade(wt_grade)
 
-    esc_grade = esc_p.current_grade if esc_p else 1
+    esc_grade = esc_p.current_grade if esc_p else 0
     esc_hours = float(esc_p.completed_hours) if esc_p else 0
     esc_hr = get_hours_for_grade(esc_grade)
 

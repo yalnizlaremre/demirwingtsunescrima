@@ -75,7 +75,7 @@ class TestManageEventsPermission:
 
 class TestManageGradesPermission:
     def _payload(self):
-        return {"branch": "WING_TSUN", "grade": 99, "grade_name": "Test Kusak", "required_hours": 50}
+        return {"branch": "WING_TSUN", "grade": 15, "grade_name": "Test Kusak", "required_hours": 50}
 
     async def test_manager_without_permission_403(self, client, db_session):
         manager = await make_user(db_session, role=UserRole.MANAGER.value)

@@ -8,6 +8,7 @@ import {
   School, Users, GraduationCap, CalendarDays,
   MessageSquare, Shield, Clock, Award, ArrowRight,
 } from 'lucide-react';
+import { formatGrade, isNoGrade } from '../utils/grade';
 
 export default function Dashboard() {
   const { user, isAdmin, isManager, isUser, isMember } = useAuth();
@@ -164,7 +165,7 @@ function ProgressCard({ title, color, grade, completed, required, minimum, remai
           </div>
           {title}
         </h3>
-        <span className={`text-2xl font-bold ${c.text}`}>{grade}. Derece</span>
+        <span className={`text-2xl font-bold ${isNoGrade(grade) ? 'text-amber-600' : c.text}`}>{formatGrade(grade)}</span>
       </div>
 
       {/* Ilerleme Cubugu */}

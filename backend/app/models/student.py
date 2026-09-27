@@ -43,7 +43,8 @@ class StudentProgress(Base, UUIDMixin, TimestampMixin):
         String(36), ForeignKey("students.id", ondelete="CASCADE"), nullable=False
     )
     branch: Mapped[str] = mapped_column(String(20), nullable=False)
-    current_grade: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    # 0 = henuz 1. dereceyi almamis (yeni baslayan); 1-17 = kazanilmis derece
+    current_grade: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completed_hours: Mapped[float] = mapped_column(Numeric(8, 2), default=0, nullable=False)
     remaining_hours: Mapped[float] = mapped_column(Numeric(8, 2), default=0, nullable=False)
 

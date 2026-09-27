@@ -211,11 +211,11 @@ async def create_student(
     await db.flush()
 
     for branch in Branch:
-        initial_hours = get_hours_for_grade(1)
+        initial_hours = get_hours_for_grade(0)
         db.add(StudentProgress(
             student_id=student.id,
             branch=branch.value,
-            current_grade=1,
+            current_grade=0,
             completed_hours=0,
             remaining_hours=initial_hours["required"],
         ))

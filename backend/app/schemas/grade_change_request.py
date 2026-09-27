@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 
 
 class GradeChangeRequestCreate(BaseModel):
     student_id: str
     branch: str
-    requested_grade: int
+    requested_grade: int = Field(ge=0, le=17)
     note: str
 
 

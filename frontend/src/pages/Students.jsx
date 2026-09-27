@@ -6,7 +6,8 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { GraduationCap, Search, Award, Edit2, Trash2, UserX, UserCheck } from 'lucide-react';
+import { GraduationCap, Search, Edit2, Trash2, UserX, UserCheck } from 'lucide-react';
+import GradeBadge from '../components/GradeBadge';
 
 export default function Students() {
   const { isAdmin, isManagerOrAbove, hasPermission } = useAuth();
@@ -163,17 +164,11 @@ export default function Students() {
                   </td>
                   <td className="text-dark-500">{s.school_name || '-'}</td>
                   <td>
-                    <span className="inline-flex items-center gap-1">
-                      <Award size={14} className="text-primary-500" />
-                      {getGrade(s.progress, 'WING_TSUN')}
-                    </span>
+                    <GradeBadge grade={getGrade(s.progress, 'WING_TSUN')} color="text-primary-500" />
                   </td>
                   <td>{getHours(s.progress, 'WING_TSUN')}h</td>
                   <td className="hidden md:table-cell">
-                    <span className="inline-flex items-center gap-1">
-                      <Award size={14} className="text-emerald-500" />
-                      {getGrade(s.progress, 'ESCRIMA')}
-                    </span>
+                    <GradeBadge grade={getGrade(s.progress, 'ESCRIMA')} color="text-emerald-500" />
                   </td>
                   <td className="hidden md:table-cell">{getHours(s.progress, 'ESCRIMA')}h</td>
                   <td>

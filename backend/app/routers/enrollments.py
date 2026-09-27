@@ -142,11 +142,11 @@ async def approve_enrollment(enrollment_id: str, current_user: User = Depends(re
                 )
             )
             if not existing_progress.scalar_one_or_none():
-                initial_hours = get_hours_for_grade(1)
+                initial_hours = get_hours_for_grade(0)
                 progress = StudentProgress(
                     student_id=s.id,
                     branch=branch.value,
-                    current_grade=1,
+                    current_grade=0,
                     completed_hours=0,
                     remaining_hours=initial_hours["required"],
                 )

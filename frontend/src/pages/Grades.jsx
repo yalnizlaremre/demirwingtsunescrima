@@ -6,7 +6,8 @@ import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { Plus, ArrowUpDown, Award, Check, X, ClipboardList, Edit2 } from 'lucide-react';
+import { Plus, ArrowUpDown, Check, X, ClipboardList, Edit2 } from 'lucide-react';
+import GradeBadge from '../components/GradeBadge';
 
 export default function Grades() {
   const { isAdmin, isManagerOrAbove, hasPermission } = useAuth();
@@ -130,7 +131,7 @@ export default function Grades() {
 
   const getGrade = (progress, branch) => {
     const p = progress?.find(pr => pr.branch === branch);
-    return p ? p.current_grade : 1;
+    return p ? p.current_grade : 0;
   };
 
   const getHours = (progress, branch) => {
@@ -184,17 +185,11 @@ export default function Grades() {
                   </td>
                   <td className="text-dark-500">{s.school_name || '-'}</td>
                   <td>
-                    <span className="inline-flex items-center gap-1">
-                      <Award size={14} className="text-primary-500" />
-                      {getGrade(s.progress, 'WING_TSUN')}
-                    </span>
+                    <GradeBadge grade={getGrade(s.progress, 'WING_TSUN')} color="text-primary-500" />
                   </td>
                   <td>{getHours(s.progress, 'WING_TSUN')}h</td>
                   <td className="hidden md:table-cell">
-                    <span className="inline-flex items-center gap-1">
-                      <Award size={14} className="text-emerald-500" />
-                      {getGrade(s.progress, 'ESCRIMA')}
-                    </span>
+                    <GradeBadge grade={getGrade(s.progress, 'ESCRIMA')} color="text-emerald-500" />
                   </td>
                   <td className="hidden md:table-cell">{getHours(s.progress, 'ESCRIMA')}h</td>
                   <td>
@@ -332,8 +327,8 @@ export default function Grades() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Derece (1-17)</label>
-              <input type="number" min={1} max={17} value={reqForm.grade} onChange={(e) => setReqForm(p => ({ ...p, grade: e.target.value }))} className="input-field" required disabled={!!editingReq} />
+              <label className="block text-sm font-medium mb-1">Derece (0-17)</label>
+              <input type="number" min={0} max={17} value={reqForm.grade} onChange={(e) => setReqForm(p => ({ ...p, grade: e.target.value }))} className="input-field" required disabled={!!editingReq} />
             </div>
           </div>
           <div>
@@ -371,7 +366,8 @@ export default function Grades() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">{canManageGrades ? 'Yeni Derece' : 'Talep Edilen Derece'}</label>
-              <input type="number" min={1} max={17} value={changeForm.new_grade} onChange={(e) => setChangeForm(p => ({ ...p, new_grade: e.target.value }))} className="input-field" required />
+              <input type="number" min={0} max={17} value={changeForm.new_grade} onChange={(e) => setChangeForm(p => ({ ...p, new_grade: e.target.value }))} className="input-field" required />
+              <p className="text-xs text-dark-400 mt-1">0 = henuz 1. dereceyi almadi</p>
             </div>
           </div>
           <div>
