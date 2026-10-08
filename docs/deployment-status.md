@@ -1,7 +1,45 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-08 — **1. tur + açık tema + kurucu anma bölümü + Caddy önbellek/güvenlik başlıkları CANLIDA.** Otomatik deploy sunucuya kuruldu ve doğrulandı: artık deploy = `main`'e push (sunucu ≤1 dk içinde yedek alıp günceller, build ~2 dk).
+> Son güncelleme: 2026-10-08 (gece) — **1. tur + açık tema + kurucu anma bölümü + Caddy önbellek/güvenlik başlıkları CANLIDA.** Otomatik deploy kurulu: deploy = `main`'e push. Kullanıcı ara verdi; **sıradaki iş: 2. tur** (aşağıdaki plan). Önce "Bekleyen / kullanıcıdan gelecek" maddelerini kontrol et.
+
+## ŞU AN NEREDEYİZ — 2026-10-08 sonu
+
+### Bekleyen / kullanıcıdan gelecek
+- [ ] **Sifu Saffet Demir henüz panele üye olmadı.** Kullanıcı kendisiyle iletişime geçecek. Üye olunca (kullanıcı haber verecek): panel → Kullanıcılar → Saffet Demir → onayla, rolü (muhtemelen MANAGER/Eğitmen, unvan SIFU) ayarla, "Tanıtım sitesinde öne çıkan eğitmen" ✔, **Sitedeki Unvan: "Baş Eğitmen"**, Sıralama: 0. Bunu kullanıcı panelden yapabilir ya da Claude tarayıcıdan yardım eder (Claude şifre giremez; kullanıcı Chrome'da giriş yapmış olmalı).
+- [ ] **Sifu Serhat Demir hayat/hocalık hikâyesi metni** — kullanıcı hazırlayıp verecek. Gelince: panel → Site İçeriği → "Kurucumuz" (slug `kurucu`) kaydı; `body` alanı şu anki "Sevgi ve Özlem İle" yazısının yerine geçer (istenirse "Sevgi ve Özlem İle" kapanış satırı olarak korunabilir — kullanıcıya sor). Doğum–vefat satırı kodda sabit: `frontend-public/src/components/FounderMemorial.jsx` → `1978 – 26 Ekim 2025`.
+- [ ] **Kadıköy ders saatleri hangisi doğru?** Panelde `description` = "Pazartesi ve Cuma 21:00–23:00", sitede gösterilen `long_description` = "Salı ve Perşembe 21:00–23:00". Kullanıcıya soruldu, cevap bekleniyor. Kalıcı çözüm: tek alan (2. tur maddesi).
+- [ ] DemirWteo sayfası metni ve diğer eğitmen bio'ları — kullanıcı hazırlayacak.
+- [ ] Panelin iç sayfaları tarayıcıda görsel olarak hiç incelenmedi (sadece koddan). Kullanıcı Chrome'da `app.demirwingtsun.com`'a giriş yaparsa görsel tur yapılacak.
+
+### PLAN — 2. tur (kullanıcı onayladı, henüz başlanmadı)
+Madde numaraları 2026-10-08'deki denetim listesinden:
+1. **(6) İletişim sayfası yeniden tasarım:** her okul için kart (adres + Maps linki, tıklanabilir telefon, Instagram), veriler okul kayıtlarından (`/api/public/schools`) gelsin. "Kadıköy Shaka Dans Okulu" başlığı bug değil (kiralanan salonun adı).
+2. **(7) Anasayfa içerik yapısı:** içerik blokları şu an "başlık + dev fotoğraf"; "Neden Wing Tsun?", ders saatleri özeti, kompakt okul kartları, altta "deneme dersi için yazın" çağrı bölümü.
+3. **Anasayfa / DemirWteo'ya kurucu anması** (kısa şerit, Eğitmenler'deki bölüme link) + **DemirWteo'da soy ağacı:** Sifu Saffet Demir → Sifu Serhat Demir (kurucu) → bugünkü eğitmenler. Kullanıcı anma fikrini çok beğendi.
+4. **(10) Medya:** aynı fotoğraf iki kez görünüyor; Videolar/YouTube filtreleri boş; görseller tam boy (700 KB'a kadar) yükleniyor.
+5. **(11) Alt metinler (alt text):** görsellerin çoğunda yok.
+6. **(17) Public okul ucu gereksiz alan döndürüyor** (`email` — kişisel hotmail, `is_active`, `created_at`): ayrı `PublicSchoolResponse` şeması.
+7. **(19) Site içeriği blok sıralaması:** `SiteContent`'e `display_order` + panelde yukarı/aşağı.
+8. **(20) Görsel küçültme:** yüklemede otomatik küçültülmüş kopya + thumbnail; anasayfa slayt gösterisi tüm görselleri baştan yüklüyor.
+9. **(23) SEO:** `sitemap.xml`, `robots.txt`, LocalBusiness/SportsActivityLocation JSON-LD (her okul için adres/telefon), paylaşım görseli logo yerine grup fotoğrafı.
+10. Kadıköy ders saatleri: iki alan yerine tek doğru kaynak (cevaba göre).
+- Caddy güvenlik/önbellek başlıkları → **1. turda yapıldı** (`2cb5743`).
+
+### PLAN — 3. tur (panel ve sağlamlık)
+- (12) Öğrenci/Kullanıcı listeleri 100'de kesiliyor → sayfalama.
+- (13) 13 yerde `window.confirm`/`alert` → panel tasarımına uygun onay modalı.
+- (14) ~~Giriş/kayıt beyaz kart~~ → açık temayla çözüldü.
+- (16) Eşzamanlı 401'lerde refresh token yarışı + logout sonrası token 7 gün geçerli (refresh token iptali).
+- (22) slowapi rate limit 2 uvicorn worker'da bellek içi → limitler fiilen 2x (Redis veya tek ortak depo).
+- (25) Testi olmayan router'lar: products, requests, mail, dashboard, enrollments, site_content.
+- Düşük: `GradeRequirement` tablosu kullanılmıyor, kullanılmayan uçlar (`/public/stats` vb.).
+
+### Çalışma notları (Claude için)
+- Claude bulut oturumundan çalışıyor; kullanıcının bilgisayarındaki klasöre `device_bash` ile erişiyor. Push için: yerelde commit → `git bundle` → bulut ortamındaki klona fetch → `git push origin ...:main`. Sunucuya SSH yok; deploy otomatik.
+- Klasörde dosya silme (git'in `.lock` dosyaları dahil) oturum başına kullanıcı izni istiyor; commit sonrası `.git/*.lock` kalmadığını kontrol et.
+- Yerel görsel test: bulut/VM'de `@sparticuz/chromium` + `puppeteer-core` ile ekran görüntüsü; canlı kontrol: Claude in Chrome.
+- Commit yazarı: `yalnizlaremre <emreyalnizlar@gmail.com>`.
 
 ## OTOMATİK DEPLOY (2026-10-08)
 
