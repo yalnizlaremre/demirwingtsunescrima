@@ -1,0 +1,11 @@
+# Satir sonlarini depoda ve calisma kopyasinda her zaman LF tut (Docker/Linux uyumu, OneDrive/Windows CRLF gurultusunu onler)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.mp4 binary
+*.mov binary
+*.db binary
