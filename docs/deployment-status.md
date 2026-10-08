@@ -1,7 +1,32 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-09-27 — **Sifre goster/gizle + "0. derece" ozellikleri CANLIYA ALINDI.** `main`, `origin/main` ve prod aynı hizada. Açık iş yok.
+> Son güncelleme: 2026-10-08 — **1. tur iyileştirmeler + açık tema + kurucu anma bölümü + otomatik deploy** hazırlandı ve `main`'e push edildi. Otomatik deploy sunucuya bir kez kurulana kadar canlıya otomatik yansımaz (bkz. aşağı).
+
+## OTOMATİK DEPLOY (2026-10-08)
+
+Kullanıcı isteği: her işten sonra `git push` → sunucuda yedek + `git pull` + `docker compose up -d --build` otomatik yapılsın.
+Claude'un çalıştığı ortam sunucuya SSH ile bağlanamıyor (port 22 erişilemez, anahtar yok) ama GitHub'a push edebiliyor. Bu yüzden **pull tabanlı** otomatik deploy kuruldu:
+
+- `scripts/auto-deploy.sh` → sunucuda `/usr/local/bin/wteo-auto-deploy` olarak kurulur, systemd timer (`wteo-auto-deploy.timer`) ile **dakikada bir** çalışır. `origin/main`'de sunucuda olmayan commit varsa sırayla: `pg_dump` yedeği (`/opt/wteo/backups/predeploy_*.sql.gz`, son 20 tutulur) → `git pull --no-edit origin main` → `docker compose up -d --build` → `/api/health` kontrolü. Log: `/var/log/wteo-deploy.log`.
+- **Bir kerelik kurulum (kullanıcı kendi terminalinden):**
+  `ssh root@188.34.180.17 "cd /opt/wteo && git fetch -q origin main && git show origin/main:scripts/install-auto-deploy.sh | bash"`
+- Sonrasında deploy = `main`'e push. GitHub'a secret/anahtar konmadı (repo public, sunucu sadece okuyor).
+- Not: `auto-deploy.sh` değişirse kurulum komutunu tekrar çalıştırmak gerekir (kurulu kopya otomatik güncellenmez).
+
+## TAMAMLANDI (2026-10-08): 1. tur + açık tema + kurucu anma bölümü (commit `b567403`, `5e9d9c8`)
+
+- Okul kapak görseli: panelde yükleme butonu; backend görsel URL doğrulaması (`app/schemas/validators.py`); migration `b2c3d4e5f6a8` geçersiz yerel yolları (Tekirdağ'daki `C:\Users\...`) temizler; sitede kırık görsel yerine galeri görseli/logolu yedek.
+- 422 hataları artık okunabilir metin `detail` döndürüyor (frontend toast'ları liste gelince bozuluyordu).
+- Panelde ~680 metin + backend hata mesajlarında Türkçe karakterler düzeltildi.
+- İki frontend'e 404 sayfası; okul kartları/footer'da `tel:` ve Google Maps linkleri; footer'a okul iletişim bilgileri.
+- Askıya alınmış "öne çıkan" eğitmenler sitede gizleniyor; öğrenci/kullanıcı aramasında URL encode.
+- **Açık tema:** tanıtım sitesi CSS değişkenleriyle açık temaya geçti (`:root` açık, `.theme-dark` koyu — hero ve lightbox koyu kalıyor); açık zeminde `logo-light.png`. Panel giriş/kayıt/portal ekranları da açık.
+- **Kurucu anma bölümü:** Eğitmenler sayfasının en üstünde "Kurucumuz — Sifu Serhat Demir (1978 – 26 Ekim 2025), Sevgi ve Özlem İle". Fotoğraf `frontend-public/public/sifu-serhat-demir.jpg`. Panelde Site İçeriği slug `kurucu` kaydı açılırsa başlık/metin/görsel oradan gelir — **kullanıcı hayat hikâyesi metnini sonra hazırlayacak.**
+- **`User.public_title`** (migration `c3d4e5f6a7b9`): eğitmen kartında vurgulu unvan. **Deploy sonrası panelde yapılacak:** Saffet Demir → "öne çıkan eğitmen" + Sitedeki Unvan "Baş Eğitmen" (prod'da şu an öne çıkan eğitmen değil).
+- Test: 218/218. Arka plan bilgi: Sifu Serhat Demir kurucumuz, 26 Ekim 2025'te vefat etti; Sifu Saffet Demir en kıdemli hocamız, Serhat Demir'in ağabeyi ve hocası.
+
+### Sırada (2. tur, onaylandı): İletişim sayfası yeniden tasarım, anasayfa içerik yapısı, Medya tekrarları/optimizasyonu, alt metinler, public okul uç noktasında gereksiz alanlar (email), site içeriği sıralama, görsel küçültme, Caddy güvenlik/önbellek başlıkları, sitemap/robots/LocalBusiness, DemirWteo soy ağacı fikri. Açık soru: Kadıköy ders saatleri (`description`: Pazartesi/Cuma vs `long_description`: Salı/Perşembe) hangisi doğru?
 
 ## TAMAMLANDI (2026-09-27): Sifre goster/gizle + yeni baslayan ogrenciler icin acik "0" derece durumu
 
