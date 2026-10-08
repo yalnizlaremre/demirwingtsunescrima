@@ -61,3 +61,29 @@ class TestFeaturedInstructorStatus:
         ids = [i["id"] for i in resp.json()["items"]]
         assert str(active.id) in ids
         assert str(suspended.id) not in ids
+
+
+class TestPublicTitle:
+    async def test_public_title_set_and_exposed(self, client, db_session):
+        admin = await make_user(db_session, role=UserRole.ADMIN.value)
+        sifu = await make_user(db_session, role=UserRole.MANAGER.value)
+        sifu.is_featured_instructor = True
+        await db_session.commit()
+
+        resp = await client.put(
+            f"/api/users/{sifu.id}",
+            json={"public_title": "  Baş Eğitmen "},
+            headers=auth_headers(admin),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["public_title"] == "Baş Eğitmen"
+
+        pub = await client.get("/api/public/instructors")
+        item = next(i for i in pub.json()["items"] if i["id"] == str(sifu.id))
+        assert item["public_title"] == "Baş Eğitmen"
+
+        # bos metin unvani kaldirir
+        resp = await client.put(
+            f"/api/users/{sifu.id}", json={"public_title": ""}, headers=auth_headers(admin)
+        )
+        assert resp.json()["public_title"] is None

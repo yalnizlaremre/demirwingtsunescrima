@@ -11,6 +11,7 @@ const SUGGESTED_SLUGS = [
   { slug: 'anasayfa', label: 'Anasayfa' },
   { slug: 'demirwteo', label: 'DemirWteo' },
   { slug: 'iletisim', label: 'İletişim' },
+  { slug: 'kurucu', label: 'Kurucumuz (Eğitmenler sayfası)' },
 ];
 
 function getYouTubeId(url) {

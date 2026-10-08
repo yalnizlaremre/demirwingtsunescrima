@@ -9,6 +9,7 @@ class PublicInstructorResponse(BaseModel):
     bio: str | None = None
     avatar_url: str | None = None
     instagram_url: str | None = None
+    public_title: str | None = None
 
     model_config = {"from_attributes": True}
 

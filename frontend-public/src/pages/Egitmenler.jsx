@@ -3,6 +3,7 @@ import { Users, Instagram } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SafeImage from '../components/SafeImage';
+import FounderMemorial from '../components/FounderMemorial';
 import usePageMeta from '../hooks/usePageMeta';
 
 const TITLE_LABELS = { SIFU: 'Sifu', SIHING: 'Sihing' };
@@ -15,7 +16,12 @@ export default function Egitmenler() {
 
   useEffect(() => {
     api.get('/instructors')
-      .then((res) => setInstructors(res.data.items))
+      // Sitedeki unvani olanlar (orn. Bas Egitmen) her zaman basta; kendi
+      // aralarinda backend'in display_order sirasi korunur.
+      .then((res) => {
+        const items = res.data.items || [];
+        setInstructors([...items.filter((i) => i.public_title), ...items.filter((i) => !i.public_title)]);
+      })
       .catch(() => setInstructors([]))
       .finally(() => setLoading(false));
   }, []);
@@ -31,6 +37,8 @@ export default function Egitmenler() {
         </p>
       </div>
 
+      <FounderMemorial />
+
       {instructors.length === 0 ? (
         <div className="text-center text-dark-500 py-16">
           <Users className="mx-auto mb-4" size={40} />
@@ -39,7 +47,7 @@ export default function Egitmenler() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {instructors.map((i) => (
-            <div key={i.id} className="card text-center">
+            <div key={i.id} className={`card text-center ${i.public_title ? 'border-primary-600/40 ring-1 ring-primary-600/20' : ''}`}>
               <div className="w-24 h-24 rounded-full bg-dark-700 mx-auto mb-4 overflow-hidden flex items-center justify-center">
                 <SafeImage
                   src={i.avatar_url}
@@ -52,6 +60,9 @@ export default function Egitmenler() {
                   }
                 />
               </div>
+              {i.public_title && (
+                <p className="text-[11px] font-semibold tracking-wider uppercase text-primary-600 mb-1">{i.public_title}</p>
+              )}
               <h3 className="font-semibold">{i.first_name} {i.last_name}</h3>
               {i.instructor_title && (
                 <p className="text-primary-500 text-sm mb-2">{TITLE_LABELS[i.instructor_title] || i.instructor_title}</p>

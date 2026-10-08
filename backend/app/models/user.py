@@ -41,6 +41,8 @@ class User(Base, UUIDMixin, TimestampMixin):
     display_order: Mapped[int] = mapped_column(Integer, default=0)
     is_featured_instructor: Mapped[bool] = mapped_column(Boolean, default=False)
     instagram_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Tanitim sitesinde unvanin ustunde gosterilen serbest etiket (orn. "Baş Eğitmen").
+    public_title: Mapped[str | None] = mapped_column(String(100), nullable=True)
     extra_permissions: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, default=list)
 
     # Relationships

@@ -28,6 +28,7 @@ def _user_to_response(user: User, student: Student | None = None) -> UserRespons
         display_order=user.display_order,
         is_featured_instructor=user.is_featured_instructor,
         instagram_url=user.instagram_url,
+        public_title=user.public_title,
         extra_permissions=user.extra_permissions or [],
         student_id=str(student.id) if student else None,
         school_id=str(student.school_id) if student else None,
@@ -218,6 +219,8 @@ async def update_user(
         user.is_featured_instructor = data.is_featured_instructor
     if data.instagram_url is not None:
         user.instagram_url = data.instagram_url
+    if data.public_title is not None:
+        user.public_title = data.public_title.strip() or None
     if data.extra_permissions is not None:
         user.extra_permissions = data.extra_permissions
 

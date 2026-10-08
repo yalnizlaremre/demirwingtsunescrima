@@ -68,7 +68,7 @@ export default function Users() {
       email: u.email, password: '', first_name: u.first_name, last_name: u.last_name, phone: u.phone || '',
       role: u.role, instructor_title: u.instructor_title || '', can_upload_media: u.can_upload_media,
       bio: u.bio || '', display_order: u.display_order || 0, is_featured_instructor: u.is_featured_instructor || false,
-      instagram_url: u.instagram_url || '', student_id: u.student_id || '', school_id: u.school_id || '',
+      instagram_url: u.instagram_url || '', public_title: u.public_title || '', student_id: u.student_id || '', school_id: u.school_id || '',
       new_student_school_id: '', extra_permissions: u.extra_permissions || [],
     });
     setModalOpen(true);
@@ -274,6 +274,11 @@ export default function Users() {
                 <input type="checkbox" checked={form.is_featured_instructor} onChange={(e) => update('is_featured_instructor', e.target.checked)} className="w-4 h-4" />
                 <span className="text-sm">Tanıtım sitesinde öne çıkan eğitmen olarak göster</span>
               </label>
+              <div>
+                <label className="block text-sm font-medium mb-1">Sitedeki Unvan (opsiyonel)</label>
+                <input value={form.public_title} onChange={(e) => update('public_title', e.target.value)} className="input-field" placeholder="örn. Baş Eğitmen" maxLength={100} />
+                <p className="text-xs text-dark-400 mt-1">Eğitmen kartında isminin üstünde vurgulu gösterilir.</p>
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Kısa Biyografi</label>
                 <textarea value={form.bio} onChange={(e) => update('bio', e.target.value)} className="input-field" rows={3} />
