@@ -1,7 +1,7 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-08 — **1. tur iyileştirmeler + açık tema + kurucu anma bölümü + otomatik deploy** hazırlandı ve `main`'e push edildi. Otomatik deploy sunucuya bir kez kurulana kadar canlıya otomatik yansımaz (bkz. aşağı).
+> Son güncelleme: 2026-10-08 — **1. tur + açık tema + kurucu anma bölümü + Caddy önbellek/güvenlik başlıkları CANLIDA.** Otomatik deploy sunucuya kuruldu ve doğrulandı: artık deploy = `main`'e push (sunucu ≤1 dk içinde yedek alıp günceller, build ~2 dk).
 
 ## OTOMATİK DEPLOY (2026-10-08)
 
@@ -9,9 +9,10 @@ Kullanıcı isteği: her işten sonra `git push` → sunucuda yedek + `git pull`
 Claude'un çalıştığı ortam sunucuya SSH ile bağlanamıyor (port 22 erişilemez, anahtar yok) ama GitHub'a push edebiliyor. Bu yüzden **pull tabanlı** otomatik deploy kuruldu:
 
 - `scripts/auto-deploy.sh` → sunucuda `/usr/local/bin/wteo-auto-deploy` olarak kurulur, systemd timer (`wteo-auto-deploy.timer`) ile **dakikada bir** çalışır. `origin/main`'de sunucuda olmayan commit varsa sırayla: `pg_dump` yedeği (`/opt/wteo/backups/predeploy_*.sql.gz`, son 20 tutulur) → `git pull --no-edit origin main` → `docker compose up -d --build` → `/api/health` kontrolü. Log: `/var/log/wteo-deploy.log`.
-- **Bir kerelik kurulum (kullanıcı kendi terminalinden):**
+- **Kurulum 2026-10-08'de yapıldı** (ilk deploy `98b2158 -> fae01b3`, yedek `predeploy_20261008_175352_98b2158.sql.gz`; ikinci deploy `2cb5743` push'tan sonra otomatik geldi). Yeniden kurmak gerekirse:
   `ssh root@188.34.180.17 "cd /opt/wteo && git fetch -q origin main && git show origin/main:scripts/install-auto-deploy.sh | bash"`
 - Sonrasında deploy = `main`'e push. GitHub'a secret/anahtar konmadı (repo public, sunucu sadece okuyor).
+- Caddy artık `index.html` için `Cache-Control: no-cache`, `/assets/*` için 1 yıl `immutable` gönderiyor (öncesinde başlık yoktu, tarayıcılar eski index.html'i tutuyordu; başlık öncesi önbelleğe alınmış eski sürüm ziyaretçilerde en fazla ~1 gün daha görünebilir).
 - Not: `auto-deploy.sh` değişirse kurulum komutunu tekrar çalıştırmak gerekir (kurulu kopya otomatik güncellenmez).
 
 ## TAMAMLANDI (2026-10-08): 1. tur + açık tema + kurucu anma bölümü (commit `b567403`, `5e9d9c8`)
