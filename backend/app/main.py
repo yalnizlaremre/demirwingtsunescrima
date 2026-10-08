@@ -6,6 +6,8 @@ from pathlib import Path
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -81,6 +83,27 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """422 yanitlarinda `detail` her zaman okunabilir bir METIN olsun.
+
+    FastAPI varsayilan olarak `detail` icinde bir liste dondurur; frontend tum
+    formlarda `toast.error(err.response.data.detail)` kullandigi icin liste
+    gelince ekranda anlamsiz/bos bir hata gosteriliyordu. Ham hata listesi
+    `errors` alaninda korunur.
+    """
+    errors = exc.errors()
+    messages = []
+    for err in errors:
+        msg = str(err.get("msg", ""))
+        if msg.startswith("Value error, "):
+            msg = msg[len("Value error, "):]
+        loc = [str(p) for p in err.get("loc", []) if p not in ("body", "query", "path")]
+        messages.append(f"{'.'.join(loc)}: {msg}" if loc and not msg.startswith("Geçersiz") else msg)
+    detail = "; ".join(m for m in messages if m) or "Geçersiz istek"
+    return JSONResponse(status_code=422, content={"detail": detail, "errors": jsonable_encoder(errors)})
 
 
 @app.exception_handler(Exception)

@@ -84,26 +84,26 @@ export default function Events() {
       };
       if (editing) {
         await api.put(`/events/${editing.id}`, payload);
-        toast.success('Etkinlik guncellendi');
+        toast.success('Etkinlik güncellendi');
       } else {
         await api.post('/events/', payload);
-        toast.success('Etkinlik olusturuldu');
+        toast.success('Etkinlik oluşturuldu');
       }
       setModalOpen(false);
       fetchEvents();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
   const handleDelete = async (event) => {
-    if (!window.confirm(`"${event.name}" etkinligi kalici olarak silinecek. Emin misiniz?`)) return;
+    if (!window.confirm(`"${event.name}" etkinliği kalıcı olarak silinecek. Emin misiniz?`)) return;
     try {
       await api.delete(`/events/${event.id}`);
       toast.success('Etkinlik silindi');
       fetchEvents();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Silme basarisiz');
+      toast.error(err.response?.data?.detail || 'Silme başarısız');
     }
   };
 
@@ -126,14 +126,14 @@ export default function Events() {
     try {
       const res = await api.post(`/events/${selectedEvent.id}/register`, regForm);
       if (res.data.needs_manager_approval) {
-        toast.success('Kayit basarili! Sinav icin egitmen onayi bekleniyor.');
+        toast.success('Kayıt başarılı! Sınav için eğitmen onayı bekleniyor.');
       } else {
-        toast.success('Kayit basarili');
+        toast.success('Kayıt başarılı');
       }
       setRegModalOpen(false);
       fetchEvents();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -161,11 +161,11 @@ export default function Events() {
   const handleEvaluate = async () => {
     try {
       await api.post(`/events/${selectedEvent.id}/evaluate`, { passed_student_ids: selectedPassed });
-      toast.success('Seminer degerlendirildi');
+      toast.success('Seminer değerlendirildi');
       setEvalModalOpen(false);
       fetchEvents();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -187,10 +187,10 @@ export default function Events() {
   const handleApproveExam = async (regId) => {
     try {
       await api.post(`/events/${selectedEvent.id}/registrations/${regId}/approve-exam`);
-      toast.success('Sinav katilimi onaylandi');
+      toast.success('Sınav katılımı onaylandı');
       setRegListItems((prev) => prev.map((r) => (r.id === regId ? { ...r, manager_approved: true } : r)));
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Onaylama basarisiz');
+      toast.error(err.response?.data?.detail || 'Onaylama başarısız');
     }
   };
 
@@ -205,7 +205,7 @@ export default function Events() {
       </PageHeader>
 
       {events.length === 0 ? (
-        <EmptyState message="Henuz etkinlik yok" icon={CalendarDays} />
+        <EmptyState message="Henüz etkinlik yok" icon={CalendarDays} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {events.map(e => (
@@ -230,20 +230,20 @@ export default function Events() {
               <div className="text-sm text-dark-500 space-y-1 mb-4">
                 <p>{parseServerDatetime(e.start_datetime).toLocaleDateString('tr-TR')} - {parseServerDatetime(e.start_datetime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
                 {e.location && <p>{e.location}</p>}
-                <p className="flex items-center gap-1"><Users size={14} /> {e.registration_count} kayit</p>
+                <p className="flex items-center gap-1"><Users size={14} /> {e.registration_count} kayıt</p>
               </div>
               <div className="flex gap-2">
                 {isUser && !e.is_completed && (
-                  <button onClick={() => openRegister(e)} className="btn-primary btn-sm flex-1">Kayit Ol</button>
+                  <button onClick={() => openRegister(e)} className="btn-primary btn-sm flex-1">Kayıt Ol</button>
                 )}
                 {canManageEvents && (
                   <button onClick={() => openRegistrantsList(e)} className="btn-secondary btn-sm flex-1">
-                    <Eye size={14} /> Kayitlilar
+                    <Eye size={14} /> Kayıtlılar
                   </button>
                 )}
                 {canManageEvents && e.event_type === 'SEMINAR' && !e.is_completed && (
                   <button onClick={() => openEvaluate(e)} className="btn-success btn-sm flex-1">
-                    <ClipboardList size={14} /> Degerlendir
+                    <ClipboardList size={14} /> Değerlendir
                   </button>
                 )}
               </div>
@@ -253,7 +253,7 @@ export default function Events() {
       )}
 
       {/* Create/Edit Event Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Etkinligi Duzenle' : 'Yeni Etkinlik'} size="lg">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Etkinliği Düzenle' : 'Yeni Etkinlik'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -261,7 +261,7 @@ export default function Events() {
               <input value={form.name} onChange={(e) => update('name', e.target.value)} className="input-field" required />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Tur</label>
+              <label className="block text-sm font-medium mb-1">Tür</label>
               <select value={form.event_type} onChange={(e) => update('event_type', e.target.value)} className="select-field">
                 <option value="EVENT">Etkinlik</option>
                 <option value="SEMINAR">Seminer</option>
@@ -272,11 +272,11 @@ export default function Events() {
               <input type="number" value={form.capacity} onChange={(e) => update('capacity', e.target.value)} className="input-field" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Baslangic *</label>
+              <label className="block text-sm font-medium mb-1">Başlangıç *</label>
               <input type="datetime-local" value={form.start_datetime} onChange={(e) => update('start_datetime', e.target.value)} className="input-field" required />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Bitis</label>
+              <label className="block text-sm font-medium mb-1">Bitiş</label>
               <input type="datetime-local" value={form.end_datetime} onChange={(e) => update('end_datetime', e.target.value)} className="input-field" />
             </div>
             <div className="col-span-2">
@@ -286,8 +286,8 @@ export default function Events() {
             <div className="col-span-2">
               <label className="block text-sm font-medium mb-1">Kapsam</label>
               <select value={form.scope} onChange={(e) => update('scope', e.target.value)} className="select-field">
-                <option value="ALL_SCHOOLS">Tum Okullar</option>
-                <option value="SELECTED_SCHOOLS">Secili Okullar</option>
+                <option value="ALL_SCHOOLS">Tüm Okullar</option>
+                <option value="SELECTED_SCHOOLS">Seçili Okullar</option>
               </select>
             </div>
             {form.scope === 'SELECTED_SCHOOLS' && (
@@ -313,26 +313,26 @@ export default function Events() {
                       {s.name}
                     </label>
                   ))}
-                  {schools.length === 0 && <p className="text-xs text-dark-400">Okul bulunamadi</p>}
+                  {schools.length === 0 && <p className="text-xs text-dark-400">Okul bulunamadı</p>}
                 </div>
               </div>
             )}
             <div className="col-span-2">
-              <label className="block text-sm font-medium mb-1">Aciklama</label>
+              <label className="block text-sm font-medium mb-1">Açıklama</label>
               <textarea value={form.description} onChange={(e) => update('description', e.target.value)} className="input-field" rows={2} />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">{editing ? 'Guncelle' : 'Olustur'}</button>
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">{editing ? 'Güncelle' : 'Oluştur'}</button>
           </div>
         </form>
       </Modal>
 
       {/* Register Modal */}
-      <Modal isOpen={regModalOpen} onClose={() => setRegModalOpen(false)} title="Etkinlige Kayit">
+      <Modal isOpen={regModalOpen} onClose={() => setRegModalOpen(false)} title="Etkinliğe Kayıt">
         <div className="space-y-4">
-          <p className="text-sm text-dark-500"><strong>{selectedEvent?.name}</strong> etkinligine kayit olun.</p>
+          <p className="text-sm text-dark-500"><strong>{selectedEvent?.name}</strong> etkinliğine kayıt olun.</p>
           <div className="space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={regForm.register_wt} onChange={(e) => setRegForm(p => ({ ...p, register_wt: e.target.checked }))} className="w-4 h-4" />
@@ -347,7 +347,7 @@ export default function Events() {
                 <hr />
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input type="checkbox" checked={regForm.will_take_exam} onChange={(e) => setRegForm(p => ({ ...p, will_take_exam: e.target.checked, exam_branch_wt: false, exam_branch_escrima: false }))} className="w-4 h-4" />
-                  <span className="font-medium">Sinava girecegim</span>
+                  <span className="font-medium">Sınava gireceğim</span>
                 </label>
                 {regForm.will_take_exam && (
                   <div className="ml-7 space-y-2">
@@ -355,11 +355,11 @@ export default function Events() {
                       <div>
                         <label className="flex items-center gap-3 cursor-pointer">
                           <input type="checkbox" checked={regForm.exam_branch_wt} onChange={(e) => setRegForm(p => ({ ...p, exam_branch_wt: e.target.checked }))} className="w-4 h-4" />
-                          <span>Wing Tsun sinavi</span>
+                          <span>Wing Tsun sınavı</span>
                         </label>
                         {needsApproval('wt') && regForm.exam_branch_wt && (
                           <p className="ml-7 text-xs text-amber-600 flex items-center gap-1 mt-1">
-                            <AlertTriangle size={12} /> Egitmen onayi gerekiyor ({eligibility?.wt_completed_hours}/{eligibility?.wt_required_hours} saat)
+                            <AlertTriangle size={12} /> Eğitmen onayı gerekiyor ({eligibility?.wt_completed_hours}/{eligibility?.wt_required_hours} saat)
                           </p>
                         )}
                       </div>
@@ -368,11 +368,11 @@ export default function Events() {
                       <div>
                         <label className="flex items-center gap-3 cursor-pointer">
                           <input type="checkbox" checked={regForm.exam_branch_escrima} onChange={(e) => setRegForm(p => ({ ...p, exam_branch_escrima: e.target.checked }))} className="w-4 h-4" />
-                          <span>Escrima sinavi</span>
+                          <span>Escrima sınavı</span>
                         </label>
                         {needsApproval('escrima') && regForm.exam_branch_escrima && (
                           <p className="ml-7 text-xs text-amber-600 flex items-center gap-1 mt-1">
-                            <AlertTriangle size={12} /> Egitmen onayi gerekiyor ({eligibility?.escrima_completed_hours}/{eligibility?.escrima_required_hours} saat)
+                            <AlertTriangle size={12} /> Eğitmen onayı gerekiyor ({eligibility?.escrima_completed_hours}/{eligibility?.escrima_required_hours} saat)
                           </p>
                         )}
                       </div>
@@ -384,21 +384,21 @@ export default function Events() {
             {selectedEvent?.event_type === 'SEMINAR' && !canTakeExam('wt') && !canTakeExam('escrima') && (
               <>
                 <hr />
-                <p className="text-sm text-dark-400 italic">Sinav icin yeterli calisma saatiniz bulunmuyor.</p>
+                <p className="text-sm text-dark-400 italic">Sınav için yeterli çalışma saatiniz bulunmuyor.</p>
               </>
             )}
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setRegModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button onClick={handleRegister} className="btn-primary">Kayit Ol</button>
+            <button onClick={() => setRegModalOpen(false)} className="btn-secondary">İptal</button>
+            <button onClick={handleRegister} className="btn-primary">Kayıt Ol</button>
           </div>
         </div>
       </Modal>
 
       {/* Evaluate Seminar Modal */}
-      <Modal isOpen={evalModalOpen} onClose={() => setEvalModalOpen(false)} title="Semineri Degerlendir" size="lg">
+      <Modal isOpen={evalModalOpen} onClose={() => setEvalModalOpen(false)} title="Semineri Değerlendir" size="lg">
         <div className="space-y-4">
-          <p className="text-sm text-dark-500">Sinava giren ogrencilerden <strong>basarili olanlari</strong> secin. Secilen ogrencilerin derecesi +1 arttirilacaktir.</p>
+          <p className="text-sm text-dark-500">Sınava giren öğrencilerden <strong>başarılı olanları</strong> seçin. Seçilen öğrencilerin derecesi +1 arttırılacaktır.</p>
           <div className="max-h-72 overflow-y-auto border border-dark-200 rounded-lg divide-y">
             {registrations.map(r => (
               <label key={r.student_id} className="flex items-center gap-3 px-4 py-3 hover:bg-dark-50 cursor-pointer">
@@ -412,20 +412,20 @@ export default function Events() {
                 </div>
               </label>
             ))}
-            {registrations.length === 0 && <p className="text-sm text-dark-400 p-4">Sinava giren ogrenci yok</p>}
+            {registrations.length === 0 && <p className="text-sm text-dark-400 p-4">Sınava giren öğrenci yok</p>}
           </div>
           <div className="flex justify-between items-center pt-2">
-            <span className="text-sm text-dark-500">{selectedPassed.length} ogrenci secildi</span>
+            <span className="text-sm text-dark-500">{selectedPassed.length} öğrenci secildi</span>
             <div className="flex gap-3">
-              <button onClick={() => setEvalModalOpen(false)} className="btn-secondary">Iptal</button>
-              <button onClick={handleEvaluate} className="btn-success">Degerlendir & Bitir</button>
+              <button onClick={() => setEvalModalOpen(false)} className="btn-secondary">İptal</button>
+              <button onClick={handleEvaluate} className="btn-success">Değerlendir & Bitir</button>
             </div>
           </div>
         </div>
       </Modal>
 
       {/* Registrants List Modal */}
-      <Modal isOpen={regListModalOpen} onClose={() => setRegListModalOpen(false)} title="Kayitlilar" size="lg">
+      <Modal isOpen={regListModalOpen} onClose={() => setRegListModalOpen(false)} title="Kayıtlılar" size="lg">
         <div className="max-h-96 overflow-y-auto border border-dark-200 rounded-lg divide-y">
           {regListItems.map((r) => (
             <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
@@ -436,7 +436,7 @@ export default function Events() {
                   {r.register_escrima && <span className="badge badge-info text-xs">Escrima</span>}
                   {r.will_take_exam && (
                     <span className="badge badge-warning text-xs">
-                      Sinav{r.exam_branch_wt ? ' WT' : ''}{r.exam_branch_escrima ? ' ESC' : ''}
+                      Sınav{r.exam_branch_wt ? ' WT' : ''}{r.exam_branch_escrima ? ' ESC' : ''}
                     </span>
                   )}
                   {r.needs_manager_approval && !r.manager_approved && (
@@ -445,7 +445,7 @@ export default function Events() {
                     </span>
                   )}
                   {r.needs_manager_approval && r.manager_approved && (
-                    <span className="badge badge-success text-xs">Onaylandi</span>
+                    <span className="badge badge-success text-xs">Onaylandı</span>
                   )}
                 </div>
               </div>
@@ -454,7 +454,7 @@ export default function Events() {
               )}
             </div>
           ))}
-          {regListItems.length === 0 && <p className="text-sm text-dark-400 p-4">Henuz kayit yok</p>}
+          {regListItems.length === 0 && <p className="text-sm text-dark-400 p-4">Henüz kayıt yok</p>}
         </div>
       </Modal>
     </div>

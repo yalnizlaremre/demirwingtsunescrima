@@ -152,7 +152,7 @@ async def get_event(
     )
     event = result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
 
     return EventResponse(
         id=str(event.id),
@@ -182,7 +182,7 @@ async def update_event(
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
 
     update_data = data.model_dump(exclude_unset=True)
     school_ids = update_data.pop("selected_school_ids", None)
@@ -229,7 +229,7 @@ async def delete_event(
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
 
     await db.delete(event)
     await db.commit()
@@ -250,14 +250,14 @@ async def register_for_event(
     )
     student = student_result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=400, detail="Ogrenci profili bulunamadi")
+        raise HTTPException(status_code=400, detail="Öğrenci profili bulunamadı")
 
     event_result = await db.execute(select(Event).where(Event.id == event_id))
     event = event_result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
     if event.is_completed:
-        raise HTTPException(status_code=400, detail="Bu etkinlik tamamlanmis")
+        raise HTTPException(status_code=400, detail="Bu etkinlik tamamlanmış")
 
     if event.scope == EventScope.SELECTED_SCHOOLS.value:
         school_check = await db.execute(
@@ -267,7 +267,7 @@ async def register_for_event(
             )
         )
         if not school_check.scalar_one_or_none():
-            raise HTTPException(status_code=403, detail="Bu etkinlik sizin okulunuza acik degil")
+            raise HTTPException(status_code=403, detail="Bu etkinlik sizin okulunuza açık değil")
 
     existing = await db.execute(
         select(EventRegistration).where(
@@ -276,7 +276,7 @@ async def register_for_event(
         )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Zaten kayitlisiniz")
+        raise HTTPException(status_code=400, detail="Zaten kayıtlısınız")
 
     will_take_exam = data.will_take_exam if event.event_type == EventType.SEMINAR.value else False
 
@@ -438,9 +438,9 @@ async def approve_exam_registration(
     )
     reg = result.scalar_one_or_none()
     if not reg:
-        raise HTTPException(status_code=404, detail="Kayit bulunamadi")
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı")
     if not reg.needs_manager_approval:
-        raise HTTPException(status_code=400, detail="Bu kayit onay gerektirmiyor")
+        raise HTTPException(status_code=400, detail="Bu kayıt onay gerektirmiyor")
 
     reg.manager_approved = True
     await db.commit()
@@ -460,18 +460,18 @@ async def evaluate_seminar(
     event_result = await db.execute(select(Event).where(Event.id == event_id))
     event = event_result.scalar_one_or_none()
     if not event:
-        raise HTTPException(status_code=404, detail="Etkinlik bulunamadi")
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
     if event.event_type != EventType.SEMINAR.value:
-        raise HTTPException(status_code=400, detail="Bu etkinlik seminer degil")
+        raise HTTPException(status_code=400, detail="Bu etkinlik seminer değil")
     if event.is_completed:
-        raise HTTPException(status_code=400, detail="Bu seminer zaten degerlendirilmis")
+        raise HTTPException(status_code=400, detail="Bu seminer zaten değerlendirilmiş")
 
     # --- Guard: passed + failed toplam bossa reddet ---
     all_evaluated_ids = set(data.passed_student_ids) | set(data.failed_student_ids)
     if not all_evaluated_ids:
         raise HTTPException(
             status_code=400,
-            detail="En az bir ogrenci sonucu girilmeden seminer tamamlanamaz.",
+            detail="En az bir öğrenci sonucu girilmeden seminer tamamlanamaz.",
         )
 
     # Ayni ogrencinin her iki listede olmasi tutarsizlik
@@ -479,7 +479,7 @@ async def evaluate_seminar(
     if overlap:
         raise HTTPException(
             status_code=400,
-            detail=f"Su ogrenciler hem gecti hem kaldi listesinde: {list(overlap)}",
+            detail=f"Şu öğrenciler hem geçti hem kaldı listesinde: {list(overlap)}",
         )
 
     now = utcnow_naive()

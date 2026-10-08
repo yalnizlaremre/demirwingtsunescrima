@@ -53,7 +53,7 @@ export default function Medya() {
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               filter === f.key
                 ? 'bg-primary-600 text-white'
-                : 'bg-dark-800 text-dark-400 hover:text-white'
+                : 'bg-dark-800 border border-dark-700 text-dark-400 hover:text-ink'
             }`}
           >
             {f.label}
@@ -114,7 +114,7 @@ export default function Medya() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
+          className="theme-dark fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
           onClick={() => setLightbox(null)}
         >
           <button onClick={() => setLightbox(null)} className="absolute top-6 right-6 text-white hover:text-dark-300" title="Kapat">
@@ -126,7 +126,7 @@ export default function Medya() {
 
       {player && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
+          className="theme-dark fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
           onClick={() => setPlayer(null)}
         >
           <button onClick={() => setPlayer(null)} className="absolute top-6 right-6 text-white hover:text-dark-300" title="Kapat">

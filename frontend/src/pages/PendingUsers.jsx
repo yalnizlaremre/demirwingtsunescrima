@@ -22,21 +22,21 @@ export default function PendingUsers() {
   const handleApprove = async (userId) => {
     try {
       await api.post(`/users/${userId}/approve`);
-      toast.success('Uye onaylandi');
+      toast.success('Üye onaylandı');
       fetchPending();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
   const handleReject = async (userId) => {
-    if (!confirm('Bu kaydi reddedip silmek istediginize emin misiniz?')) return;
+    if (!confirm('Bu kaydı reddedip silmek istediğinize emin misiniz?')) return;
     try {
       await api.delete(`/users/${userId}`);
-      toast.success('Kayit silindi');
+      toast.success('Kayıt silindi');
       fetchPending();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -44,10 +44,10 @@ export default function PendingUsers() {
 
   return (
     <div>
-      <PageHeader title="Bekleyen Uyeler" subtitle={`${users.length} yeni kayit onay bekliyor`} />
+      <PageHeader title="Bekleyen Üyeler" subtitle={`${users.length} yeni kayıt onay bekliyor`} />
 
       {users.length === 0 ? (
-        <EmptyState message="Onay bekleyen yeni uye yok" icon={UserPlus} />
+        <EmptyState message="Onay bekleyen yeni üye yok" icon={UserPlus} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {users.map((u) => (

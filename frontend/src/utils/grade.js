@@ -1,4 +1,4 @@
-// current_grade === 0: ogrenci henuz 1. dereceyi almamis (yeni baslayan).
+// current_grade === 0: öğrenci henüz 1. dereceyi almamis (yeni baslayan).
 export function isNoGrade(grade) {
   return grade === 0;
 }

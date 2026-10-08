@@ -71,15 +71,15 @@ async def upload_avatar(
     db: AsyncSession = Depends(get_db),
 ):
     if current_user.role == UserRole.MEMBER.value:
-        raise HTTPException(status_code=403, detail="Profil fotografi yukleme yetkiniz yok")
+        raise HTTPException(status_code=403, detail="Profil fotoğrafı yükleme yetkiniz yok")
 
     content_type = file.content_type or ""
     if content_type not in ALLOWED_AVATAR_TYPES:
-        raise HTTPException(status_code=400, detail="Sadece JPEG, PNG veya WebP yukleyebilirsiniz")
+        raise HTTPException(status_code=400, detail="Sadece JPEG, PNG veya WebP yükleyebilirsiniz")
 
     content = await file.read()
     if len(content) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="Dosya boyutu 5MB'dan buyuk olamaz")
+        raise HTTPException(status_code=400, detail="Dosya boyutu 5MB'dan büyük olamaz")
 
     if current_user.avatar_url:
         old_file = os.path.join(settings.UPLOAD_DIR, os.path.basename(current_user.avatar_url))
@@ -115,7 +115,7 @@ async def get_my_profile(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Ogrenci profili bulunamadi")
+        raise HTTPException(status_code=404, detail="Öğrenci profili bulunamadı")
 
     progress_details = []
     for p in (student.progress or []):
@@ -184,20 +184,20 @@ async def create_student(
     user_result = await db.execute(select(User).where(User.id == data.user_id))
     user = user_result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="Kullanici bulunamadi")
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
     if current_user.role == UserRole.MANAGER.value and user.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
-        raise HTTPException(status_code=403, detail="Bu kullaniciyi ogrenci olarak atayamazsiniz")
+        raise HTTPException(status_code=403, detail="Bu kullanıcıyı öğrenci olarak atayamazsınız")
 
     existing_student = await db.execute(
         select(Student).where(Student.user_id == data.user_id)
     )
     if existing_student.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Bu kullanicinin zaten bir ogrenci kaydi var")
+        raise HTTPException(status_code=409, detail="Bu kullanıcının zaten bir öğrenci kaydı var")
 
     school_result = await db.execute(select(School).where(School.id == data.school_id))
     if not school_result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Okul bulunamadi")
+        raise HTTPException(status_code=404, detail="Okul bulunamadı")
 
     student = Student(
         user_id=data.user_id,
@@ -316,7 +316,7 @@ async def get_student(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+        raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
 
     if current_user.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
         pass
@@ -325,11 +325,11 @@ async def get_student(
             select(SchoolManager.school_id).where(SchoolManager.user_id == current_user.id)
         )
         if student.school_id not in [row[0] for row in manager_schools.all()]:
-            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
+            raise HTTPException(status_code=403, detail="Bu öğrenci sizin okulunuzda değil")
     elif current_user.role == UserRole.USER.value and student.user_id == current_user.id:
         pass
     else:
-        raise HTTPException(status_code=403, detail="Bu ogrenci profiline erisim yetkiniz yok")
+        raise HTTPException(status_code=403, detail="Bu öğrenci profiline erişim yetkiniz yok")
 
     return _student_to_response(student)
 
@@ -350,9 +350,9 @@ async def delete_student(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+        raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
     if not student.user:
-        raise HTTPException(status_code=404, detail="Ogrenciye bagli kullanici bulunamadi")
+        raise HTTPException(status_code=404, detail="Öğrenciye bağlı kullanıcı bulunamadı")
 
     check_can_delete_user(current_user, student.user)
     await delete_user_and_cascade(db, student.user)
@@ -376,7 +376,7 @@ async def update_student(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+        raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
 
     if current_user.role == UserRole.MANAGER.value:
         manager_schools = await db.execute(
@@ -384,7 +384,7 @@ async def update_student(
         )
         school_ids = [row[0] for row in manager_schools.all()]
         if student.school_id not in school_ids:
-            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
+            raise HTTPException(status_code=403, detail="Bu öğrenci sizin okulunuzda değil")
 
     old_school_id = student.school_id
     changed_fields = []
@@ -399,7 +399,7 @@ async def update_student(
             select(School).where(School.id == data.school_id)
         )
         if not school_result.scalar_one_or_none():
-            raise HTTPException(status_code=404, detail="Okul bulunamadi")
+            raise HTTPException(status_code=404, detail="Okul bulunamadı")
 
         student.school_id = data.school_id
         changed_fields.append("school_id")
@@ -460,13 +460,13 @@ async def suspend_student(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+        raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
 
     if student.user.role not in (UserRole.USER.value, UserRole.MEMBER.value):
-        raise HTTPException(status_code=400, detail="Yalnizca USER rolundeki ogrenciler askiya alinabilir")
+        raise HTTPException(status_code=400, detail="Yalnızca USER rolündeki öğrenciler askıya alınabilir")
 
     if student.user.role == UserRole.MEMBER.value:
-        raise HTTPException(status_code=400, detail="Ogrenci zaten askiya alinmis")
+        raise HTTPException(status_code=400, detail="Öğrenci zaten askıya alınmış")
 
     if current_user.role == UserRole.MANAGER.value:
         manager_schools = await db.execute(
@@ -474,7 +474,7 @@ async def suspend_student(
         )
         school_ids = [row[0] for row in manager_schools.all()]
         if student.school_id not in school_ids:
-            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
+            raise HTTPException(status_code=403, detail="Bu öğrenci sizin okulunuzda değil")
 
     student.user.role = UserRole.MEMBER.value
 
@@ -512,10 +512,10 @@ async def reactivate_student(
     )
     student = result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Ogrenci bulunamadi")
+        raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
 
     if student.user.role != UserRole.MEMBER.value:
-        raise HTTPException(status_code=400, detail="Ogrenci zaten aktif (USER rolunde)")
+        raise HTTPException(status_code=400, detail="Öğrenci zaten aktif (USER rolünde)")
 
     if student.user.status != UserStatus.ACTIVE.value:
         raise HTTPException(status_code=400, detail="Kullanici aktif degil, once aktifleştirin")
@@ -526,7 +526,7 @@ async def reactivate_student(
         )
         school_ids = [row[0] for row in manager_schools.all()]
         if student.school_id not in school_ids:
-            raise HTTPException(status_code=403, detail="Bu ogrenci sizin okulunuzda degil")
+            raise HTTPException(status_code=403, detail="Bu öğrenci sizin okulunuzda değil")
 
     student.user.role = UserRole.USER.value
 

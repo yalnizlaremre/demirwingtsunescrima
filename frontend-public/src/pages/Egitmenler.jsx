@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, Instagram } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import SafeImage from '../components/SafeImage';
 import usePageMeta from '../hooks/usePageMeta';
 
 const TITLE_LABELS = { SIFU: 'Sifu', SIHING: 'Sihing' };
@@ -40,13 +41,16 @@ export default function Egitmenler() {
           {instructors.map((i) => (
             <div key={i.id} className="card text-center">
               <div className="w-24 h-24 rounded-full bg-dark-700 mx-auto mb-4 overflow-hidden flex items-center justify-center">
-                {i.avatar_url ? (
-                  <img src={i.avatar_url} alt={`${i.first_name} ${i.last_name}`} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl font-bold text-dark-400">
-                    {i.first_name?.[0]}{i.last_name?.[0]}
-                  </span>
-                )}
+                <SafeImage
+                  src={i.avatar_url}
+                  alt={`${i.first_name} ${i.last_name}`}
+                  className="w-full h-full object-cover"
+                  fallback={
+                    <span className="text-2xl font-bold text-dark-400">
+                      {i.first_name?.[0]}{i.last_name?.[0]}
+                    </span>
+                  }
+                />
               </div>
               <h3 className="font-semibold">{i.first_name} {i.last_name}</h3>
               {i.instructor_title && (
@@ -58,7 +62,7 @@ export default function Egitmenler() {
                   href={i.instagram_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-dark-400 hover:text-white text-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 text-dark-400 hover:text-ink text-sm transition-colors"
                 >
                   <Instagram size={16} /> Instagram
                 </a>

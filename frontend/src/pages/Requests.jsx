@@ -46,24 +46,24 @@ export default function Requests() {
         preferred_date: form.preferred_date ? new Date(form.preferred_date).toISOString() : null,
       };
       await api.post('/requests/', payload);
-      toast.success('Talep olusturuldu');
+      toast.success('Talep oluşturuldu');
       setModalOpen(false);
       fetchRequests();
-    } catch (err) { toast.error(err.response?.data?.detail || 'Hata olustu'); }
+    } catch (err) { toast.error(err.response?.data?.detail || 'Hata oluştu'); }
   };
 
   const handleAction = async (id, status) => {
     try {
       await api.post(`/requests/${id}/handle`, { status });
-      toast.success(`Talep ${status === 'APPROVED' ? 'onaylandi' : 'reddedildi'}`);
+      toast.success(`Talep ${status === 'APPROVED' ? 'onaylandı' : 'reddedildi'}`);
       fetchRequests(statusFilter, typeFilter);
     } catch (err) { toast.error(err.response?.data?.detail || 'Hata'); }
   };
 
-  const getTypeLabel = (t) => ({ PRODUCT: 'Urun', PRIVATE_LESSON: 'Ozel Ders', GROUP_LESSON: 'Grup Ders' }[t] || t);
+  const getTypeLabel = (t) => ({ PRODUCT: 'Ürün', PRIVATE_LESSON: 'Özel Ders', GROUP_LESSON: 'Grup Ders' }[t] || t);
   const getStatusBadge = (s) => {
     const map = { PENDING: 'badge-warning', APPROVED: 'badge-success', REJECTED: 'badge-danger' };
-    const labels = { PENDING: 'Bekliyor', APPROVED: 'Onaylandi', REJECTED: 'Reddedildi' };
+    const labels = { PENDING: 'Bekliyor', APPROVED: 'Onaylandı', REJECTED: 'Reddedildi' };
     return <span className={`badge ${map[s]}`}>{labels[s]}</span>;
   };
 
@@ -79,32 +79,32 @@ export default function Requests() {
 
       <div className="flex flex-wrap gap-3 mb-6">
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); fetchRequests(e.target.value, typeFilter); }} className="select-field w-auto">
-          <option value="">Tum Durumlar</option>
+          <option value="">Tüm Durumlar</option>
           <option value="PENDING">Bekliyor</option>
-          <option value="APPROVED">Onaylandi</option>
+          <option value="APPROVED">Onaylandı</option>
           <option value="REJECTED">Reddedildi</option>
         </select>
         <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); fetchRequests(statusFilter, e.target.value); }} className="select-field w-auto">
-          <option value="">Tum Turler</option>
-          <option value="PRODUCT">Urun</option>
-          <option value="PRIVATE_LESSON">Ozel Ders</option>
+          <option value="">Tüm Türler</option>
+          <option value="PRODUCT">Ürün</option>
+          <option value="PRIVATE_LESSON">Özel Ders</option>
           <option value="GROUP_LESSON">Grup Ders</option>
         </select>
       </div>
 
       {requests.length === 0 ? (
-        <EmptyState message="Henuz talep yok" icon={MessageSquare} />
+        <EmptyState message="Henüz talep yok" icon={MessageSquare} />
       ) : (
         <div className="table-container">
           <table>
             <thead>
               <tr>
-                <th>Ogrenci</th>
-                <th>Tur</th>
+                <th>Öğrenci</th>
+                <th>Tür</th>
                 <th>Detay</th>
                 <th>Durum</th>
                 <th className="hidden sm:table-cell">Tarih</th>
-                {isManagerOrAbove && <th>Islem</th>}
+                {isManagerOrAbove && <th>İşlem</th>}
               </tr>
             </thead>
             <tbody>
@@ -113,9 +113,9 @@ export default function Requests() {
                   <td className="font-medium">{r.student_name || '-'}</td>
                   <td><span className="badge badge-info">{getTypeLabel(r.request_type)}</span></td>
                   <td className="text-sm text-dark-500">
-                    {r.product_name && <span>Urun: {r.product_name}</span>}
+                    {r.product_name && <span>Ürün: {r.product_name}</span>}
                     {r.size && <span> ({r.size})</span>}
-                    {r.branch && <span>Brans: {r.branch === 'WING_TSUN' ? 'WT' : 'ESC'}</span>}
+                    {r.branch && <span>Branş: {r.branch === 'WING_TSUN' ? 'WT' : 'ESC'}</span>}
                     {r.notes && <p className="text-xs mt-0.5">{r.notes}</p>}
                   </td>
                   <td>{getStatusBadge(r.status)}</td>
@@ -140,19 +140,19 @@ export default function Requests() {
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Yeni Talep">
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Talep Turu *</label>
+            <label className="block text-sm font-medium mb-1">Talep Türü *</label>
             <select value={form.request_type} onChange={(e) => update('request_type', e.target.value)} className="select-field">
-              <option value="PRODUCT">Urun Talebi</option>
-              <option value="PRIVATE_LESSON">Ozel Ders Talebi</option>
+              <option value="PRODUCT">Ürün Talebi</option>
+              <option value="PRIVATE_LESSON">Özel Ders Talebi</option>
               <option value="GROUP_LESSON">Grup Ders Talebi</option>
             </select>
           </div>
           {form.request_type === 'PRODUCT' && (
             <>
               <div>
-                <label className="block text-sm font-medium mb-1">Urun *</label>
+                <label className="block text-sm font-medium mb-1">Ürün *</label>
                 <select value={form.product_id} onChange={(e) => update('product_id', e.target.value)} className="select-field" required>
-                  <option value="">Urun secin...</option>
+                  <option value="">Ürün seçin...</option>
                   {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
@@ -165,9 +165,9 @@ export default function Requests() {
           {(form.request_type === 'PRIVATE_LESSON' || form.request_type === 'GROUP_LESSON') && (
             <>
               <div>
-                <label className="block text-sm font-medium mb-1">Brans</label>
+                <label className="block text-sm font-medium mb-1">Branş</label>
                 <select value={form.branch} onChange={(e) => update('branch', e.target.value)} className="select-field">
-                  <option value="">Secin...</option>
+                  <option value="">Seçin...</option>
                   <option value="WING_TSUN">Wing Tsun</option>
                   <option value="ESCRIMA">Escrima</option>
                 </select>
@@ -183,8 +183,8 @@ export default function Requests() {
             <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} className="input-field" rows={2} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">Gonder</button>
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">Gönder</button>
           </div>
         </form>
       </Modal>

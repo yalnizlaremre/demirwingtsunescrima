@@ -23,6 +23,7 @@ import Users from './pages/Users';
 import SiteContent from './pages/SiteContent';
 import Profile from './pages/Profile';
 import MySchool from './pages/MySchool';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   const { loading } = useAuth();
@@ -32,7 +33,7 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center bg-dark-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-dark-400">Yukleniyor...</p>
+          <p className="text-dark-400">Yükleniyor...</p>
         </div>
       </div>
     );
@@ -114,6 +115,7 @@ export default function App() {
           </ProtectedRoute>
         } />
       </Route>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

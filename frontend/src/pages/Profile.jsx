@@ -82,7 +82,7 @@ export default function Profile() {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (pwForm.new_password !== pwForm.confirm_password) {
-      toast.error('Yeni sifreler eslesmiyor');
+      toast.error('Yeni şifreler eşleşmiyor');
       return;
     }
     setPwSaving(true);
@@ -91,10 +91,10 @@ export default function Profile() {
         current_password: pwForm.current_password,
         new_password: pwForm.new_password,
       });
-      toast.success('Sifre basariyla degistirildi');
+      toast.success('Şifre başarıyla değiştirildi');
       setPwForm({ current_password: '', new_password: '', confirm_password: '' });
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Sifre degistirilemedi');
+      toast.error(err.response?.data?.detail || 'Şifre değiştirilemedi');
     } finally {
       setPwSaving(false);
     }
@@ -106,13 +106,13 @@ export default function Profile() {
     if (eligibility === 'ELIGIBLE') {
       return (
         <span className="flex items-center gap-1 text-sm text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-          <CheckCircle2 size={14} /> Sinava girebilir
+          <CheckCircle2 size={14} /> Sınava girebilir
         </span>
       );
     } else if (eligibility === 'NEEDS_APPROVAL') {
       return (
         <span className="flex items-center gap-1 text-sm text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">
-          <AlertTriangle size={14} /> Egitmen onayi gerekli
+          <AlertTriangle size={14} /> Eğitmen onayı gerekli
         </span>
       );
     }
@@ -239,15 +239,15 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Sifre Degistir - tum roller */}
+      {/* Şifre Değiştir - tüm roller */}
       <div className="card mb-6">
         <h3 className="font-semibold text-dark-700 flex items-center gap-2 mb-4">
-          <Lock size={18} /> Sifre Degistir
+          <Lock size={18} /> Şifre Değiştir
         </h3>
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Mevcut Sifre</label>
+              <label className="block text-sm font-medium mb-1">Mevcut Şifre</label>
               <PasswordInput
                 value={pwForm.current_password}
                 onChange={(e) => setPwForm(f => ({ ...f, current_password: e.target.value }))}
@@ -256,7 +256,7 @@ export default function Profile() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Yeni Sifre</label>
+              <label className="block text-sm font-medium mb-1">Yeni Şifre</label>
               <PasswordInput
                 value={pwForm.new_password}
                 onChange={(e) => setPwForm(f => ({ ...f, new_password: e.target.value }))}
@@ -266,7 +266,7 @@ export default function Profile() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Yeni Sifre (Tekrar)</label>
+              <label className="block text-sm font-medium mb-1">Yeni Şifre (Tekrar)</label>
               <PasswordInput
                 value={pwForm.confirm_password}
                 onChange={(e) => setPwForm(f => ({ ...f, confirm_password: e.target.value }))}
@@ -277,7 +277,7 @@ export default function Profile() {
             </div>
           </div>
           <button type="submit" className="btn-primary" disabled={pwSaving}>
-            {pwSaving ? 'Kaydediliyor...' : 'Sifreyi Degistir'}
+            {pwSaving ? 'Kaydediliyor...' : 'Şifreyi Değiştir'}
           </button>
         </form>
       </div>
@@ -285,7 +285,7 @@ export default function Profile() {
       {/* Student Progress (only for students with profile) */}
       {profile && profile.progress && profile.progress.length > 0 && (
         <>
-          <h2 className="text-lg font-semibold mb-4">Brans Ilerleme Durumu</h2>
+          <h2 className="text-lg font-semibold mb-4">Branş İlerleme Durumu</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {profile.progress.map((p) => {
               const percent = getProgressPercent(p.completed_hours, p.required_hours);
@@ -309,7 +309,7 @@ export default function Profile() {
                       <span className={`font-bold text-2xl ${isNoGrade(p.current_grade) ? 'text-amber-600' : ''}`}>{formatGrade(p.current_grade)}</span>
                     </div>
 
-                    {/* Ilerleme Cubugu */}
+                    {/* İlerleme Cubugu */}
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-dark-500">Tamamlanan</span>
@@ -327,7 +327,7 @@ export default function Profile() {
                       </div>
                       <div className="flex justify-between text-xs text-dark-400 mt-1">
                         <span>0</span>
-                        <span className="text-amber-600">Alt sinir: {p.minimum_hours}s</span>
+                        <span className="text-amber-600">Alt sınır: {p.minimum_hours}s</span>
                         <span>{p.required_hours}s</span>
                       </div>
                     </div>
@@ -339,7 +339,7 @@ export default function Profile() {
                         <p className="font-bold text-lg">{p.remaining_hours}</p>
                       </div>
                       <div className="text-center p-2 bg-dark-50 rounded-lg">
-                        <p className="text-xs text-dark-500">Ilerleme</p>
+                        <p className="text-xs text-dark-500">İlerleme</p>
                         <p className="font-bold text-lg">%{percent}</p>
                       </div>
                     </div>

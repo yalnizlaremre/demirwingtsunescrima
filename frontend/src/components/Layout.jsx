@@ -23,18 +23,18 @@ export default function Layout() {
     { to: '/profile', label: 'Profilim', icon: User, show: true },
     { to: '/my-school', label: 'Okulum', icon: School, show: isUser },
     { to: '/schools', label: 'Okullar', icon: School, show: isAdmin || isMember || isUser || hasPermission('manage_schools') },
-    { to: '/students', label: 'Ogrenciler', icon: GraduationCap, show: isAdmin || isManager },
+    { to: '/students', label: 'Öğrenciler', icon: GraduationCap, show: isAdmin || isManager },
     { to: '/students/pending', label: 'Onay Bekleyenler', icon: Users, show: isAdmin || isManager },
-    { to: '/users/pending', label: 'Bekleyen Uyeler', icon: UserPlus, show: isAdmin || isManager },
+    { to: '/users/pending', label: 'Bekleyen Üyeler', icon: UserPlus, show: isAdmin || isManager },
     { to: '/lessons', label: 'Dersler', icon: BookOpen, show: isAdmin || isManager },
     { to: '/events', label: 'Etkinlikler', icon: CalendarDays, show: true },
     { to: '/grades', label: 'Dereceler', icon: Shield, show: isAdmin || isManager },
-    { to: '/products', label: 'Urunler', icon: Package, show: true },
+    { to: '/products', label: 'Ürünler', icon: Package, show: true },
     { to: '/requests', label: 'Talepler', icon: MessageSquare, show: !isMember },
     { to: '/mail', label: 'Mail', icon: Mail, show: isAdmin || isManager },
     { to: '/media', label: 'Medya', icon: Image, show: isAdmin || isManager || isUser || isMember },
-    { to: '/users', label: 'Kullanicilar', icon: Users, show: isAdmin || hasPermission('manage_users') },
-    { to: '/site-content', label: 'Site Icerigi', icon: FileText, show: isAdmin || hasPermission('manage_site_content') },
+    { to: '/users', label: 'Kullanıcılar', icon: Users, show: isAdmin || hasPermission('manage_users') },
+    { to: '/site-content', label: 'Site İçeriği', icon: FileText, show: isAdmin || hasPermission('manage_site_content') },
   ];
 
   const filteredNav = navItems.filter((item) => item.show);
@@ -43,9 +43,9 @@ export default function Layout() {
     const roles = {
       SUPER_ADMIN: { label: 'Super Admin', class: 'bg-purple-100 text-purple-800' },
       ADMIN: { label: 'Admin', class: 'bg-blue-100 text-blue-800' },
-      MANAGER: { label: 'Egitmen', class: 'bg-emerald-100 text-emerald-800' },
-      USER: { label: 'Ogrenci', class: 'bg-amber-100 text-amber-800' },
-      MEMBER: { label: 'Uye', class: 'bg-gray-100 text-gray-800' },
+      MANAGER: { label: 'Eğitmen', class: 'bg-emerald-100 text-emerald-800' },
+      USER: { label: 'Öğrenci', class: 'bg-amber-100 text-amber-800' },
+      MEMBER: { label: 'Üye', class: 'bg-gray-100 text-gray-800' },
     };
     const r = roles[user?.role] || roles.MEMBER;
     return <span className={`badge ${r.class}`}>{r.label}</span>;
@@ -74,7 +74,7 @@ export default function Layout() {
       >
         <div className="p-5 border-b border-dark-700 shrink-0">
           <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-12 w-auto" />
-          <p className="text-dark-400 text-xs mt-1">Okul Yonetim Sistemi</p>
+          <p className="text-dark-400 text-xs mt-1">Okul Yönetim Sistemi</p>
         </div>
 
         <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
@@ -115,7 +115,7 @@ export default function Layout() {
             className="flex items-center gap-2 text-dark-400 hover:text-red-400 text-sm w-full transition-colors"
           >
             <LogOut size={16} />
-            Cikis Yap
+            Çıkış Yap
           </button>
           <a
             href="https://demirwingtsun.com"

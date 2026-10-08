@@ -156,10 +156,10 @@ async def import_youtube(
             bool(data.school_id) and user_has_permission(current_user, Permission.MANAGE_SCHOOLS)
         )
         if not allowed:
-            raise HTTPException(status_code=403, detail="Medya yukleme yetkiniz yok")
+            raise HTTPException(status_code=403, detail="Medya yükleme yetkiniz yok")
 
     if not data.youtube_url or "youtu" not in data.youtube_url:
-        raise HTTPException(status_code=400, detail="Gecerli bir YouTube linki girin")
+        raise HTTPException(status_code=400, detail="Geçerli bir YouTube linki girin")
 
     media = Media(
         media_type="YOUTUBE",

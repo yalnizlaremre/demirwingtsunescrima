@@ -114,13 +114,13 @@ async def create_schedule(
 ):
     # Validate day_of_week
     if data.day_of_week < 0 or data.day_of_week > 6:
-        raise HTTPException(status_code=400, detail="day_of_week 0-6 arasi olmali")
+        raise HTTPException(status_code=400, detail="Gün değeri 0-6 arasında olmalı")
 
     # Validate lesson_type
     try:
         lt = LessonType(data.lesson_type)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Gecersiz ders turu")
+        raise HTTPException(status_code=400, detail="Geçersiz ders türü")
 
     # MANAGER check
     if current_user.role == UserRole.MANAGER.value:
@@ -129,17 +129,17 @@ async def create_schedule(
         )
         school_ids = [row[0] for row in manager_schools.all()]
         if data.school_id not in school_ids:
-            raise HTTPException(status_code=403, detail="Bu okul icin program olusturamazsiniz")
+            raise HTTPException(status_code=403, detail="Bu okul için program oluşturamazsınız")
 
     # Parse dates
     try:
         start_dt = datetime.strptime(data.start_date, "%Y-%m-%d").date()
         end_dt = datetime.strptime(data.end_date, "%Y-%m-%d").date()
     except ValueError:
-        raise HTTPException(status_code=400, detail="Tarih formati YYYY-MM-DD olmali")
+        raise HTTPException(status_code=400, detail="Tarih formatı YYYY-MM-DD olmalı")
 
     if end_dt <= start_dt:
-        raise HTTPException(status_code=400, detail="Bitis tarihi baslangictan sonra olmali")
+        raise HTTPException(status_code=400, detail="Bitiş tarihi başlangıçtan sonra olmalı")
 
     # Validate start_time format
     try:
@@ -147,7 +147,7 @@ async def create_schedule(
         int(hour)
         int(minute)
     except (ValueError, AttributeError):
-        raise HTTPException(status_code=400, detail="Saat formati HH:MM olmali")
+        raise HTTPException(status_code=400, detail="Saat formatı HH:MM olmalı")
 
     duration = data.duration_hours if data.duration_hours is not None else LESSON_DURATION[lt]
 
@@ -220,7 +220,7 @@ async def get_schedule(
     )
     schedule = result.scalar_one_or_none()
     if not schedule:
-        raise HTTPException(status_code=404, detail="Program bulunamadi")
+        raise HTTPException(status_code=404, detail="Program bulunamadı")
 
     return _schedule_to_response(schedule)
 
@@ -238,7 +238,7 @@ async def delete_schedule(
     )
     schedule = result.scalar_one_or_none()
     if not schedule:
-        raise HTTPException(status_code=404, detail="Program bulunamadi")
+        raise HTTPException(status_code=404, detail="Program bulunamadı")
 
     if current_user.role == UserRole.MANAGER.value:
         manager_schools = await db.execute(
@@ -246,7 +246,7 @@ async def delete_schedule(
         )
         school_ids = [row[0] for row in manager_schools.all()]
         if schedule.school_id not in school_ids:
-            raise HTTPException(status_code=403, detail="Bu program sizin okulunuzda degil")
+            raise HTTPException(status_code=403, detail="Bu program sizin okulunuzda değil")
 
     # Deactivate schedule
     schedule.is_active = False
@@ -283,7 +283,7 @@ async def extend_schedule(
     )
     schedule = result.scalar_one_or_none()
     if not schedule:
-        raise HTTPException(status_code=404, detail="Program bulunamadi")
+        raise HTTPException(status_code=404, detail="Program bulunamadı")
 
     if current_user.role == UserRole.MANAGER.value:
         manager_schools = await db.execute(
@@ -291,17 +291,17 @@ async def extend_schedule(
         )
         school_ids = [row[0] for row in manager_schools.all()]
         if schedule.school_id not in school_ids:
-            raise HTTPException(status_code=403, detail="Bu program sizin okulunuzda degil")
+            raise HTTPException(status_code=403, detail="Bu program sizin okulunuzda değil")
 
     if not schedule.is_active:
-        raise HTTPException(status_code=400, detail="Program aktif degil")
+        raise HTTPException(status_code=400, detail="Program aktif değil")
 
     # Update end_date if provided
     if new_end_date:
         try:
             new_end_dt = datetime.strptime(new_end_date, "%Y-%m-%d").date()
         except ValueError:
-            raise HTTPException(status_code=400, detail="Tarih formati YYYY-MM-DD olmali")
+            raise HTTPException(status_code=400, detail="Tarih formatı YYYY-MM-DD olmalı")
         schedule.end_date = datetime.combine(new_end_dt, datetime.min.time())
 
     start_dt = schedule.start_date.date() if isinstance(schedule.start_date, datetime) else schedule.start_date

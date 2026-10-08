@@ -55,7 +55,7 @@ async def get_my_school(
     )
     student = student_result.scalar_one_or_none()
     if not student:
-        raise HTTPException(status_code=404, detail="Bir okula kayitli degilsiniz")
+        raise HTTPException(status_code=404, detail="Bir okula kayıtlı değilsiniz")
 
     # Get the school with managers (selectinload ile N+1 önlendi)
     school_result = await db.execute(
@@ -65,7 +65,7 @@ async def get_my_school(
     )
     school = school_result.scalar_one_or_none()
     if not school:
-        raise HTTPException(status_code=404, detail="Okul bulunamadi")
+        raise HTTPException(status_code=404, detail="Okul bulunamadı")
 
     # Get instructors (managers) - relationship üzerinden tek sorguda geldi
     instructors = []

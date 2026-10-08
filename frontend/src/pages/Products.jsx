@@ -62,23 +62,23 @@ export default function Products() {
       };
       if (editing) {
         await api.put(`/products/${editing.id}`, payload);
-        toast.success('Urun guncellendi');
+        toast.success('Ürün güncellendi');
       } else {
         await api.post('/products/', payload);
-        toast.success('Urun eklendi');
+        toast.success('Ürün eklendi');
       }
       setModalOpen(false);
       fetchProducts();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Bu urunu silmek istediginize emin misiniz?')) return;
+    if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
     try {
       await api.delete(`/products/${id}`);
-      toast.success('Urun silindi');
+      toast.success('Ürün silindi');
       fetchProducts();
     } catch (err) { toast.error(err.response?.data?.detail || 'Hata'); }
   };
@@ -100,17 +100,17 @@ export default function Products() {
 
   return (
     <div>
-      <PageHeader title="Urun Katalogu" subtitle={`${total} urun`}>
+      <PageHeader title="Ürün Kataloğu" subtitle={`${total} ürün`}>
         {canManageProducts && (
           <>
             <button onClick={() => setCatModalOpen(true)} className="btn-secondary"><Plus size={18} /> Kategori</button>
-            <button onClick={openCreate} className="btn-primary"><Plus size={18} /> Yeni Urun</button>
+            <button onClick={openCreate} className="btn-primary"><Plus size={18} /> Yeni Ürün</button>
           </>
         )}
       </PageHeader>
 
       {products.length === 0 ? (
-        <EmptyState message="Henuz urun eklenmemis" icon={Package} />
+        <EmptyState message="Henüz ürün eklenmemiş" icon={Package} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.map(p => (
@@ -133,43 +133,43 @@ export default function Products() {
         </div>
       )}
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Urun Duzenle' : 'Yeni Urun'}>
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Ürün Düzenle' : 'Yeni Ürün'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Urun Adi *</label>
+            <label className="block text-sm font-medium mb-1">Ürün Adı *</label>
             <input value={form.name} onChange={(e) => update('name', e.target.value)} className="input-field" required />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Kategori</label>
             <select value={form.category_id} onChange={(e) => update('category_id', e.target.value)} className="select-field">
-              <option value="">Kategori secin...</option>
+              <option value="">Kategori seçin...</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Aciklama</label>
+            <label className="block text-sm font-medium mb-1">Açıklama</label>
             <textarea value={form.description} onChange={(e) => update('description', e.target.value)} className="input-field" rows={2} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Bedenler (virgul ile)</label>
+            <label className="block text-sm font-medium mb-1">Bedenler (virgül ile)</label>
             <input value={form.sizes} onChange={(e) => update('sizes', e.target.value)} className="input-field" placeholder="S, M, L, XL" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Gorsel URL</label>
+            <label className="block text-sm font-medium mb-1">Görsel URL</label>
             <input value={form.image_url} onChange={(e) => update('image_url', e.target.value)} className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">{editing ? 'Guncelle' : 'Ekle'}</button>
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">{editing ? 'Güncelle' : 'Ekle'}</button>
           </div>
         </form>
       </Modal>
 
       <Modal isOpen={catModalOpen} onClose={() => setCatModalOpen(false)} title="Yeni Kategori">
         <div className="space-y-4">
-          <input value={catName} onChange={(e) => setCatName(e.target.value)} className="input-field" placeholder="Kategori adi" />
+          <input value={catName} onChange={(e) => setCatName(e.target.value)} className="input-field" placeholder="Kategori adı" />
           <div className="flex justify-end gap-3">
-            <button onClick={() => setCatModalOpen(false)} className="btn-secondary">Iptal</button>
+            <button onClick={() => setCatModalOpen(false)} className="btn-secondary">İptal</button>
             <button onClick={handleCreateCategory} className="btn-primary">Ekle</button>
           </div>
         </div>

@@ -15,26 +15,26 @@ export default function ForgotPassword() {
       await api.post('/auth/forgot-password', { email });
       setSent(true);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Bir hata olustu');
+      toast.error(err.response?.data?.detail || 'Bir hata oluştu');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-dark-50 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-20 w-auto mx-auto mb-4" />
-          <p className="text-dark-400 mt-2">Sifremi Unuttum</p>
+          <img src="/logo-light.png" alt="Demir Wing Tsun Akademi" className="h-20 w-auto mx-auto mb-4" />
+          <p className="text-dark-500 mt-2">Şifremi Unuttum</p>
         </div>
 
         <div className="card space-y-5">
-          <h2 className="text-xl font-semibold text-center">Sifremi Unuttum</h2>
+          <h2 className="text-xl font-semibold text-center">Şifremi Unuttum</h2>
 
           {sent ? (
             <p className="text-sm text-dark-500 text-center">
-              Bu e-posta adresi sistemde kayitliysa, sifre sifirlama linki gonderildi.
+              Bu e-posta adresi sistemde kayıtlıysa, şifre sıfırlama linki gönderildi.
               Gelen kutunuzu (ve spam klasorunu) kontrol edin.
             </p>
           ) : (
@@ -46,20 +46,20 @@ export default function ForgotPassword() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="input-field"
-                  placeholder="ornek@email.com"
+                  placeholder="örnek@email.com"
                   required
                 />
               </div>
 
               <button type="submit" disabled={loading} className="btn-primary w-full">
-                {loading ? 'Gonderiliyor...' : 'Sifirlama Linki Gonder'}
+                {loading ? 'Gönderiliyor...' : 'Sıfırlama Linki Gönder'}
               </button>
             </form>
           )}
 
           <p className="text-center text-sm text-dark-500">
             <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-              ← Giris sayfasina don
+              ← Giriş sayfasına dön
             </Link>
           </p>
         </div>

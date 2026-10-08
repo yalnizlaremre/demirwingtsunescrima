@@ -22,10 +22,10 @@ export default function PendingStudents() {
   const handleApprove = async (enrollmentId) => {
     try {
       await api.post(`/enrollments/${enrollmentId}/approve`);
-      toast.success('Talep onaylandi');
+      toast.success('Talep onaylandı');
       fetchPending();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -35,7 +35,7 @@ export default function PendingStudents() {
       toast.success('Talep reddedildi');
       fetchPending();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 

@@ -1,7 +1,7 @@
 import { Award } from 'lucide-react';
 import { isNoGrade } from '../utils/grade';
 
-// Kompakt (tablo hucresi) derece gosterimi: 0 = henuz 1. dereceyi almamis.
+// Kompakt (tablo hucresi) derece gosterimi: 0 = henüz 1. dereceyi almamis.
 export default function GradeBadge({ grade, color = 'text-primary-500' }) {
   if (grade === '-' || grade === null || grade === undefined) {
     return <span className="text-dark-400">-</span>;

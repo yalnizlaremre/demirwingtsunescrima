@@ -48,10 +48,10 @@ export default function Media() {
       await api.post(`/media/upload?is_public=${makePublic}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      toast.success('Dosya yuklendi');
+      toast.success('Dosya yüklendi');
       fetchMedia();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Yukleme hatasi');
+      toast.error(err.response?.data?.detail || 'Yükleme hatası');
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -74,12 +74,12 @@ export default function Media() {
       setYoutubeTitle('');
       fetchMedia();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'YouTube import hatasi');
+      toast.error(err.response?.data?.detail || 'YouTube import hatası');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Bu medyayi silmek istediginize emin misiniz?')) return;
+    if (!confirm('Bu medyayı silmek istediğinize emin misiniz?')) return;
     try {
       await api.delete(`/media/${id}`);
       toast.success('Medya silindi');
@@ -91,7 +91,7 @@ export default function Media() {
     try {
       await api.patch(`/media/${m.id}`, { is_public: !m.is_public });
       setMedia((prev) => prev.map((x) => (x.id === m.id ? { ...x, is_public: !m.is_public } : x)));
-      toast.success(!m.is_public ? 'Tanitim sitesinde gosterilecek' : 'Tanitim sitesinden kaldirildi');
+      toast.success(!m.is_public ? 'Tanıtım sitesinde gösterilecek' : 'Tanıtım sitesinden kaldırıldı');
     } catch (err) { toast.error(err.response?.data?.detail || 'Hata'); }
   };
 
@@ -131,7 +131,7 @@ export default function Media() {
                 <Play size={16} /> YouTube Ekle
               </button>
               <label className={`btn-primary cursor-pointer flex items-center gap-2 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                <Upload size={18} /> {uploading ? 'Yukleniyor...' : 'Dosya Yukle'}
+                <Upload size={18} /> {uploading ? 'Yükleniyor...' : 'Dosya Yükle'}
                 <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleUpload} className="hidden" />
               </label>
             </>
@@ -142,8 +142,8 @@ export default function Media() {
       {/* Filter */}
       <div className="flex gap-2 mb-4">
         {[
-          { key: 'ALL', label: 'Tumu' },
-          { key: 'IMAGE', label: 'Fotograflar' },
+          { key: 'ALL', label: 'Tümü' },
+          { key: 'IMAGE', label: 'Fotoğraflar' },
           { key: 'VIDEO', label: 'Videolar' },
           { key: 'YOUTUBE', label: 'YouTube' },
         ].map((f) => (
@@ -162,7 +162,7 @@ export default function Media() {
       </div>
 
       {media.length === 0 ? (
-        <EmptyState message="Henuz medya yuklenmemis" icon={Image} />
+        <EmptyState message="Henüz medya yüklenmemiş" icon={Image} />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {media.map(m => (
@@ -248,16 +248,16 @@ export default function Media() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Baslik</label>
+            <label className="block text-sm font-medium mb-1">Başlık</label>
             <input
               value={youtubeTitle}
               onChange={(e) => setYoutubeTitle(e.target.value)}
-              placeholder="Video basligi (opsiyonel)"
+              placeholder="Video başlığı (opsiyonel)"
               className="input-field"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setYoutubeModal(false)} className="btn-secondary">Iptal</button>
+            <button type="button" onClick={() => setYoutubeModal(false)} className="btn-secondary">İptal</button>
             <button type="submit" className="btn-primary">Ekle</button>
           </div>
         </form>

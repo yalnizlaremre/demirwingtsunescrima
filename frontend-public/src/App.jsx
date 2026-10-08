@@ -7,10 +7,11 @@ import DemirWteo from './pages/DemirWteo';
 import Egitmenler from './pages/Egitmenler';
 import Medya from './pages/Medya';
 import Iletisim from './pages/Iletisim';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-dark-900 text-white flex flex-col">
+    <div className="min-h-screen bg-dark-900 text-ink flex flex-col">
       <Nav />
       <main className="flex-1">
         <Routes>
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/egitmenler" element={<Egitmenler />} />
           <Route path="/medya" element={<Medya />} />
           <Route path="/iletisim" element={<Iletisim />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

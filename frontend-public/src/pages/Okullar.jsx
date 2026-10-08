@@ -3,6 +3,8 @@ import { School, MapPin, Phone, X } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import YouTubeEmbed from '../components/YouTubeEmbed';
+import SafeImage from '../components/SafeImage';
+import { telHref, formatPhone, mapsHref } from '../utils/contact';
 import usePageMeta from '../hooks/usePageMeta';
 
 export default function Okullar() {
@@ -39,24 +41,39 @@ export default function Okullar() {
         <div className="grid md:grid-cols-2 gap-8">
           {schools.map((s) => (
             <div key={s.id} className="card overflow-hidden">
-              {s.cover_image_url && (
-                <img
-                  src={s.cover_image_url}
+              <div className="-mt-6 -mx-6 mb-6 h-48 overflow-hidden rounded-t-xl">
+                <SafeImage
+                  src={s.cover_image_url || s.media?.[0]?.file_url}
                   alt={s.name}
-                  className="w-full h-48 object-cover rounded-lg -mt-6 -mx-6 mb-6"
-                  style={{ width: 'calc(100% + 3rem)' }}
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                  fallback={
+                    <div className="w-full h-full bg-gradient-to-br from-dark-950 via-dark-900 to-dark-700 flex items-center justify-center">
+                      <img src="/logo-light.png" alt="" className="h-16 w-auto opacity-40" />
+                    </div>
+                  }
                 />
-              )}
+              </div>
               <h3 className="font-bold text-xl mb-2">{s.name}</h3>
               {s.address && (
-                <p className="text-dark-400 text-sm flex items-center gap-2 mb-1">
-                  <MapPin size={14} /> {s.address}
-                </p>
+                <a
+                  href={mapsHref(s.address, s.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-dark-400 hover:text-ink text-sm flex items-start gap-2 mb-1 transition-colors"
+                  title="Haritada aç"
+                >
+                  <MapPin size={14} className="mt-0.5 shrink-0" /> <span>{s.address}</span>
+                </a>
               )}
               {s.phone && (
-                <p className="text-dark-400 text-sm flex items-center gap-2 mb-3">
-                  <Phone size={14} /> {s.phone}
-                </p>
+                <a
+                  href={telHref(s.phone)}
+                  className="text-dark-400 hover:text-ink text-sm flex items-center gap-2 mb-3 transition-colors"
+                  title="Ara"
+                >
+                  <Phone size={14} className="shrink-0" /> {formatPhone(s.phone)}
+                </a>
               )}
               <p className="text-dark-300 text-sm whitespace-pre-line">
                 {s.long_description || s.description}
@@ -86,7 +103,7 @@ export default function Okullar() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
+          className="theme-dark fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6"
           onClick={() => setLightbox(null)}
         >
           <button

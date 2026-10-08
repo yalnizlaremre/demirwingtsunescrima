@@ -24,6 +24,8 @@ export default function Schools() {
   const [galleryImages, setGalleryImages] = useState([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
   const galleryFileRef = useRef(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileRef = useRef(null);
   const { user, isAdmin, isMember } = useAuth();
 
   useEffect(() => {
@@ -55,10 +57,10 @@ export default function Schools() {
   const handleEnrollmentRequest = async (schoolId) => {
     try {
       await api.post('/enrollments/', { school_id: schoolId });
-      toast.success('Okula katilma talebiniz gonderildi');
+      toast.success('Okula katılma talebiniz gönderildi');
       fetchMyEnrollments();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Talep gonderilemedi');
+      toast.error(err.response?.data?.detail || 'Talep gönderilemedi');
     }
   };
 
@@ -85,6 +87,28 @@ export default function Schools() {
     setModalOpen(true);
   };
 
+  // Kapak görseli okul galerisine eklenmemesi için school_id olmadan yuklenir
+  // (Site İçeriği sayfasindaki görsel yükleme ile ayni yontem).
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    setCoverUploading(true);
+    try {
+      const res = await api.post('/media/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      update('cover_image_url', res.data.file_url);
+      toast.success('Kapak görseli yüklendi — kaydetmeyi unutmayın');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Yükleme hatası');
+    } finally {
+      setCoverUploading(false);
+      if (coverFileRef.current) coverFileRef.current.value = '';
+    }
+  };
+
   const handleGalleryUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0 || !editing) return;
@@ -99,10 +123,10 @@ export default function Schools() {
         });
         setGalleryImages((prev) => [...prev, { id: res.data.id, file_url: res.data.file_url, file_size: res.data.file_size }]);
       }
-      toast.success('Gorseller yuklendi');
+      toast.success('Görseller yüklendi');
       fetchSchools();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Yukleme hatasi');
+      toast.error(err.response?.data?.detail || 'Yükleme hatası');
     } finally {
       setGalleryUploading(false);
       if (galleryFileRef.current) galleryFileRef.current.value = '';
@@ -110,14 +134,14 @@ export default function Schools() {
   };
 
   const handleDeleteGalleryImage = async (mediaId) => {
-    if (!confirm('Bu gorseli galeriden silmek istediginize emin misiniz?')) return;
+    if (!confirm('Bu görseli galeriden silmek istediğinize emin misiniz?')) return;
     try {
       await api.delete(`/media/${mediaId}`);
       setGalleryImages((prev) => prev.filter((m) => m.id !== mediaId));
-      toast.success('Gorsel silindi');
+      toast.success('Görsel silindi');
       fetchSchools();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -126,26 +150,26 @@ export default function Schools() {
     try {
       if (editing) {
         await api.put(`/schools/${editing.id}`, form);
-        toast.success('Okul guncellendi');
+        toast.success('Okul güncellendi');
       } else {
         await api.post('/schools/', form);
-        toast.success('Okul olusturuldu');
+        toast.success('Okul oluşturuldu');
       }
       setModalOpen(false);
       fetchSchools();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Bu okulu silmek istediginize emin misiniz?')) return;
+    if (!confirm('Bu okulu silmek istediğinize emin misiniz?')) return;
     try {
       await api.delete(`/schools/${id}`);
       toast.success('Okul silindi');
       fetchSchools();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -173,24 +197,24 @@ export default function Schools() {
     if (!managerUserId) return;
     try {
       await api.post(`/schools/${selectedSchool.id}/managers`, { user_id: managerUserId });
-      toast.success('Egitmen atandi');
+      toast.success('Eğitmen atandı');
       setManagerUserId('');
       fetchAssignedManagers(selectedSchool.id);
       fetchSchools();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
   const removeManager = async (userId) => {
-    if (!window.confirm('Bu egitmenin okul atamasi kaldirilsin mi?')) return;
+    if (!window.confirm('Bu eğitmenin okul ataması kaldırılsın mi?')) return;
     try {
       await api.delete(`/schools/${selectedSchool.id}/managers/${userId}`);
-      toast.success('Egitmen atamasi kaldirildi');
+      toast.success('Eğitmen ataması kaldırıldı');
       fetchAssignedManagers(selectedSchool.id);
       fetchSchools();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -205,7 +229,7 @@ export default function Schools() {
         <PageHeader title="Okullar" subtitle={`${total} okul`} />
 
         {schools.length === 0 ? (
-          <EmptyState message="Henuz okul eklenmemis" icon={School} />
+          <EmptyState message="Henüz okul eklenmemiş" icon={School} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {schools.map((s) => (
@@ -228,10 +252,10 @@ export default function Schools() {
   if (isMember) {
     return (
       <div>
-        <PageHeader title="Okullar" subtitle="Bir okula katilma talebi olusturun" />
+        <PageHeader title="Okullar" subtitle="Bir okula katılma talebi oluşturun" />
 
         {schools.length === 0 ? (
-          <EmptyState message="Henuz okul eklenmemis" icon={School} />
+          <EmptyState message="Henüz okul eklenmemiş" icon={School} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {schools.map((s) => {
@@ -250,17 +274,17 @@ export default function Schools() {
                         onClick={() => handleEnrollmentRequest(s.id)}
                         className="btn-primary w-full flex items-center justify-center gap-2"
                       >
-                        <UserPlus size={16} /> Katilma Talebi Olustur
+                        <UserPlus size={16} /> Katılma Talebi Oluştur
                       </button>
                     )}
                     {enrollment && enrollment.status === 'PENDING' && (
                       <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-                        <Clock size={16} /> <span className="text-sm font-medium">Talep Gonderildi - Onay Bekleniyor</span>
+                        <Clock size={16} /> <span className="text-sm font-medium">Talep Gönderildi - Onay Bekleniyor</span>
                       </div>
                     )}
                     {enrollment && enrollment.status === 'APPROVED' && (
                       <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
-                        <CheckCircle size={16} /> <span className="text-sm font-medium">Onaylandi</span>
+                        <CheckCircle size={16} /> <span className="text-sm font-medium">Onaylandı</span>
                       </div>
                     )}
                     {enrollment && enrollment.status === 'REJECTED' && (
@@ -286,7 +310,7 @@ export default function Schools() {
       </PageHeader>
 
       {schools.length === 0 ? (
-        <EmptyState message="Henuz okul eklenmemis" icon={School} />
+        <EmptyState message="Henüz okul eklenmemiş" icon={School} />
       ) : (
         <div className="table-container">
           <table>
@@ -296,7 +320,7 @@ export default function Schools() {
                 <th className="hidden md:table-cell">Adres</th>
                 <th className="hidden sm:table-cell">Telefon</th>
                 <th>Durum</th>
-                <th>Islemler</th>
+                <th>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -312,10 +336,10 @@ export default function Schools() {
                   </td>
                   <td>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => openManagerModal(s)} className="text-blue-600 hover:text-blue-800" title="Egitmen Ata">
+                      <button onClick={() => openManagerModal(s)} className="text-blue-600 hover:text-blue-800" title="Eğitmen Ata">
                         <UserPlus size={16} />
                       </button>
-                      <button onClick={() => openEdit(s)} className="text-dark-500 hover:text-dark-700" title="Duzenle">
+                      <button onClick={() => openEdit(s)} className="text-dark-500 hover:text-dark-700" title="Düzenle">
                         <Edit2 size={16} />
                       </button>
                       <button onClick={() => handleDelete(s.id)} className="text-red-500 hover:text-red-700" title="Sil">
@@ -330,10 +354,10 @@ export default function Schools() {
         </div>
       )}
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Okul Duzenle' : 'Yeni Okul'}>
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Okul Düzenle' : 'Yeni Okul'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Okul Adi *</label>
+            <label className="block text-sm font-medium mb-1">Okul Adı *</label>
             <input value={form.name} onChange={(e) => update('name', e.target.value)} className="input-field" required />
           </div>
           <div>
@@ -341,7 +365,7 @@ export default function Schools() {
             <textarea value={form.address} onChange={(e) => update('address', e.target.value)} className="input-field" rows={2} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Aciklama</label>
+            <label className="block text-sm font-medium mb-1">Açıklama</label>
             <textarea value={form.description} onChange={(e) => update('description', e.target.value)} className="input-field" rows={2} />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -355,11 +379,30 @@ export default function Schools() {
             </div>
           </div>
           <div className="pt-2 border-t border-dark-100">
-            <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Tanitim Sitesi Icerigi</p>
+            <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Tanıtım Sitesi İçeriği</p>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Kapak Gorseli URL</label>
-            <input value={form.cover_image_url} onChange={(e) => update('cover_image_url', e.target.value)} className="input-field" placeholder="/uploads/... veya https://..." />
+            <label className="block text-sm font-medium mb-1">Kapak Görseli</label>
+            {form.cover_image_url && (
+              <div className="relative inline-block mb-2">
+                <img src={form.cover_image_url} alt="" className="h-28 w-auto rounded-lg border border-dark-700 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => update('cover_image_url', '')}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full"
+                  title="Kapak görselini kaldır"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2 items-center">
+              <label className={`btn-secondary btn-sm cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${coverUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                <Upload size={14} /> {coverUploading ? 'Yükleniyor...' : 'Dosya Seç'}
+                <input ref={coverFileRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+              </label>
+              <input value={form.cover_image_url} onChange={(e) => update('cover_image_url', e.target.value)} className="input-field" placeholder="veya https://... adresi yapıştırın" />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Galeri</label>
@@ -374,7 +417,7 @@ export default function Schools() {
                           type="button"
                           onClick={() => handleDeleteGalleryImage(m.id)}
                           className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Galeriden kaldir"
+                          title="Galeriden kaldır"
                         >
                           <X size={12} />
                         </button>
@@ -383,43 +426,43 @@ export default function Schools() {
                   </div>
                 )}
                 <label className={`btn-secondary btn-sm cursor-pointer inline-flex items-center gap-1.5 ${galleryUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <Upload size={14} /> {galleryUploading ? 'Yukleniyor...' : 'Dosya Sec'}
+                  <Upload size={14} /> {galleryUploading ? 'Yükleniyor...' : 'Dosya Seç'}
                   <input ref={galleryFileRef} type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" />
                 </label>
               </>
             ) : (
-              <p className="text-xs text-dark-400">Galeriye gorsel eklemek icin once okulu olusturup tekrar duzenleyin.</p>
+              <p className="text-xs text-dark-400">Galeriye görsel eklemek için önce okulu oluşturup tekrar düzenleyin.</p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Detayli Tanitim Metni</label>
+            <label className="block text-sm font-medium mb-1">Detaylı Tanıtım Metni</label>
             <textarea value={form.long_description} onChange={(e) => update('long_description', e.target.value)} className="input-field" rows={4} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">YouTube Tanitim Linki</label>
+            <label className="block text-sm font-medium mb-1">YouTube Tanıtım Linki</label>
             <input value={form.youtube_url} onChange={(e) => update('youtube_url', e.target.value)} className="input-field" placeholder="https://www.youtube.com/watch?v=..." />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">{editing ? 'Guncelle' : 'Olustur'}</button>
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">{editing ? 'Güncelle' : 'Oluştur'}</button>
           </div>
         </form>
       </Modal>
 
-      <Modal isOpen={managerModalOpen} onClose={() => setManagerModalOpen(false)} title="Egitmen Ata">
+      <Modal isOpen={managerModalOpen} onClose={() => setManagerModalOpen(false)} title="Eğitmen Ata">
         <div className="space-y-4">
           <p className="text-sm text-dark-500">
-            <strong>{selectedSchool?.name}</strong> okuluna egitmen atayin.
+            <strong>{selectedSchool?.name}</strong> okuluna eğitmen atayin.
           </p>
 
           {assignedManagers.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Atanmis Egitmenler</p>
+              <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Atanmış Eğitmenler</p>
               <div className="space-y-2">
                 {assignedManagers.map((m) => (
                   <div key={m.id} className="flex items-center justify-between px-3 py-2 bg-dark-50 rounded-lg">
                     <span className="text-sm">{m.first_name} {m.last_name} ({m.email})</span>
-                    <button onClick={() => removeManager(m.id)} className="text-red-500 hover:text-red-700" title="Atamayi Kaldir">
+                    <button onClick={() => removeManager(m.id)} className="text-red-500 hover:text-red-700" title="Atamayı Kaldır">
                       <X size={16} />
                     </button>
                   </div>
@@ -429,9 +472,9 @@ export default function Schools() {
           )}
 
           <div>
-            <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Yeni Egitmen Ata</p>
+            <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Yeni Eğitmen Ata</p>
             <select value={managerUserId} onChange={(e) => setManagerUserId(e.target.value)} className="select-field">
-              <option value="">Egitmen secin...</option>
+              <option value="">Eğitmen seçin...</option>
               {managers.map((m) => (
                 <option key={m.id} value={m.id}>{m.first_name} {m.last_name} ({m.email})</option>
               ))}

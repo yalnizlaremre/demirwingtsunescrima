@@ -5,7 +5,7 @@ from fastapi import Depends
 
 from app.database import get_db
 from app.models.school import School
-from app.models.user import User
+from app.models.user import User, UserStatus
 from app.models.student import Student
 from app.models.site_content import SiteContent
 from app.models.media import Media
@@ -60,7 +60,9 @@ async def public_get_school(school_id: str, db: AsyncSession = Depends(get_db)):
 async def public_list_instructors(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(User)
-        .where(User.is_featured_instructor == True)
+        # Askiya alinmis/onay bekleyen bir hesap "one cikan" isaretli kalsa bile
+        # tanitim sitesinde gorunmemeli.
+        .where(User.is_featured_instructor == True, User.status == UserStatus.ACTIVE.value)
         .order_by(User.display_order.asc(), User.created_at.asc())
     )
     instructors = result.scalars().all()

@@ -42,11 +42,11 @@ export default function Mail() {
         grade_max: form.grade_max ? parseInt(form.grade_max) : null,
       };
       const res = await api.post('/mail/send', payload);
-      toast.success(`${res.data.recipient_count} kisiye mail gonderildi`);
+      toast.success(`${res.data.recipient_count} kişiye mail gönderildi`);
       setForm({ subject: '', body: '', school_ids: [], branch: '', grade_min: '', grade_max: '' });
       fetchLogs();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     } finally { setSending(false); }
   };
 
@@ -61,7 +61,7 @@ export default function Mail() {
 
   return (
     <div>
-      <PageHeader title="Mail Gonder" subtitle="Ogrencilere toplu mail gonderimi" />
+      <PageHeader title="Mail Gönder" subtitle="Öğrencilere toplu mail gönderimi" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Send Form */}
@@ -73,13 +73,13 @@ export default function Mail() {
               <input value={form.subject} onChange={(e) => update('subject', e.target.value)} className="input-field" required />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Icerik *</label>
+              <label className="block text-sm font-medium mb-1">İçerik *</label>
               <textarea value={form.body} onChange={(e) => update('body', e.target.value)} className="input-field" rows={5} required />
             </div>
 
             {isAdmin && schools.length > 0 && (
               <div>
-                <label className="block text-sm font-medium mb-1">Okullar (bos = tumu)</label>
+                <label className="block text-sm font-medium mb-1">Okullar (boş = tümü)</label>
                 <div className="space-y-1 max-h-32 overflow-y-auto border border-dark-200 rounded-lg p-2">
                   {schools.map(s => (
                     <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
@@ -93,9 +93,9 @@ export default function Mail() {
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Brans</label>
+                <label className="block text-sm font-medium mb-1">Branş</label>
                 <select value={form.branch} onChange={(e) => update('branch', e.target.value)} className="select-field">
-                  <option value="">Tumu</option>
+                  <option value="">Tümü</option>
                   <option value="WING_TSUN">Wing Tsun</option>
                   <option value="ESCRIMA">Escrima</option>
                 </select>
@@ -111,16 +111,16 @@ export default function Mail() {
             </div>
 
             <button type="submit" disabled={sending} className="btn-primary w-full">
-              {sending ? 'Gonderiliyor...' : 'Mail Gonder'}
+              {sending ? 'Gönderiliyor...' : 'Mail Gönder'}
             </button>
           </form>
         </div>
 
         {/* Logs */}
         <div className="card">
-          <h3 className="font-semibold text-lg mb-4 flex items-center gap-2"><Clock size={18} /> Gonderim Gecmisi</h3>
+          <h3 className="font-semibold text-lg mb-4 flex items-center gap-2"><Clock size={18} /> Gönderim Geçmişi</h3>
           {loading ? <LoadingSpinner /> : logs.length === 0 ? (
-            <EmptyState message="Henuz mail gonderilmemis" icon={MailIcon} />
+            <EmptyState message="Henüz mail gönderilmemiş" icon={MailIcon} />
           ) : (
             <div className="space-y-3 max-h-[500px] overflow-y-auto">
               {logs.map(l => (

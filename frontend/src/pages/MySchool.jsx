@@ -26,20 +26,20 @@ export default function MySchool() {
     return (
       <div>
         <PageHeader title="Okulum" subtitle="Okul bilgileri" />
-        <EmptyState message="Bir okula kayitli degilsiniz" icon={School} />
+        <EmptyState message="Bir okula kayıtlı değilsiniz" icon={School} />
       </div>
     );
   }
 
   const tabs = [
     { id: 'info', label: 'Bilgiler', icon: School },
-    { id: 'instructors', label: 'Egitmenler', icon: Users },
+    { id: 'instructors', label: 'Eğitmenler', icon: Users },
     { id: 'lessons', label: 'Dersler', icon: BookOpen },
     { id: 'gallery', label: 'Galeri', icon: Image },
   ];
 
   const getBranchLabel = (b) => b === 'WING_TSUN' ? 'Wing Tsun' : b === 'ESCRIMA' ? 'Escrima' : b;
-  const getLessonTypeLabel = (t) => t === 'GROUP' ? 'Grup' : t === 'PRIVATE' ? 'Ozel' : t;
+  const getLessonTypeLabel = (t) => t === 'GROUP' ? 'Grup' : t === 'PRIVATE' ? 'Özel' : t;
 
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return null;
@@ -49,7 +49,7 @@ export default function MySchool() {
 
   return (
     <div>
-      <PageHeader title={school.name} subtitle="Okul bilgileri ve detaylari" />
+      <PageHeader title={school.name} subtitle="Okul bilgileri ve detayları" />
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-dark-100 p-1 rounded-xl overflow-x-auto">
@@ -85,21 +85,21 @@ export default function MySchool() {
                 <MapPin size={18} className="text-dark-400 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm text-dark-500">Adres</p>
-                  <p className="font-medium">{school.address || 'Belirtilmemis'}</p>
+                  <p className="font-medium">{school.address || 'Belirtilmemiş'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Phone size={18} className="text-dark-400 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm text-dark-500">Telefon</p>
-                  <p className="font-medium">{school.phone || 'Belirtilmemis'}</p>
+                  <p className="font-medium">{school.phone || 'Belirtilmemiş'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Mail size={18} className="text-dark-400 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm text-dark-500">E-posta</p>
-                  <p className="font-medium">{school.email || 'Belirtilmemis'}</p>
+                  <p className="font-medium">{school.email || 'Belirtilmemiş'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -114,7 +114,7 @@ export default function MySchool() {
             </div>
             {school.description && (
               <div className="mt-4 pt-4 border-t border-dark-100">
-                <p className="text-sm text-dark-500 mb-1">Aciklama</p>
+                <p className="text-sm text-dark-500 mb-1">Açıklama</p>
                 <p className="text-dark-700">{school.description}</p>
               </div>
             )}
@@ -143,7 +143,7 @@ export default function MySchool() {
               ))}
             </div>
           ) : (
-            <EmptyState message="Egitmen bilgisi bulunamadi" icon={Users} />
+            <EmptyState message="Eğitmen bilgisi bulunamadı" icon={Users} />
           )}
         </div>
       )}
@@ -157,9 +157,9 @@ export default function MySchool() {
                 <thead>
                   <tr>
                     <th>Tarih</th>
-                    <th>Brans</th>
-                    <th>Tur</th>
-                    <th>Sure</th>
+                    <th>Branş</th>
+                    <th>Tür</th>
+                    <th>Süre</th>
                     <th className="hidden sm:table-cell">Not</th>
                   </tr>
                 </thead>
@@ -189,7 +189,7 @@ export default function MySchool() {
               </table>
             </div>
           ) : (
-            <EmptyState message="Henuz ders bilgisi eklenmemis" icon={BookOpen} />
+            <EmptyState message="Henüz ders bilgisi eklenmemiş" icon={BookOpen} />
           )}
         </div>
       )}
@@ -228,7 +228,7 @@ export default function MySchool() {
               ))}
             </div>
           ) : (
-            <EmptyState message="Henuz medya eklenmemis" icon={Image} />
+            <EmptyState message="Henüz medya eklenmemiş" icon={Image} />
           )}
         </div>
       )}

@@ -140,7 +140,7 @@ async def create_user(
         raise HTTPException(status_code=400, detail="Bu e-posta zaten kayıtlı")
 
     if current_user.role == UserRole.MANAGER.value and data.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
-        raise HTTPException(status_code=403, detail="Bu rolde kullanici olusturamazsiniz")
+        raise HTTPException(status_code=403, detail="Bu rolde kullanıcı oluşturamazsınız")
 
     user = User(
         email=data.email,
@@ -190,11 +190,11 @@ async def update_user(
     caller_is_real_admin = current_user.role in (UserRole.SUPER_ADMIN.value, UserRole.ADMIN.value)
     if not caller_is_real_admin:
         if user.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
-            raise HTTPException(status_code=403, detail="Bu kullaniciyi duzenleyemezsiniz")
+            raise HTTPException(status_code=403, detail="Bu kullanıcıyı düzenleyemezsiniz")
         if data.role is not None and data.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
-            raise HTTPException(status_code=403, detail="Bu role yukseltme yapamazsiniz")
+            raise HTTPException(status_code=403, detail="Bu role yükseltme yapamazsınız")
         if data.extra_permissions is not None:
-            raise HTTPException(status_code=403, detail="Izinleri degistirme yetkiniz yok")
+            raise HTTPException(status_code=403, detail="İzinleri değiştirme yetkiniz yok")
 
     if data.first_name is not None:
         user.first_name = data.first_name
@@ -230,9 +230,9 @@ async def update_user(
 def check_can_delete_user(current_user: User, target_user: User) -> None:
     """Bir kullanicinin silinip silinemeyecegini kontrol eder, degilse HTTPException firlatir."""
     if current_user.id == target_user.id:
-        raise HTTPException(status_code=400, detail="Kendi hesabinizi silemezsiniz")
+        raise HTTPException(status_code=400, detail="Kendi hesabınızı silemezsiniz")
     if current_user.role == UserRole.MANAGER.value and target_user.role in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value):
-        raise HTTPException(status_code=403, detail="Bu kullaniciyi silemezsiniz")
+        raise HTTPException(status_code=403, detail="Bu kullanıcıyı silemezsiniz")
 
 
 async def delete_user_and_cascade(db: AsyncSession, target_user: User) -> None:

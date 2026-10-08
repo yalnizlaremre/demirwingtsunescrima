@@ -18,10 +18,10 @@ export default function Register() {
     setLoading(true);
     try {
       await register({ ...form, form_rendered_at: renderedAt });
-      toast.success('Kayit basarili! Hesabiniz onaylandiktan sonra giris yapabilirsiniz.');
+      toast.success('Kayıt başarılı! Hesabınız onaylandıktan sonra giriş yapabilirsiniz.');
       navigate('/login');
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Kayit basarisiz');
+      toast.error(err.response?.data?.detail || 'Kayıt başarısız');
     } finally {
       setLoading(false);
     }
@@ -30,21 +30,21 @@ export default function Register() {
   const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-dark-50 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-20 w-auto mx-auto mb-4" />
-          <p className="text-dark-400 mt-2">Uye Kayit</p>
+          <img src="/logo-light.png" alt="Demir Wing Tsun Akademi" className="h-20 w-auto mx-auto mb-4" />
+          <p className="text-dark-500 mt-2">Üye Kayıt</p>
           <a
             href="https://demirwingtsun.com"
-            className="inline-block text-sm text-dark-500 hover:text-white transition-colors mt-2"
+            className="inline-block text-sm text-dark-500 hover:text-dark-900 transition-colors mt-2"
           >
             ← Tanıtım sitesine dön
           </a>
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">
-          <h2 className="text-xl font-semibold text-center">Kayit Ol</h2>
+          <h2 className="text-xl font-semibold text-center">Kayıt Ol</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -79,7 +79,7 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-dark-700 mb-1">Sifre</label>
+            <label className="block text-sm font-medium text-dark-700 mb-1">Şifre</label>
             <PasswordInput
               value={form.password}
               onChange={(e) => update('password', e.target.value)}
@@ -115,13 +115,13 @@ export default function Register() {
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? 'Kayit yapiliyor...' : 'Kayit Ol'}
+            {loading ? 'Kayıt yapılıyor...' : 'Kayıt Ol'}
           </button>
 
           <p className="text-center text-sm text-dark-500">
             Zaten hesabiniz var mi?{' '}
             <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-              Giris Yap
+              Giriş Yap
             </Link>
           </p>
         </form>

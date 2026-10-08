@@ -10,9 +10,9 @@ import { parseServerDatetime, toDatetimeLocalInput } from '../utils/datetime';
 
 const DAY_NAMES = {
   0: 'Pazartesi',
-  1: 'Sali',
-  2: 'Carsamba',
-  3: 'Persembe',
+  1: 'Salı',
+  2: 'Çarşamba',
+  3: 'Perşembe',
   4: 'Cuma',
   5: 'Cumartesi',
   6: 'Pazar',
@@ -87,26 +87,26 @@ export default function Lessons() {
           lesson_date: new Date(form.lesson_date).toISOString(),
           notes: form.notes,
         });
-        toast.success('Ders guncellendi');
+        toast.success('Ders güncellendi');
       } else {
         await api.post('/lessons/', { ...form, lesson_date: new Date(form.lesson_date).toISOString() });
-        toast.success('Ders olusturuldu');
+        toast.success('Ders oluşturuldu');
       }
       setModalOpen(false);
       fetchLessons();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
   const handleDeleteLesson = async (lesson) => {
-    if (!confirm('Bu dersi silmek istediginize emin misiniz? Derse ait yoklama saatleri ogrencilerden geri alinacak.')) return;
+    if (!confirm('Bu dersi silmek istediğinize emin misiniz? Derse ait yoklama saatleri öğrencilerden geri alınacak.')) return;
     try {
       await api.delete(`/lessons/${lesson.id}`);
       toast.success('Ders silindi');
       fetchLessons();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Silme basarisiz');
+      toast.error(err.response?.data?.detail || 'Silme başarısız');
     }
   };
 
@@ -125,7 +125,7 @@ export default function Lessons() {
       setInitialAttendance(attMap);
       setSelectedStudents(Object.keys(attMap));
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Ogrenci/yoklama listesi yuklenemedi');
+      toast.error(err.response?.data?.detail || 'Öğrenci/yoklama listesi yüklenemedi');
     }
     setAttModalOpen(true);
   };
@@ -145,11 +145,11 @@ export default function Lessons() {
         toAdd.length > 0 ? api.post('/attendance/', { lesson_id: selectedLesson.id, student_ids: toAdd }) : Promise.resolve(),
         ...toRemove.map((id) => api.delete(`/attendance/${initialAttendance[id]}`)),
       ]);
-      toast.success('Yoklama guncellendi');
+      toast.success('Yoklama güncellendi');
       setAttModalOpen(false);
       fetchLessons();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -176,7 +176,7 @@ export default function Lessons() {
         ...scheduleForm,
         day_of_week: parseInt(scheduleForm.day_of_week),
       });
-      toast.success(res.data.message || 'Program olusturuldu');
+      toast.success(res.data.message || 'Program oluşturuldu');
       setScheduleModalOpen(false);
       setScheduleForm({
         school_id: '', branch: 'WING_TSUN', lesson_type: 'GROUP',
@@ -186,12 +186,12 @@ export default function Lessons() {
       fetchSchedules();
       fetchLessons();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
   const handleDeleteSchedule = async (id) => {
-    if (!confirm('Bu programi deaktif etmek istediginize emin misiniz? Katilimsiz gelecek dersler silinecek.')) return;
+    if (!confirm('Bu programı deaktif etmek istediğinize emin misiniz? Katılımsız gelecek dersler silinecek.')) return;
     try {
       const res = await api.delete(`/lesson-schedules/${id}`);
       toast.success(res.data.message || 'Program deaktif edildi');
@@ -203,11 +203,11 @@ export default function Lessons() {
   };
 
   const handleExtendSchedule = async (id) => {
-    const newEnd = prompt('Yeni bitis tarihi (YYYY-MM-DD):');
+    const newEnd = prompt('Yeni bitiş tarihi (YYYY-MM-DD):');
     if (!newEnd) return;
     try {
       const res = await api.post(`/lesson-schedules/${id}/generate?new_end_date=${newEnd}`);
-      toast.success(res.data.message || 'Dersler olusturuldu');
+      toast.success(res.data.message || 'Dersler oluşturuldu');
       fetchSchedules();
       fetchLessons();
     } catch (err) {
@@ -222,12 +222,12 @@ export default function Lessons() {
 
   const tabs = [
     { id: 'lessons', label: 'Dersler', icon: BookOpen, count: total },
-    { id: 'schedules', label: 'Ders Programi', icon: Repeat, count: scheduleTotal },
+    { id: 'schedules', label: 'Ders Programı', icon: Repeat, count: scheduleTotal },
   ];
 
   return (
     <div>
-      <PageHeader title="Dersler" subtitle="Ders yonetimi ve haftalik program">
+      <PageHeader title="Dersler" subtitle="Ders yönetimi ve haftalık program">
         {activeTab === 'lessons' ? (
           <button onClick={openCreateLesson} className="btn-primary"><Plus size={18} /> Tek Ders Ekle</button>
         ) : (
@@ -263,20 +263,20 @@ export default function Lessons() {
       {activeTab === 'lessons' && (
         <>
           {lessons.length === 0 ? (
-            <EmptyState message="Henuz ders eklenmemis" icon={BookOpen} />
+            <EmptyState message="Henüz ders eklenmemiş" icon={BookOpen} />
           ) : (
             <div className="table-container">
               <table>
                 <thead>
                   <tr>
                     <th>Tarih</th>
-                    <th>Brans</th>
-                    <th>Tur</th>
+                    <th>Branş</th>
+                    <th>Tür</th>
                     <th className="hidden sm:table-cell">Okul</th>
-                    <th>Sure</th>
-                    <th>Katilim</th>
+                    <th>Süre</th>
+                    <th>Katılım</th>
                     <th>Kaynak</th>
-                    <th>Islem</th>
+                    <th>İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -290,7 +290,7 @@ export default function Lessons() {
                       </td>
                       <td>
                         <span className={`badge ${l.lesson_type === 'GROUP' ? 'badge-info' : 'badge-warning'}`}>
-                          {l.lesson_type === 'GROUP' ? 'Grup' : 'Ozel'}
+                          {l.lesson_type === 'GROUP' ? 'Grup' : 'Özel'}
                         </span>
                       </td>
                       <td className="hidden sm:table-cell text-dark-500">{l.school_name || '-'}</td>
@@ -314,7 +314,7 @@ export default function Lessons() {
                           <button onClick={() => openAttendance(l)} className="text-blue-600 hover:text-blue-800" title="Yoklama">
                             <ClipboardCheck size={16} />
                           </button>
-                          <button onClick={() => openEditLesson(l)} className="text-dark-500 hover:text-dark-700" title="Duzenle">
+                          <button onClick={() => openEditLesson(l)} className="text-dark-500 hover:text-dark-700" title="Düzenle">
                             <Edit2 size={16} />
                           </button>
                           <button onClick={() => handleDeleteLesson(l)} className="text-red-500 hover:text-red-700" title="Sil">
@@ -337,7 +337,7 @@ export default function Lessons() {
           {scheduleLoading ? (
             <LoadingSpinner />
           ) : schedules.length === 0 ? (
-            <EmptyState message="Henuz ders programi olusturulmamis" icon={Repeat} />
+            <EmptyState message="Henüz ders programı oluşturulmamış" icon={Repeat} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {schedules.map(s => (
@@ -354,7 +354,7 @@ export default function Lessons() {
                         {s.branch === 'WING_TSUN' ? 'WT' : 'ESC'}
                       </span>
                       <span className={`badge ${s.lesson_type === 'GROUP' ? 'badge-info' : 'badge-warning'}`}>
-                        {s.lesson_type === 'GROUP' ? 'Grup' : 'Ozel'}
+                        {s.lesson_type === 'GROUP' ? 'Grup' : 'Özel'}
                       </span>
                     </div>
                   </div>
@@ -410,7 +410,7 @@ export default function Lessons() {
       )}
 
       {/* New/Edit Single Lesson Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingLesson ? 'Dersi Duzenle' : 'Yeni Ders'}>
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingLesson ? 'Dersi Düzenle' : 'Yeni Ders'}>
         <form onSubmit={handleSubmitLesson} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Okul *</label>
@@ -421,13 +421,13 @@ export default function Lessons() {
               required
               disabled={!!editingLesson}
             >
-              <option value="">Secin...</option>
+              <option value="">Seçin...</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Brans</label>
+              <label className="block text-sm font-medium mb-1">Branş</label>
               <select
                 value={form.branch}
                 onChange={(e) => update('branch', e.target.value)}
@@ -439,7 +439,7 @@ export default function Lessons() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Tur</label>
+              <label className="block text-sm font-medium mb-1">Tür</label>
               <select
                 value={form.lesson_type}
                 onChange={(e) => update('lesson_type', e.target.value)}
@@ -447,13 +447,13 @@ export default function Lessons() {
                 disabled={editingLesson && editingLesson.attendance_count > 0}
               >
                 <option value="GROUP">Grup (2 saat)</option>
-                <option value="PRIVATE">Ozel (2 saat)</option>
+                <option value="PRIVATE">Özel (2 saat)</option>
               </select>
             </div>
           </div>
           {editingLesson && editingLesson.attendance_count > 0 && (
             <p className="text-xs text-amber-600">
-              Bu derse yoklama alindigi icin brans/tur degistirilemiyor.
+              Bu derse yoklama alındığı için branş/tür değiştirilemiyor.
             </p>
           )}
           <div>
@@ -465,44 +465,44 @@ export default function Lessons() {
             <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} className="input-field" rows={2} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">{editingLesson ? 'Guncelle' : 'Olustur'}</button>
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">{editingLesson ? 'Güncelle' : 'Oluştur'}</button>
           </div>
         </form>
       </Modal>
 
       {/* New Schedule Modal */}
-      <Modal isOpen={scheduleModalOpen} onClose={() => setScheduleModalOpen(false)} title="Yeni Ders Programi">
+      <Modal isOpen={scheduleModalOpen} onClose={() => setScheduleModalOpen(false)} title="Yeni Ders Programı">
         <form onSubmit={handleCreateSchedule} className="space-y-4">
           <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
-            Haftalik tekrarlayan ders programi olusturun. Belirtilen tarih araligindaki tum dersler otomatik olusturulacaktir.
+            Haftalık tekrarlayan ders programı oluşturun. Belirtilen tarih aralığındaki tüm dersler otomatik oluşturulacaktır.
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Okul *</label>
             <select value={scheduleForm.school_id} onChange={(e) => updateSchedule('school_id', e.target.value)} className="select-field" required>
-              <option value="">Secin...</option>
+              <option value="">Seçin...</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Brans</label>
+              <label className="block text-sm font-medium mb-1">Branş</label>
               <select value={scheduleForm.branch} onChange={(e) => updateSchedule('branch', e.target.value)} className="select-field">
                 <option value="WING_TSUN">Wing Tsun</option>
                 <option value="ESCRIMA">Escrima</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Tur</label>
+              <label className="block text-sm font-medium mb-1">Tür</label>
               <select value={scheduleForm.lesson_type} onChange={(e) => updateSchedule('lesson_type', e.target.value)} className="select-field">
                 <option value="GROUP">Grup (2 saat)</option>
-                <option value="PRIVATE">Ozel (2 saat)</option>
+                <option value="PRIVATE">Özel (2 saat)</option>
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Gun *</label>
+              <label className="block text-sm font-medium mb-1">Gün *</label>
               <select value={scheduleForm.day_of_week} onChange={(e) => updateSchedule('day_of_week', e.target.value)} className="select-field" required>
                 {Object.entries(DAY_NAMES).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
@@ -522,7 +522,7 @@ export default function Lessons() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Baslangic Tarihi *</label>
+              <label className="block text-sm font-medium mb-1">Başlangıç Tarihi *</label>
               <input
                 type="date"
                 value={scheduleForm.start_date}
@@ -532,7 +532,7 @@ export default function Lessons() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Bitis Tarihi *</label>
+              <label className="block text-sm font-medium mb-1">Bitiş Tarihi *</label>
               <input
                 type="date"
                 value={scheduleForm.end_date}
@@ -547,8 +547,8 @@ export default function Lessons() {
             <textarea value={scheduleForm.notes} onChange={(e) => updateSchedule('notes', e.target.value)} className="input-field" rows={2} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setScheduleModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">Program Olustur</button>
+            <button type="button" onClick={() => setScheduleModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">Program Oluştur</button>
           </div>
         </form>
       </Modal>
@@ -570,16 +570,16 @@ export default function Lessons() {
                 />
                 <span className="text-sm font-medium">{s.user_name || 'Bilinmiyor'}</span>
                 {initialAttendance[s.id] && (
-                  <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Kayitli</span>
+                  <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Kayıtlı</span>
                 )}
               </label>
             ))}
-            {students.length === 0 && <p className="text-sm text-dark-400 p-4">Bu okulda ogrenci yok</p>}
+            {students.length === 0 && <p className="text-sm text-dark-400 p-4">Bu okulda öğrenci yok</p>}
           </div>
           <div className="flex justify-between items-center pt-2">
-            <span className="text-sm text-dark-500">{selectedStudents.length} ogrenci isaretli</span>
+            <span className="text-sm text-dark-500">{selectedStudents.length} öğrenci isaretli</span>
             <div className="flex gap-3">
-              <button onClick={() => setAttModalOpen(false)} className="btn-secondary">Iptal</button>
+              <button onClick={() => setAttModalOpen(false)} className="btn-secondary">İptal</button>
               <button onClick={handleAttendance} className="btn-primary">Kaydet</button>
             </div>
           </div>

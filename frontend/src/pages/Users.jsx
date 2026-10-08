@@ -10,12 +10,12 @@ import { Plus, Edit2, Trash2, Users as UsersIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const ADMIN_PERMISSIONS = [
-  { key: 'manage_schools', label: 'Okul yonetimi' },
-  { key: 'manage_site_content', label: 'Site icerigi yonetimi' },
-  { key: 'manage_events', label: 'Etkinlik yonetimi' },
-  { key: 'manage_products', label: 'Urun/magaza yonetimi' },
-  { key: 'manage_grades', label: 'Derece gereksinimleri ve manuel derece degisikligi' },
-  { key: 'manage_users', label: 'Kullanici yonetimi (riskli)' },
+  { key: 'manage_schools', label: 'Okul yönetimi' },
+  { key: 'manage_site_content', label: 'Site içeriği yönetimi' },
+  { key: 'manage_events', label: 'Etkinlik yönetimi' },
+  { key: 'manage_products', label: 'Ürün/mağaza yönetimi' },
+  { key: 'manage_grades', label: 'Derece gereksinimleri ve manuel derece değişikliği' },
+  { key: 'manage_users', label: 'Kullanıcı yönetimi (riskli)' },
 ];
 
 export default function Users() {
@@ -45,7 +45,7 @@ export default function Users() {
     try {
       let url = '/users/?limit=100';
       if (r) url += `&role=${r}`;
-      if (s) url += `&search=${s}`;
+      if (s) url += `&search=${encodeURIComponent(s)}`;
       const res = await api.get(url);
       setUsers(res.data.items);
       setTotal(res.data.total);
@@ -93,21 +93,21 @@ export default function Users() {
         if (!editing.student_id && form.new_student_school_id && !['MANAGER', 'ADMIN', 'SUPER_ADMIN'].includes(editing.role)) {
           await api.post('/students/', { user_id: editing.id, school_id: form.new_student_school_id });
         }
-        toast.success('Kullanici guncellendi');
+        toast.success('Kullanıcı güncellendi');
       } else {
         await api.post('/users/', form);
-        toast.success('Kullanici olusturuldu');
+        toast.success('Kullanıcı oluşturuldu');
       }
       setModalOpen(false);
       fetchUsers(roleFilter, search);
-    } catch (err) { toast.error(err.response?.data?.detail || 'Hata olustu'); }
+    } catch (err) { toast.error(err.response?.data?.detail || 'Hata oluştu'); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Bu kullaniciyi silmek istediginize emin misiniz?')) return;
+    if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
     try {
       await api.delete(`/users/${id}`);
-      toast.success('Kullanici silindi');
+      toast.success('Kullanıcı silindi');
       fetchUsers(roleFilter, search);
     } catch (err) { toast.error(err.response?.data?.detail || 'Hata'); }
   };
@@ -116,9 +116,9 @@ export default function Users() {
     const map = {
       SUPER_ADMIN: { label: 'Super Admin', class: 'bg-purple-100 text-purple-800' },
       ADMIN: { label: 'Admin', class: 'bg-blue-100 text-blue-800' },
-      MANAGER: { label: 'Egitmen', class: 'bg-emerald-100 text-emerald-800' },
-      USER: { label: 'Ogrenci', class: 'bg-amber-100 text-amber-800' },
-      MEMBER: { label: 'Uye', class: 'bg-dark-100 text-dark-600' },
+      MANAGER: { label: 'Eğitmen', class: 'bg-emerald-100 text-emerald-800' },
+      USER: { label: 'Öğrenci', class: 'bg-amber-100 text-amber-800' },
+      MEMBER: { label: 'Üye', class: 'bg-dark-100 text-dark-600' },
     };
     const r = map[role] || map.USER;
     return <span className={`badge ${r.class}`}>{r.label}</span>;
@@ -136,8 +136,8 @@ export default function Users() {
 
   return (
     <div>
-      <PageHeader title="Kullanicilar" subtitle={`${total} kullanici`}>
-        <button onClick={openCreate} className="btn-primary"><Plus size={18} /> Yeni Kullanici</button>
+      <PageHeader title="Kullanıcılar" subtitle={`${total} kullanıcı`}>
+        <button onClick={openCreate} className="btn-primary"><Plus size={18} /> Yeni Kullanıcı</button>
       </PageHeader>
 
       <div className="flex flex-wrap gap-3 mb-6">
@@ -149,17 +149,17 @@ export default function Users() {
           className="input-field w-auto"
         />
         <select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); fetchUsers(e.target.value, search); }} className="select-field w-auto">
-          <option value="">Tum Roller</option>
+          <option value="">Tüm Roller</option>
           <option value="SUPER_ADMIN">Super Admin</option>
           <option value="ADMIN">Admin</option>
-          <option value="MANAGER">Egitmen</option>
-          <option value="USER">Ogrenci</option>
-          <option value="MEMBER">Uye</option>
+          <option value="MANAGER">Eğitmen</option>
+          <option value="USER">Öğrenci</option>
+          <option value="MEMBER">Üye</option>
         </select>
       </div>
 
       {users.length === 0 ? (
-        <EmptyState message="Kullanici bulunamadi" icon={UsersIcon} />
+        <EmptyState message="Kullanıcı bulunamadı" icon={UsersIcon} />
       ) : (
         <div className="table-container">
           <table>
@@ -169,7 +169,7 @@ export default function Users() {
                 <th className="hidden sm:table-cell">E-posta</th>
                 <th>Rol</th>
                 <th className="hidden md:table-cell">Durum</th>
-                <th>Islemler</th>
+                <th>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -197,7 +197,7 @@ export default function Users() {
         </div>
       )}
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Kullanici Duzenle' : 'Yeni Kullanici'}>
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {!editing && (
             <div>
@@ -207,7 +207,7 @@ export default function Users() {
           )}
           {!editing && (
             <div>
-              <label className="block text-sm font-medium mb-1">Sifre *</label>
+              <label className="block text-sm font-medium mb-1">Şifre *</label>
               <PasswordInput value={form.password} onChange={(e) => update('password', e.target.value)} className="input-field" required minLength={6} />
             </div>
           )}
@@ -228,9 +228,9 @@ export default function Users() {
           <div>
             <label className="block text-sm font-medium mb-1">Rol</label>
             <select value={form.role} onChange={(e) => update('role', e.target.value)} className="select-field">
-              <option value="MEMBER">Uye</option>
-              <option value="USER">Ogrenci</option>
-              <option value="MANAGER">Egitmen (Manager)</option>
+              <option value="MEMBER">Üye</option>
+              <option value="USER">Öğrenci</option>
+              <option value="MANAGER">Eğitmen (Manager)</option>
               {isAdmin && <option value="ADMIN">Admin</option>}
               {isAdmin && <option value="SUPER_ADMIN">Super Admin</option>}
             </select>
@@ -245,12 +245,12 @@ export default function Users() {
           )}
           {editing && !editing.student_id && !['MANAGER', 'ADMIN', 'SUPER_ADMIN'].includes(editing.role) && (
             <div>
-              <label className="block text-sm font-medium mb-1">Okula Ogrenci Olarak Kaydet</label>
+              <label className="block text-sm font-medium mb-1">Okula Öğrenci Olarak Kaydet</label>
               <select value={form.new_student_school_id} onChange={(e) => update('new_student_school_id', e.target.value)} className="select-field">
-                <option value="">Simdilik atama...</option>
+                <option value="">Şimdilik atama...</option>
                 {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
-              <p className="text-xs text-dark-400 mt-1">Bir okul secip Guncelle'ye bastiginizda bu kullanici icin ogrenci kaydi olusturulur.</p>
+              <p className="text-xs text-dark-400 mt-1">Bir okul seçip Güncelle'ye bastığınızda bu kullanıcı için öğrenci kaydı oluşturulur.</p>
             </div>
           )}
           {form.role === 'MANAGER' && (
@@ -258,28 +258,28 @@ export default function Users() {
               <div>
                 <label className="block text-sm font-medium mb-1">Unvan</label>
                 <select value={form.instructor_title} onChange={(e) => update('instructor_title', e.target.value)} className="select-field">
-                  <option value="">Secin...</option>
+                  <option value="">Seçin...</option>
                   <option value="SIFU">SIFU</option>
                   <option value="SIHING">SIHING</option>
                 </select>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.can_upload_media} onChange={(e) => update('can_upload_media', e.target.checked)} className="w-4 h-4" />
-                <span className="text-sm">Medya yukleme yetkisi</span>
+                <span className="text-sm">Medya yükleme yetkisi</span>
               </label>
               <div className="pt-2 border-t border-dark-100">
-                <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Tanitim Sitesi (Egitmenler Sayfasi)</p>
+                <p className="text-xs font-semibold text-dark-400 uppercase mb-2">Tanıtım Sitesi (Eğitmenler Sayfası)</p>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.is_featured_instructor} onChange={(e) => update('is_featured_instructor', e.target.checked)} className="w-4 h-4" />
-                <span className="text-sm">Tanitim sitesinde oncikan egitmen olarak goster</span>
+                <span className="text-sm">Tanıtım sitesinde öne çıkan eğitmen olarak göster</span>
               </label>
               <div>
-                <label className="block text-sm font-medium mb-1">Kisa Biyografi</label>
+                <label className="block text-sm font-medium mb-1">Kısa Biyografi</label>
                 <textarea value={form.bio} onChange={(e) => update('bio', e.target.value)} className="input-field" rows={3} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Siralama (kucuk sayi once gorunur)</label>
+                <label className="block text-sm font-medium mb-1">Sıralama (küçük sayı önce görünür)</label>
                 <input type="number" value={form.display_order} onChange={(e) => update('display_order', parseInt(e.target.value, 10) || 0)} className="input-field" />
               </div>
               <div>
@@ -307,8 +307,8 @@ export default function Users() {
             </>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">{editing ? 'Guncelle' : 'Olustur'}</button>
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">{editing ? 'Güncelle' : 'Oluştur'}</button>
           </div>
         </form>
       </Modal>

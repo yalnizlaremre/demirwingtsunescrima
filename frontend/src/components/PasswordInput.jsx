@@ -15,7 +15,7 @@ export default function PasswordInput({ className = '', ...props }) {
         type="button"
         onClick={() => setVisible((v) => !v)}
         tabIndex={-1}
-        aria-label={visible ? 'Sifreyi gizle' : 'Sifreyi goster'}
+        aria-label={visible ? 'Şifreyi gizle' : 'Şifreyi göster'}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600 transition-colors"
       >
         {visible ? <EyeOff size={18} /> : <Eye size={18} />}

@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+from app.schemas.validators import validate_media_url, validate_web_url
 from datetime import datetime
 
 
@@ -12,6 +14,16 @@ class SchoolCreate(BaseModel):
     long_description: str | None = None
     youtube_url: str | None = None
 
+    @field_validator("cover_image_url")
+    @classmethod
+    def _check_cover(cls, v):
+        return validate_media_url(v)
+
+    @field_validator("youtube_url")
+    @classmethod
+    def _check_youtube(cls, v):
+        return validate_web_url(v)
+
 
 class SchoolUpdate(BaseModel):
     name: str | None = None
@@ -23,6 +35,16 @@ class SchoolUpdate(BaseModel):
     cover_image_url: str | None = None
     long_description: str | None = None
     youtube_url: str | None = None
+
+    @field_validator("cover_image_url")
+    @classmethod
+    def _check_cover(cls, v):
+        return validate_media_url(v)
+
+    @field_validator("youtube_url")
+    @classmethod
+    def _check_youtube(cls, v):
+        return validate_web_url(v)
 
 
 class SchoolMediaItem(BaseModel):

@@ -1,6 +1,6 @@
 import { Inbox } from 'lucide-react';
 
-export default function EmptyState({ message = 'Henuz veri yok', icon: Icon = Inbox }) {
+export default function EmptyState({ message = 'Henüz veri yok', icon: Icon = Inbox }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-dark-400">
       <Icon size={48} strokeWidth={1.5} />

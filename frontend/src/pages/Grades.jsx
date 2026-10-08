@@ -71,7 +71,7 @@ export default function Grades() {
           grade_name: reqForm.grade_name,
           required_hours: parseFloat(reqForm.required_hours),
         });
-        toast.success('Derece gereksinimi guncellendi');
+        toast.success('Derece gereksinimi güncellendi');
       } else {
         await api.post('/grades/requirements', { ...reqForm, grade: parseInt(reqForm.grade), required_hours: parseFloat(reqForm.required_hours) });
         toast.success('Derece gereksinimi eklendi');
@@ -79,7 +79,7 @@ export default function Grades() {
       setReqModalOpen(false);
       fetchRequirements();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -90,11 +90,11 @@ export default function Grades() {
 
   const handleGradeChange = async (e) => {
     e.preventDefault();
-    if (!changeForm.note.trim()) { toast.error('Not alani zorunludur'); return; }
+    if (!changeForm.note.trim()) { toast.error('Not alanı zorunludur'); return; }
     try {
       if (canManageGrades) {
         await api.post('/grades/manual-change', { ...changeForm, new_grade: parseInt(changeForm.new_grade) });
-        toast.success('Derece guncellendi');
+        toast.success('Derece güncellendi');
         refreshStudents();
       } else {
         await api.post('/grades/change-requests', {
@@ -103,19 +103,19 @@ export default function Grades() {
           requested_grade: parseInt(changeForm.new_grade),
           note: changeForm.note,
         });
-        toast.success('Degisiklik talebi gonderildi, admin onayi bekleniyor');
+        toast.success('Değişiklik talebi gönderildi, admin onayı bekleniyor');
       }
       setChangeModalOpen(false);
       if (isManagerOrAbove) fetchChangeRequests(statusFilter);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
   const handleApprove = async (id) => {
     try {
       await api.post(`/grades/change-requests/${id}/approve`);
-      toast.success('Talep onaylandi, derece guncellendi');
+      toast.success('Talep onaylandı, derece güncellendi');
       fetchChangeRequests(statusFilter);
       refreshStudents();
     } catch (err) { toast.error(err.response?.data?.detail || 'Hata'); }
@@ -141,7 +141,7 @@ export default function Grades() {
 
   const getStatusBadge = (s) => {
     const map = { PENDING: 'badge-warning', APPROVED: 'badge-success', REJECTED: 'badge-danger' };
-    const labels = { PENDING: 'Bekliyor', APPROVED: 'Onaylandi', REJECTED: 'Reddedildi' };
+    const labels = { PENDING: 'Bekliyor', APPROVED: 'Onaylandı', REJECTED: 'Reddedildi' };
     return <span className={`badge ${map[s]}`}>{labels[s]}</span>;
   };
 
@@ -151,10 +151,10 @@ export default function Grades() {
 
   return (
     <div>
-      <PageHeader title="Dereceler & Saat Yonetimi" subtitle={canManageGrades ? 'Derece gereksinimleri ve manuel duzenleme' : 'Ogrenci dereceleri ve degisiklik talepleri'}>
+      <PageHeader title="Dereceler & Saat Yönetimi" subtitle={canManageGrades ? 'Derece gereksinimleri ve manuel düzenleme' : 'Öğrenci dereceleri ve değişiklik talepleri'}>
         {isManagerOrAbove && (
           <button onClick={() => openChangeModal()} className="btn-primary">
-            <ArrowUpDown size={18} /> {canManageGrades ? 'Derece Degistir' : 'Degisiklik Talep Et'}
+            <ArrowUpDown size={18} /> {canManageGrades ? 'Derece Değiştir' : 'Değişiklik Talep Et'}
           </button>
         )}
         {canManageGrades && (
@@ -173,7 +173,7 @@ export default function Grades() {
                 <th>WT Saat</th>
                 <th className="hidden md:table-cell">Esc Derece</th>
                 <th className="hidden md:table-cell">Esc Saat</th>
-                <th>Islemler</th>
+                <th>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -201,7 +201,7 @@ export default function Grades() {
                 </tr>
               ))}
               {students.length === 0 && (
-                <tr><td colSpan={7} className="text-center text-dark-400 py-8">Ogrenci bulunamadi</td></tr>
+                <tr><td colSpan={7} className="text-center text-dark-400 py-8">Öğrenci bulunamadı</td></tr>
               )}
             </tbody>
           </table>
@@ -226,8 +226,8 @@ export default function Grades() {
                   <th>Derece</th>
                   <th>Ad</th>
                   <th>Gereken Saat</th>
-                  <th>Tur</th>
-                  <th>Islemler</th>
+                  <th>Tür</th>
+                  <th>İşlemler</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,7 +238,7 @@ export default function Grades() {
                     <td>{r.required_hours}h</td>
                     <td>
                       <span className={`badge ${r.grade <= 12 ? 'badge-info' : 'badge-warning'}`}>
-                        {r.grade <= 12 ? 'Ogrenci' : 'Usta'}
+                        {r.grade <= 12 ? 'Öğrenci' : 'Usta'}
                       </span>
                     </td>
                     <td>
@@ -247,7 +247,7 @@ export default function Grades() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={5} className="text-center text-dark-400 py-8">Henuz gereksinim eklenmemis</td></tr>
+                  <tr><td colSpan={5} className="text-center text-dark-400 py-8">Henüz gereksinim eklenmemiş</td></tr>
                 )}
               </tbody>
             </table>
@@ -259,32 +259,32 @@ export default function Grades() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <ClipboardList size={20} /> {canManageGrades ? 'Derece Degisiklik Talepleri' : 'Taleplerim'}
+              <ClipboardList size={20} /> {canManageGrades ? 'Derece Değişiklik Talepleri' : 'Taleplerim'}
             </h2>
             {canManageGrades && (
               <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); fetchChangeRequests(e.target.value); }} className="select-field w-auto">
-                <option value="">Tum Durumlar</option>
+                <option value="">Tüm Durumlar</option>
                 <option value="PENDING">Bekliyor</option>
-                <option value="APPROVED">Onaylandi</option>
+                <option value="APPROVED">Onaylandı</option>
                 <option value="REJECTED">Reddedildi</option>
               </select>
             )}
           </div>
 
           {changeRequests.length === 0 ? (
-            <EmptyState message="Talep bulunamadi" icon={ClipboardList} />
+            <EmptyState message="Talep bulunamadı" icon={ClipboardList} />
           ) : (
             <div className="table-container">
               <table>
                 <thead>
                   <tr>
-                    <th>Ogrenci</th>
+                    <th>Öğrenci</th>
                     <th className="hidden sm:table-cell">Okul</th>
-                    <th>Brans</th>
+                    <th>Branş</th>
                     <th>Mevcut → Talep</th>
                     <th className="hidden md:table-cell">Not</th>
                     <th>Durum</th>
-                    {canManageGrades && <th>Islem</th>}
+                    {canManageGrades && <th>İşlem</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -316,11 +316,11 @@ export default function Grades() {
       )}
 
       {/* Add/Edit Requirement Modal */}
-      <Modal isOpen={reqModalOpen} onClose={() => setReqModalOpen(false)} title={editingReq ? 'Derece Gereksinimi Duzenle' : 'Derece Gereksinimi Ekle'}>
+      <Modal isOpen={reqModalOpen} onClose={() => setReqModalOpen(false)} title={editingReq ? 'Derece Gereksinimi Düzenle' : 'Derece Gereksinimi Ekle'}>
         <form onSubmit={handleSubmitReq} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Brans</label>
+              <label className="block text-sm font-medium mb-1">Branş</label>
               <select value={reqForm.branch} onChange={(e) => setReqForm(p => ({ ...p, branch: e.target.value }))} className="select-field" disabled={!!editingReq}>
                 <option value="WING_TSUN">Wing Tsun</option>
                 <option value="ESCRIMA">Escrima</option>
@@ -332,7 +332,7 @@ export default function Grades() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Derece Adi</label>
+            <label className="block text-sm font-medium mb-1">Derece Adı</label>
             <input value={reqForm.grade_name} onChange={(e) => setReqForm(p => ({ ...p, grade_name: e.target.value }))} className="input-field" required />
           </div>
           <div>
@@ -340,25 +340,25 @@ export default function Grades() {
             <input type="number" step="0.5" value={reqForm.required_hours} onChange={(e) => setReqForm(p => ({ ...p, required_hours: e.target.value }))} className="input-field" required />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setReqModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">{editingReq ? 'Guncelle' : 'Ekle'}</button>
+            <button type="button" onClick={() => setReqModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">{editingReq ? 'Güncelle' : 'Ekle'}</button>
           </div>
         </form>
       </Modal>
 
       {/* Grade Change / Change Request Modal */}
-      <Modal isOpen={changeModalOpen} onClose={() => setChangeModalOpen(false)} title={canManageGrades ? 'Manuel Derece Degistir' : 'Derece Degisikligi Talep Et'}>
+      <Modal isOpen={changeModalOpen} onClose={() => setChangeModalOpen(false)} title={canManageGrades ? 'Manuel Derece Değiştir' : 'Derece Değişikliği Talep Et'}>
         <form onSubmit={handleGradeChange} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Ogrenci *</label>
+            <label className="block text-sm font-medium mb-1">Öğrenci *</label>
             <select value={changeForm.student_id} onChange={(e) => setChangeForm(p => ({ ...p, student_id: e.target.value }))} className="select-field" required>
-              <option value="">Ogrenci secin...</option>
+              <option value="">Öğrenci seçin...</option>
               {students.map(s => <option key={s.id} value={s.id}>{s.user_name || s.user_email}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Brans</label>
+              <label className="block text-sm font-medium mb-1">Branş</label>
               <select value={changeForm.branch} onChange={(e) => setChangeForm(p => ({ ...p, branch: e.target.value }))} className="select-field">
                 <option value="WING_TSUN">Wing Tsun</option>
                 <option value="ESCRIMA">Escrima</option>
@@ -367,16 +367,16 @@ export default function Grades() {
             <div>
               <label className="block text-sm font-medium mb-1">{canManageGrades ? 'Yeni Derece' : 'Talep Edilen Derece'}</label>
               <input type="number" min={0} max={17} value={changeForm.new_grade} onChange={(e) => setChangeForm(p => ({ ...p, new_grade: e.target.value }))} className="input-field" required />
-              <p className="text-xs text-dark-400 mt-1">0 = henuz 1. dereceyi almadi</p>
+              <p className="text-xs text-dark-400 mt-1">0 = henüz 1. dereceyi almadı</p>
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Not (Zorunlu) *</label>
-            <textarea value={changeForm.note} onChange={(e) => setChangeForm(p => ({ ...p, note: e.target.value }))} className="input-field" rows={3} required placeholder="Degisiklik sebebini yazin..." />
+            <textarea value={changeForm.note} onChange={(e) => setChangeForm(p => ({ ...p, note: e.target.value }))} className="input-field" rows={3} required placeholder="Değişiklik sebebini yazın..." />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setChangeModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">{canManageGrades ? 'Degistir' : 'Talep Gonder'}</button>
+            <button type="button" onClick={() => setChangeModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">{canManageGrades ? 'Değiştir' : 'Talep Gönder'}</button>
           </div>
         </form>
       </Modal>

@@ -1,6 +1,6 @@
-// Backend NaiveDatetime alanlari UTC'yi tzinfo'suz doner (ornek: "2026-09-15T15:00:00").
+// Backend NaiveDatetime alanlari UTC'yi tzinfo'suz doner (örnek: "2026-09-15T15:00:00").
 // "Z" eklenmezse tarayici bunu YEREL saat sanip yanlis yorumlar (JS'in bilinen bir
-// ISO 8601 tuzagi) - once dogru UTC olarak parse edip sonra yerel saat bilesenlerini
+// ISO 8601 tuzagi) - önce dogru UTC olarak parse edip sonra yerel saat bilesenlerini
 // okumak gerekiyor.
 export function parseServerDatetime(iso) {
   if (!iso) return null;
@@ -8,7 +8,7 @@ export function parseServerDatetime(iso) {
   return new Date(hasTimezone ? iso : `${iso}Z`);
 }
 
-// <input type="datetime-local"> alanlarini doldurmak icin: server'dan gelen
+// <input type="datetime-local"> alanlarini doldurmak için: server'dan gelen
 // tarihi dogru yerel saatle "YYYY-MM-DDTHH:mm" formatina cevirir.
 export function toDatetimeLocalInput(iso) {
   const d = parseServerDatetime(iso);

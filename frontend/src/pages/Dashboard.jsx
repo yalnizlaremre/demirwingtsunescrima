@@ -27,15 +27,15 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader
-        title={`Hosgeldin, ${user?.first_name}!`}
-        subtitle="Genel durum ozeti"
+        title={`Hoş geldin, ${user?.first_name}!`}
+        subtitle="Genel durum özeti"
       />
 
       {(isAdmin) && stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard icon={School} label="Toplam Okul" value={stats.total_schools} color="blue" />
-          <StatCard icon={GraduationCap} label="Toplam Ogrenci" value={stats.total_students} color="emerald" />
-          <StatCard icon={Users} label="Toplam Egitmen" value={stats.total_managers} color="purple" />
+          <StatCard icon={GraduationCap} label="Toplam Öğrenci" value={stats.total_students} color="emerald" />
+          <StatCard icon={Users} label="Toplam Eğitmen" value={stats.total_managers} color="purple" />
           <StatCard icon={CalendarDays} label="Aktif Etkinlik" value={stats.active_events} color="amber" />
           <StatCard icon={MessageSquare} label="Bekleyen Talep" value={stats.pending_requests} color="red" />
           <StatCard icon={Shield} label="Onay Bekleyen" value={stats.pending_approvals} color="orange" />
@@ -45,10 +45,10 @@ export default function Dashboard() {
       {isManager && stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard icon={School} label="Okul" value={stats.school_name} color="blue" isText />
-          <StatCard icon={GraduationCap} label="Ogrenci Sayisi" value={stats.total_students} color="emerald" />
+          <StatCard icon={GraduationCap} label="Öğrenci Sayısı" value={stats.total_students} color="emerald" />
           <StatCard icon={MessageSquare} label="Bekleyen Talep" value={stats.pending_requests} color="red" />
           <StatCard icon={Shield} label="Onay Bekleyen" value={stats.pending_approvals} color="orange" />
-          <StatCard icon={CalendarDays} label="Yaklasan Etkinlik" value={stats.upcoming_events} color="amber" />
+          <StatCard icon={CalendarDays} label="Yaklaşan Etkinlik" value={stats.upcoming_events} color="amber" />
         </div>
       )}
 
@@ -56,7 +56,7 @@ export default function Dashboard() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard icon={School} label="Okul" value={stats.school_name || '-'} color="blue" isText />
-            <StatCard icon={CalendarDays} label="Yaklasan Etkinlik" value={stats.upcoming_events} color="amber" />
+            <StatCard icon={CalendarDays} label="Yaklaşan Etkinlik" value={stats.upcoming_events} color="amber" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -93,10 +93,10 @@ export default function Dashboard() {
                 <School size={22} />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg text-blue-900">Okula Katilma Talebi Olusturun</h3>
+                <h3 className="font-semibold text-lg text-blue-900">Okula Katılma Talebi Oluşturun</h3>
                 <p className="text-sm text-blue-700 mt-1">
-                  Henuz bir okula kayitli degilsiniz. Okullar sayfasindan bir okula katilma talebi olusturabilirsiniz.
-                  Talebiniz onaylandiginda ogrenci olarak sisteme erisim saglayabileceksiniz.
+                  Henüz bir okula kayıtlı değilsiniz. Okullar sayfasından bir okula katılma talebi oluşturabilirsiniz.
+                  Talebiniz onaylandığında öğrenci olarak sisteme erişim sağlayabileceksiniz.
                 </p>
                 <Link to="/schools" className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 hover:text-blue-800">
                   Okullari Gor <ArrowRight size={16} />
@@ -168,19 +168,19 @@ function ProgressCard({ title, color, grade, completed, required, minimum, remai
         <span className={`text-2xl font-bold ${isNoGrade(grade) ? 'text-amber-600' : c.text}`}>{formatGrade(grade)}</span>
       </div>
 
-      {/* Ilerleme Cubugu */}
+      {/* İlerleme Cubugu */}
       <div className="mb-4">
         <div className="flex justify-between text-sm mb-1">
           <span className="text-dark-500">Tamamlanan</span>
           <span className="font-medium">{completed} / {required} saat</span>
         </div>
         <div className="relative w-full bg-dark-200 rounded-full h-3">
-          {/* Alt sinir isaretcisi */}
+          {/* Alt sınır isaretcisi */}
           {minimum > 0 && (
             <div
               className="absolute top-0 h-3 border-r-2 border-amber-500 z-10"
               style={{ left: `${minPercent}%` }}
-              title={`Alt sinir: ${minimum} saat`}
+              title={`Alt sınır: ${minimum} saat`}
             />
           )}
           <div
@@ -194,7 +194,7 @@ function ProgressCard({ title, color, grade, completed, required, minimum, remai
         </div>
         <div className="flex justify-between text-xs text-dark-400 mt-1">
           <span>0</span>
-          <span className="text-amber-600">Alt sinir: {minimum}s</span>
+          <span className="text-amber-600">Alt sınır: {minimum}s</span>
           <span>{required}s</span>
         </div>
       </div>
@@ -209,7 +209,7 @@ function ProgressCard({ title, color, grade, completed, required, minimum, remai
           </p>
         </div>
         <div className="text-center p-2 bg-dark-50 rounded-lg">
-          <p className="text-xs text-dark-500">Ilerleme</p>
+          <p className="text-xs text-dark-500">İlerleme</p>
           <p className="font-bold text-lg">%{percent}</p>
         </div>
         <div className="text-center p-2 bg-dark-50 rounded-lg">
@@ -219,7 +219,7 @@ function ProgressCard({ title, color, grade, completed, required, minimum, remai
             percent >= minPercent ? 'text-amber-600' :
             'text-dark-500'
           }`}>
-            {percent >= 100 ? 'Hazir' : percent >= minPercent ? 'Onayla' : 'Devam'}
+            {percent >= 100 ? 'Hazır' : percent >= minPercent ? 'Onayla' : 'Devam'}
           </p>
         </div>
       </div>

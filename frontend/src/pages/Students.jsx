@@ -45,11 +45,11 @@ export default function Students() {
       const payload = { date_of_birth: form.date_of_birth || null, emergency_contact: form.emergency_contact || null, emergency_phone: form.emergency_phone || null, notes: form.notes || null };
       if (isAdmin) payload.school_id = form.school_id;
       await api.put(`/students/${editing.id}`, payload);
-      toast.success('Ogrenci guncellendi');
+      toast.success('Öğrenci güncellendi');
       setModalOpen(false);
       fetchStudents(search, schoolFilter);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Hata olustu');
+      toast.error(err.response?.data?.detail || 'Hata oluştu');
     }
   };
 
@@ -57,8 +57,8 @@ export default function Students() {
     setLoading(true);
     try {
       let url = '/students/?limit=100';
-      if (s) url += `&search=${s}`;
-      if (sid) url += `&school_id=${sid}`;
+      if (s) url += `&search=${encodeURIComponent(s)}`;
+      if (sid) url += `&school_id=${encodeURIComponent(sid)}`;
       const res = await api.get(url);
       setStudents(res.data.items);
       setTotal(res.data.total);
@@ -68,34 +68,34 @@ export default function Students() {
   const handleSearch = () => fetchStudents(search, schoolFilter);
 
   const handleDelete = async (s) => {
-    if (!window.confirm(`${s.user_name || 'Bu ogrenci'} ve giris hesabi kalici olarak silinecek. Emin misiniz?`)) return;
+    if (!window.confirm(`${s.user_name || 'Bu öğrenci'} ve giriş hesabı kalıcı olarak silinecek. Emin misiniz?`)) return;
     try {
       await api.delete(`/students/${s.id}`);
-      toast.success('Ogrenci silindi');
+      toast.success('Öğrenci silindi');
       fetchStudents(search, schoolFilter);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Silme basarisiz');
+      toast.error(err.response?.data?.detail || 'Silme başarısız');
     }
   };
 
   const handleSuspend = async (s) => {
-    if (!window.confirm(`${s.user_name || 'Bu ogrenci'} askiya alinsin mi? Giris yapabilir ama okula ozel icerik goremez.`)) return;
+    if (!window.confirm(`${s.user_name || 'Bu öğrenci'} askıya alınsın mi? Giriş yapabilir ama okula özel içerik göremez.`)) return;
     try {
       await api.post(`/students/${s.id}/suspend`);
-      toast.success('Ogrenci askiya alindi');
+      toast.success('Öğrenci askıya alındı');
       fetchStudents(search, schoolFilter);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Islem basarisiz');
+      toast.error(err.response?.data?.detail || 'İşlem başarısız');
     }
   };
 
   const handleReactivate = async (s) => {
     try {
       await api.post(`/students/${s.id}/reactivate`);
-      toast.success('Ogrenci yeniden aktiflestirildi');
+      toast.success('Öğrenci yeniden aktifleştirildi');
       fetchStudents(search, schoolFilter);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Islem basarisiz');
+      toast.error(err.response?.data?.detail || 'İşlem başarısız');
     }
   };
 
@@ -111,7 +111,7 @@ export default function Students() {
 
   return (
     <div>
-      <PageHeader title="Ogrenciler" subtitle={`${total} ogrenci`} />
+      <PageHeader title="Öğrenciler" subtitle={`${total} öğrenci`} />
 
       <div className="card mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
@@ -126,7 +126,7 @@ export default function Students() {
           </div>
           {isAdmin && (
             <select value={schoolFilter} onChange={(e) => { setSchoolFilter(e.target.value); fetchStudents(search, e.target.value); }} className="select-field sm:w-48">
-              <option value="">Tum Okullar</option>
+              <option value="">Tüm Okullar</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           )}
@@ -135,7 +135,7 @@ export default function Students() {
       </div>
 
       {loading ? <LoadingSpinner /> : students.length === 0 ? (
-        <EmptyState message="Ogrenci bulunamadi" icon={GraduationCap} />
+        <EmptyState message="Öğrenci bulunamadı" icon={GraduationCap} />
       ) : (
         <div className="table-container">
           <table>
@@ -147,7 +147,7 @@ export default function Students() {
                 <th>WT Saat</th>
                 <th className="hidden md:table-cell">Esc Derece</th>
                 <th className="hidden md:table-cell">Esc Saat</th>
-                <th>Islemler</th>
+                <th>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -157,7 +157,7 @@ export default function Students() {
                     <div>
                       <p className="font-medium flex items-center gap-2">
                         {s.user_name || '-'}
-                        {s.user_role === 'MEMBER' && <span className="badge badge-danger text-xs">Askida</span>}
+                        {s.user_role === 'MEMBER' && <span className="badge badge-danger text-xs">Askıda</span>}
                       </p>
                       <p className="text-xs text-dark-400">{s.user_email}</p>
                     </div>
@@ -175,10 +175,10 @@ export default function Students() {
                     <div className="flex items-center gap-3">
                       <button onClick={() => openEdit(s)} className="text-dark-500 hover:text-dark-700"><Edit2 size={16} /></button>
                       {isManagerOrAbove && s.user_role === 'MEMBER' && (
-                        <button onClick={() => handleReactivate(s)} className="text-emerald-600 hover:text-emerald-800" title="Yeniden Aktiflestir"><UserCheck size={16} /></button>
+                        <button onClick={() => handleReactivate(s)} className="text-emerald-600 hover:text-emerald-800" title="Yeniden Aktifleştir"><UserCheck size={16} /></button>
                       )}
                       {isManagerOrAbove && s.user_role === 'USER' && (
-                        <button onClick={() => handleSuspend(s)} className="text-amber-600 hover:text-amber-800" title="Askiya Al"><UserX size={16} /></button>
+                        <button onClick={() => handleSuspend(s)} className="text-amber-600 hover:text-amber-800" title="Askıya Al"><UserX size={16} /></button>
                       )}
                       {canDelete && (
                         <button onClick={() => handleDelete(s)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
@@ -192,7 +192,7 @@ export default function Students() {
         </div>
       )}
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Ogrenci Duzenle">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Öğrenci Düzenle">
         <form onSubmit={handleSubmit} className="space-y-4">
           {isAdmin && (
             <div>
@@ -203,12 +203,12 @@ export default function Students() {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium mb-1">Dogum Tarihi</label>
+            <label className="block text-sm font-medium mb-1">Doğum Tarihi</label>
             <input type="date" value={form.date_of_birth} onChange={(e) => setForm(p => ({ ...p, date_of_birth: e.target.value }))} className="input-field" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Acil Durum Kisisi</label>
+              <label className="block text-sm font-medium mb-1">Acil Durum Kişisi</label>
               <input value={form.emergency_contact} onChange={(e) => setForm(p => ({ ...p, emergency_contact: e.target.value }))} className="input-field" />
             </div>
             <div>
@@ -221,8 +221,8 @@ export default function Students() {
             <textarea value={form.notes} onChange={(e) => setForm(p => ({ ...p, notes: e.target.value }))} className="input-field" rows={3} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Iptal</button>
-            <button type="submit" className="btn-primary">Guncelle</button>
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">İptal</button>
+            <button type="submit" className="btn-primary">Güncelle</button>
           </div>
         </form>
       </Modal>

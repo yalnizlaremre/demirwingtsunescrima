@@ -6,16 +6,16 @@ export default function Home() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-dark-900 text-white flex flex-col">
-      <header className="border-b border-dark-800">
+    <div className="min-h-screen bg-dark-50 text-dark-900 flex flex-col">
+      <header className="border-b border-dark-200 bg-white">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-10 w-auto" />
+            <img src="/logo-light.png" alt="Demir Wing Tsun Akademi" className="h-10 w-auto" />
             <span className="font-bold text-lg">Demir Wing Tsun Akademi</span>
           </div>
           <a
             href="https://demirwingtsun.com"
-            className="text-sm text-dark-400 hover:text-white transition-colors"
+            className="text-sm text-dark-500 hover:text-dark-900 transition-colors"
           >
             Tanıtım sitesine dön
           </a>
@@ -24,9 +24,9 @@ export default function Home() {
 
       <section className="flex-1 flex items-center justify-center px-6">
         <div className="max-w-md w-full text-center">
-          <img src="/logo.png" alt="Demir Wing Tsun Akademi" className="h-20 w-auto mx-auto mb-6" />
+          <img src="/logo-light.png" alt="Demir Wing Tsun Akademi" className="h-20 w-auto mx-auto mb-6" />
           <h1 className="text-3xl font-bold mb-3">Demir Wing Tsun Akademi Üye Portalı</h1>
-          <p className="text-dark-400 mb-10">
+          <p className="text-dark-500 mb-10">
             Ders programınızı, derece ilerlemenizi, seminer ve katılım kayıtlarınızı tek yerden takip edin.
           </p>
 
@@ -47,7 +47,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-dark-800 py-6 text-center text-dark-500 text-sm">
+      <footer className="border-t border-dark-200 py-6 text-center text-dark-500 text-sm">
         © {new Date().getFullYear()} Demir Wing Tsun Akademi
       </footer>
     </div>

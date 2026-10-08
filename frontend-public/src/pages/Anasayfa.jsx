@@ -53,7 +53,7 @@ export default function Anasayfa() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-dark-900">
+      <section className="theme-dark text-ink relative min-h-[85vh] flex items-center overflow-hidden bg-dark-900">
         <div className="absolute inset-0 z-0">
           {heroIsVideo ? (
             <video
@@ -102,14 +102,14 @@ export default function Anasayfa() {
 
       {/* Icerik bloklari - hepsi (Site Icerigi'nde girilen sirayla) alt alta, ayni sekilde gosterilir */}
       {items.map((block) => (
-        <section key={block.id} className="max-w-4xl mx-auto px-6 py-16 border-b border-dark-800 last:border-b-0">
+        <section key={block.id} className="max-w-4xl mx-auto px-6 py-16 border-b border-dark-700 last:border-b-0">
           {block.title && <h2 className="text-2xl font-bold mb-4">{block.title}</h2>}
           {block.body && <p className="text-dark-300 leading-relaxed whitespace-pre-line mb-6">{block.body}</p>}
           {block.image_url && (
             isVideoUrl(block.image_url) ? (
-              <video src={block.image_url} controls className="w-full rounded-xl border border-dark-800 mb-6" />
+              <video src={block.image_url} controls className="w-full rounded-xl border border-dark-700 mb-6" />
             ) : (
-              <img src={block.image_url} alt={block.title || ''} className="w-full rounded-xl border border-dark-800 mb-6" />
+              <img src={block.image_url} alt={block.title || ''} className="w-full rounded-xl border border-dark-700 mb-6" />
             )
           )}
           {block.youtube_url && <YouTubeEmbed url={block.youtube_url} title={block.title} />}
@@ -117,7 +117,7 @@ export default function Anasayfa() {
       ))}
 
       {/* Quick links */}
-      <section className="max-w-6xl mx-auto px-6 py-16 border-t border-dark-800">
+      <section className="max-w-6xl mx-auto px-6 py-16 border-t border-dark-700">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link to="/okullar" className="card hover:border-primary-600 transition-colors text-center">
             <School className="mx-auto mb-4 text-primary-500" size={32} />
