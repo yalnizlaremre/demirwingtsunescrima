@@ -365,8 +365,9 @@ export default function Schools() {
             <textarea value={form.address} onChange={(e) => update('address', e.target.value)} className="input-field" rows={2} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Açıklama</label>
-            <textarea value={form.description} onChange={(e) => update('description', e.target.value)} className="input-field" rows={2} />
+            <label className="block text-sm font-medium mb-1">Ders Saatleri / Kısa Açıklama</label>
+            <textarea value={form.description} onChange={(e) => update('description', e.target.value)} className="input-field" rows={2} placeholder="örn. Salı ve Perşembe 21:00 – 22:30" />
+            <p className="text-xs text-dark-400 mt-1">Hem panelde hem tanıtım sitesindeki okul kartında gösterilir.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -435,8 +436,9 @@ export default function Schools() {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Detaylı Tanıtım Metni</label>
+            <label className="block text-sm font-medium mb-1">Ek Tanıtım Metni (opsiyonel)</label>
             <textarea value={form.long_description} onChange={(e) => update('long_description', e.target.value)} className="input-field" rows={4} />
+            <p className="text-xs text-dark-400 mt-1">Sadece tanıtım sitesinde, ders saatlerinin altında görünür. Ders saatlerini burada tekrarlamayın.</p>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">YouTube Tanıtım Linki</label>

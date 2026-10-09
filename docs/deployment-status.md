@@ -1,15 +1,15 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-08 (gece) — **1. tur + açık tema + kurucu anma bölümü + Caddy önbellek/güvenlik başlıkları CANLIDA.** Otomatik deploy kurulu: deploy = `main`'e push. Kullanıcı ara verdi; **sıradaki iş: 2. tur** (aşağıdaki plan). Önce "Bekleyen / kullanıcıdan gelecek" maddelerini kontrol et.
+> Son güncelleme: 2026-10-09 — Serhat Hoca'nın hayat hikâyesi anma bölümüne eklendi, Kadıköy ders saatleri düzeltildi (Salı–Perşembe 21:00–22:30) ve ders bilgisi tek alana indirildi. Otomatik deploy kurulu: deploy = `main`'e push. **Sıradaki iş: 2. tur** (aşağıdaki plan). Önce "Bekleyen / kullanıcıdan gelecek" maddelerini kontrol et.
 
-## ŞU AN NEREDEYİZ — 2026-10-08 sonu
+## ŞU AN NEREDEYİZ — 2026-10-09
 
 ### Bekleyen / kullanıcıdan gelecek
-- [ ] **Sifu Saffet Demir henüz panele üye olmadı.** Kullanıcı kendisiyle iletişime geçecek. Üye olunca (kullanıcı haber verecek): panel → Kullanıcılar → Saffet Demir → onayla, rolü (muhtemelen MANAGER/Eğitmen, unvan SIFU) ayarla, "Tanıtım sitesinde öne çıkan eğitmen" ✔, **Sitedeki Unvan: "Baş Eğitmen"**, Sıralama: 0. Bunu kullanıcı panelden yapabilir ya da Claude tarayıcıdan yardım eder (Claude şifre giremez; kullanıcı Chrome'da giriş yapmış olmalı).
-- [ ] **Sifu Serhat Demir hayat/hocalık hikâyesi metni** — kullanıcı hazırlayıp verecek. Gelince: panel → Site İçeriği → "Kurucumuz" (slug `kurucu`) kaydı; `body` alanı şu anki "Sevgi ve Özlem İle" yazısının yerine geçer (istenirse "Sevgi ve Özlem İle" kapanış satırı olarak korunabilir — kullanıcıya sor). Doğum–vefat satırı kodda sabit: `frontend-public/src/components/FounderMemorial.jsx` → `1978 – 26 Ekim 2025`.
-- [ ] **Kadıköy ders saatleri hangisi doğru?** Panelde `description` = "Pazartesi ve Cuma 21:00–23:00", sitede gösterilen `long_description` = "Salı ve Perşembe 21:00–23:00". Kullanıcıya soruldu, cevap bekleniyor. Kalıcı çözüm: tek alan (2. tur maddesi).
-- [ ] DemirWteo sayfası metni ve diğer eğitmen bio'ları — kullanıcı hazırlayacak.
+- [ ] **Sifu Saffet Demir henüz panele üye olmadı (2026-10-09 itibarıyla kullanıcı oluşturmadı).** Kullanıcı kendisiyle iletişime geçecek. Alternatif: admin panelden (Kullanıcılar → Yeni) onun adına hesap açabilir (e-posta gerekir). Üye olunca (kullanıcı haber verecek): panel → Kullanıcılar → Saffet Demir → onayla, rolü (muhtemelen MANAGER/Eğitmen, unvan SIFU) ayarla, "Tanıtım sitesinde öne çıkan eğitmen" ✔, **Sitedeki Unvan: "Baş Eğitmen"**, Sıralama: 0. Bunu kullanıcı panelden yapabilir ya da Claude tarayıcıdan yardım eder (Claude şifre giremez; kullanıcı Chrome'da giriş yapmış olmalı).
+- [x] ~~Sifu Serhat Demir hayat/hocalık hikâyesi~~ → 2026-10-09 kullanıcı verdi, `FounderMemorial.jsx` içinde varsayılan metin olarak eklendi (4 paragraf + "Kendisini saygı, sevgi ve özlemle anıyoruz." kapanışı). Panelde `kurucu` slug'lı Site İçeriği kaydı açılırsa onun metni (her satır bir paragraf) bunun yerine geçer.
+- [x] ~~Kadıköy ders saatleri~~ → doğrusu **Salı ve Perşembe 21:00–22:30** (2026-10-09). Migration `d4e5f6a7b8ca` `description`'ı günceller, `long_description`'ı boşaltır. Sitedeki okul kartı artık ders bilgisini `description`'dan (panelle aynı alan) gösteriyor; `long_description` sadece ek metin. Panel etiketleri: "Ders Saatleri / Kısa Açıklama" ve "Ek Tanıtım Metni".
+- [ ] DemirWteo sayfası metni ve diğer eğitmen bio'ları — kullanıcı hazırlayacak (2026-10-09: henüz hazır değil).
 - [ ] Panelin iç sayfaları tarayıcıda görsel olarak hiç incelenmedi (sadece koddan). Kullanıcı Chrome'da `app.demirwingtsun.com`'a giriş yaparsa görsel tur yapılacak.
 
 ### PLAN — 2. tur (kullanıcı onayladı, henüz başlanmadı)
@@ -23,7 +23,7 @@ Madde numaraları 2026-10-08'deki denetim listesinden:
 7. **(19) Site içeriği blok sıralaması:** `SiteContent`'e `display_order` + panelde yukarı/aşağı.
 8. **(20) Görsel küçültme:** yüklemede otomatik küçültülmüş kopya + thumbnail; anasayfa slayt gösterisi tüm görselleri baştan yüklüyor.
 9. **(23) SEO:** `sitemap.xml`, `robots.txt`, LocalBusiness/SportsActivityLocation JSON-LD (her okul için adres/telefon), paylaşım görseli logo yerine grup fotoğrafı.
-10. Kadıköy ders saatleri: iki alan yerine tek doğru kaynak (cevaba göre).
+10. ~~Kadıköy ders saatleri tek kaynak~~ → 2026-10-09 yapıldı.
 - Caddy güvenlik/önbellek başlıkları → **1. turda yapıldı** (`2cb5743`).
 
 ### PLAN — 3. tur (panel ve sağlamlık)

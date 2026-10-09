@@ -75,9 +75,14 @@ export default function Okullar() {
                   <Phone size={14} className="shrink-0" /> {formatPhone(s.phone)}
                 </a>
               )}
-              <p className="text-dark-300 text-sm whitespace-pre-line">
-                {s.long_description || s.description}
-              </p>
+              {/* Ders saatleri / kisa aciklama tek kaynaktan (description) gelir; panelde de
+                  ayni alan gosterilir. long_description sadece ek tanitim metnidir. */}
+              {s.description && (
+                <p className="text-dark-300 text-sm font-medium whitespace-pre-line">{s.description}</p>
+              )}
+              {s.long_description && s.long_description.trim() !== (s.description || '').trim() && (
+                <p className="text-dark-400 text-sm whitespace-pre-line mt-3">{s.long_description}</p>
+              )}
               {s.media && s.media.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mt-4">
                   {s.media.map((m) => (
