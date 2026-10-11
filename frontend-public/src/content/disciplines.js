@@ -61,10 +61,10 @@ export const DISCIPLINES = [
       'Her derece, öğrencinin teknik bilgisini, uygulama becerisini, disiplinini ve önceki programlara hâkimiyetini kapsar. Yeni başlayan bir öğrenciden kendi derece programını öğrenmesi beklenirken, derece yükseldikçe önceki programların da daha sağlam ve doğru uygulanması beklenir. Bu nedenle öğrencinin sorumluluğu, her seviyede kademeli olarak artar.',
       'Derece programlarının tamamlanma süresi; öğrencinin antrenman düzenine, çalışmaya ayırdığı zamana ve teknik gelişimine göre değişir. Düzenli yapılan grup antrenmanları ve bireysel çalışmalar gelişimi destekler; düzensiz katılım ise sürecin uzamasına neden olabilir.',
       'Derece eğitimleri, dört aylık periyotlarla düzenlenen seminerler kapsamında değerlendirilir. Öğrenciler bu seminerlerde kendi derecelerine ait eğitim programını çalışır ve derece sınavına katılır.',
-      'Demir Wing Tsun & Escrima Organizasyonu’nda klasik paso uygulaması yerine, tüm takip işlemleri Öğrenci Yönetim Sistemi üzerinden gerçekleştirilir. Öğrenci; sistem üzerinden seminer ve etkinlik katılımını takip eder. Derece eğitimi ve sınav sürecini başarıyla tamamlayan öğrencinin katılımı, eğitmeni tarafından Öğrenci Yönetim Sistemi üzerinden onaylanır. Onayın ardından öğrencinin derecesi sistem üzerinde bir üst seviyeye güncellenir ve yeni derecesine ait eğitim programı otomatik olarak erişime açılır.',
+      'Demir Wing Tsun & Escrima Organizasyonu’nda klasik paso uygulaması yerine, tüm takip işlemleri Öğrenci Yönetim Sistemi üzerinden gerçekleştirilir. Öğrenci; sistem üzerinden seminer ve etkinlik katılımını takip eder. Derece eğitimi ve sınav sürecini başarıyla tamamlayan öğrencinin katılımı, eğitmeni tarafından Öğrenci Yönetim Sistemi üzerinden onaylanır. Onayın ardından öğrencinin derecesi sistem üzerinde bir üst seviyeye güncellenir ve öğrenci yeni derecesine ait eğitim programına geçer.',
     ],
     closing:
-      'Bu sistem sayesinde her öğrencinin eğitim süreci, derece ilerlemesi, seminer katılımları ve program içeriği düzenli, şeffaf ve kişiye özel biçimde takip edilir.',
+      'Bu sistem sayesinde her öğrencinin eğitim süreci, derece ilerlemesi ve seminer katılımları düzenli, şeffaf ve kişiye özel biçimde takip edilir.',
     actions: 'student',
   },
 ];

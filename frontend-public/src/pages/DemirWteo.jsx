@@ -37,10 +37,8 @@ export default function DemirWteo() {
         <h1 className="text-3xl md:text-4xl font-bold">{main?.title || 'DemirWteo'}</h1>
       </div>
 
-      {main?.image_url && (
-        <img src={main.image_url} alt={main.title || ''} className="w-full rounded-xl border border-dark-700 mb-10" />
-      )}
-
+      {/* Kullanici istegi (2026-10-11): DemirWteo sayfasinda fotograf gosterilmez;
+          panelde girilmis gorseller bu sayfada yok sayilir. */}
       {main?.body && (
         <p className="text-dark-300 leading-relaxed whitespace-pre-line">{main.body}</p>
       )}
@@ -62,9 +60,6 @@ export default function DemirWteo() {
       {extra.map((block) => (
         <div key={block.id} className="mt-12 pt-12 border-t border-dark-700">
           {block.title && <h2 className="text-2xl font-bold mb-4">{block.title}</h2>}
-          {block.image_url && (
-            <img src={block.image_url} alt={block.title || ''} className="w-full rounded-xl border border-dark-700 mb-6" />
-          )}
           {block.body && <p className="text-dark-300 leading-relaxed whitespace-pre-line">{block.body}</p>}
           {block.youtube_url && (
             <div className="mt-6">
@@ -75,7 +70,7 @@ export default function DemirWteo() {
       ))}
 
       {disciplines.map((d) => (
-        <DisciplineSection key={d.slug} d={d} />
+        <DisciplineSection key={d.slug} d={{ ...d, image: null }} />
       ))}
     </div>
   );
