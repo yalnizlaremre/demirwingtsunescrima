@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Instagram } from 'lucide-react';
+import { Users, Instagram, X } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SafeImage from '../components/SafeImage';
@@ -12,6 +12,18 @@ const TITLE_LABELS = { SIFU: 'Sifu', SIHING: 'Sihing' };
 export default function Egitmenler() {
   const [instructors, setInstructors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (e) => e.key === 'Escape' && setSelected(null);
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [selected]);
 
   usePageMeta('Eğitmenlerimiz', 'Demir Wing Tsun Akademi deneyimli ve sertifikalı eğitmen kadrosuyla tanışın.');
 
@@ -75,7 +87,18 @@ export default function Egitmenler() {
               {i.instructor_title && (
                 <p className="text-primary-500 text-sm mb-2">{TITLE_LABELS[i.instructor_title] || i.instructor_title}</p>
               )}
-              {i.bio && <p className="text-dark-400 text-sm mb-3">{i.bio}</p>}
+              {i.bio && (
+                <>
+                  <p className="text-dark-400 text-sm mb-2 line-clamp-3 text-left">{i.bio}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(i)}
+                    className="block mx-auto text-primary-600 hover:text-primary-700 text-sm font-medium mb-3"
+                  >
+                    Biyografiyi oku
+                  </button>
+                </>
+              )}
               {i.instagram_url && (
                 <a
                   href={i.instagram_url}
@@ -88,6 +111,68 @@ export default function Egitmenler() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center p-4 overflow-y-auto"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="egitmen-bio-baslik"
+            className="card relative w-full max-w-2xl my-8 p-6 md:p-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="absolute top-4 right-4 text-dark-400 hover:text-ink"
+              title="Kapat"
+              aria-label="Kapat"
+            >
+              <X size={24} />
+            </button>
+            <div className="flex items-center gap-4 mb-6 pr-8">
+              <div className="w-20 h-20 rounded-full bg-dark-700 overflow-hidden flex items-center justify-center shrink-0">
+                <SafeImage
+                  src={selected.avatar_url}
+                  alt={`${selected.first_name} ${selected.last_name}`}
+                  className="w-full h-full object-cover"
+                  fallback={
+                    <span className="text-xl font-bold text-dark-400">
+                      {selected.first_name?.[0]}{selected.last_name?.[0]}
+                    </span>
+                  }
+                />
+              </div>
+              <div>
+                {selected.instructor_title && (
+                  <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary-600 mb-1">
+                    {TITLE_LABELS[selected.instructor_title] || selected.instructor_title}
+                  </p>
+                )}
+                <h2 id="egitmen-bio-baslik" className="text-2xl font-bold">
+                  {selected.first_name} {selected.last_name}
+                </h2>
+              </div>
+            </div>
+            <div className="space-y-3 text-dark-300 leading-relaxed">
+              {selected.bio.split(/\n+/).map((line, idx) => line.trim() && <p key={idx}>{line}</p>)}
+            </div>
+            {selected.instagram_url && (
+              <a
+                href={selected.instagram_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-dark-400 hover:text-ink text-sm mt-6 transition-colors"
+              >
+                <Instagram size={16} /> Instagram
+              </a>
+            )}
+          </div>
         </div>
       )}
     </div>

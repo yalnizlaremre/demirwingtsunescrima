@@ -1,7 +1,7 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-11 — Eğitmenler sayfasına **Baş Eğitmen — Sifu Saffet Demir** biyografi bölümü eklendi (anma bölümünün altında). DemirWteo: Demir Wing Tsun, Demir Escrima, Derecelendirme Sistemi. Otomatik deploy kurulu: deploy = `main`'e push. Sıradaki iş: 2. tur.
+> Son güncelleme: 2026-10-11 — Eğitmenler: Baş Eğitmen Sifu Saffet Demir bölümü + **Sifu Emre Yalnızlar biyografisi** (kartta önizleme + "Biyografiyi oku" penceresi). DemirWteo: Demir Wing Tsun, Demir Escrima, Derecelendirme Sistemi. Otomatik deploy kurulu: deploy = `main`'e push. Sıradaki iş: 2. tur.
 
 ## ŞU AN NEREDEYİZ — 2026-10-11
 
@@ -15,7 +15,8 @@
 - [x] ~~Derecelendirme Sistemi metni~~ → 2026-10-11 DemirWteo'ya 3. bölüm olarak eklendi (`disciplines.js` → `derecelendirme-sistemi`; 4 bilgi kutusu: 12 öğrenci derecesi / 5. Usta en üst / 4 ayda seminer / paso yerine dijital; kapanışta "Öğrenci Yönetim Sistemi" butonu). Metin sistemle uyumlu: derece 0–17 (0 = derece yok, 1–12 öğrenci, 13–17 eğitmen → 5. Usta), seminer sınavını geçen öğrenci otomatik +1.
 - [x] ~~Derece programı uyuşmazlığı~~ → kullanıcı 2. seçeneği seçti (2026-10-11): metin yumuşatıldı — "…ve öğrenci yeni derecesine ait eğitim programına geçer."; kapanıştaki "ve program içeriği" de çıkarıldı (sistemde derece programı içeriği özelliği YOK; kullanıcı istemedikçe sitede vaat edilmeyecek).
 - [x] DemirWteo sayfasında fotoğraf gösterilmiyor (kullanıcı isteği, 2026-10-11) — panelde `demirwteo` bloğuna görsel girilse de sayfa yok sayar; sadece üstteki logo var.
-- [ ] Diğer eğitmenlerin bio'ları (Emre Yalnızlar, Serkan Çetin, Günder Murat Kocaman) — kullanıcı hazırlayacak; bunlar panelden (Kullanıcılar → Kısa Biyografi) girilebilir.
+- [x] ~~Sifu Emre Yalnızlar biyografisi~~ → 2026-10-11, migration `e5f6a7b8c9db` `users.bio`'ya yazar (email `emreyalnizlar@gmail.com`) ve soyadı "Yalnizlar" → "Yalnızlar" düzeltir. Metin kullanıcının verdiği gibi (satır sonları korunur; iki küçük yazım: "itibariylen", "Taekwondo' a" — kullanıcıya soruldu). Eğitmen kartları: bio varsa 3 satır önizleme + "Biyografiyi oku" → tam metin penceresi (Esc/dışa tıklama ile kapanır).
+- [ ] Diğer eğitmenler (Serkan Çetin, Günder Murat Kocaman): bio'lar + isim yazımı ("GÜNDER MURAT KOCAMAN" tamamen büyük harf) — kullanıcı "sonra düzeltiriz" dedi. Panelden (Kullanıcılar) ya da Emre'deki gibi migration ile yapılabilir.
 - [ ] Panelin iç sayfaları tarayıcıda görsel olarak hiç incelenmedi (sadece koddan). Kullanıcı Chrome'da `app.demirwingtsun.com`'a giriş yaparsa görsel tur yapılacak.
 
 ### PLAN — 2. tur (kullanıcı onayladı, henüz başlanmadı)
