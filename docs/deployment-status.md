@@ -1,9 +1,18 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-11 — Eğitmenler: Baş Eğitmen Sifu Saffet Demir bölümü + **Sifu Emre Yalnızlar biyografisi** (kartta önizleme + "Biyografiyi oku" penceresi). DemirWteo: Demir Wing Tsun, Demir Escrima, Derecelendirme Sistemi. Otomatik deploy kurulu: deploy = `main`'e push. Sıradaki iş: 2. tur.
+> Son güncelleme: 2026-10-11 (oturum sonu) — Bugün: DemirWteo'ya Demir Wing Tsun / Demir Escrima / Derecelendirme Sistemi; Eğitmenler'e Baş Eğitmen Sifu Saffet Demir bölümü + Sifu Emre Yalnızlar biyografisi. Hepsi CANLIDA. Kullanıcı burada ara verdi. **Devam edince:** önce aşağıdaki "Kullanıcıya sorulacak" maddesini sor, sonra 2. tura (İletişim sayfası) geç.
 
 ## ŞU AN NEREDEYİZ — 2026-10-11
+
+### Kullanıcıya sorulacak (açık soru)
+- Emre Yalnızlar biyografisindeki iki küçük yazım düzeltilsin mi? "2013 yılı **itibariylen**" → "itibarıyla"; "başlamış olduğu **Taekwondo' a** 2012 yılında…" → "Taekwondo'da". (Metin şu an kullanıcının yazdığı gibi; `users.bio` — panelden de düzeltilebilir.)
+
+### Bu oturumda (2026-10-09 → 10-11) yapılanlar — hepsi canlıda
+- Eğitmenler: Sifu Serhat Demir anma bölümüne hayat hikâyesi (`FounderMemorial.jsx`); **Baş Eğitmen — Sifu Saffet Demir** bölümü (`HeadInstructor.jsx`, fotoğraf `public/sifu-saffet-demir.jpg`); **Sifu Emre Yalnızlar** bio'su (migration `e5f6a7b8c9db`) + kartlarda "Biyografiyi oku" penceresi.
+- Okullar: Kadıköy ders saatleri Salı–Perşembe 21:00–22:30 (migration `d4e5f6a7b8ca`); ders bilgisi tek alanda (`description`).
+- DemirWteo: Demir Wing Tsun, Demir Escrima, Derecelendirme Sistemi bölümleri (`content/disciplines.js`, `DisciplineSection.jsx`); sayfada fotoğraf yok (kullanıcı isteği); derece programı içeriği vaadi metinden çıkarıldı (sistemde yok).
+- Metinlerin hepsi kullanıcının verdiği gibi (değiştirilmeden) kondu; "Çalışmalarda" etiketleri ve bilgi kutuları metinden özetlendi.
 
 ### Bekleyen / kullanıcıdan gelecek
 - [x] **Sifu Saffet Demir biyografisi** → 2026-10-11 eklendi: `components/HeadInstructor.jsx`, Eğitmenler sayfasında anma bölümünün altında "BAŞ EĞİTMEN" bölümü. Fotoğraf: `public/sifu-saffet-demir.jpg` (picture/"Sifu Saffet.jpeg" — siyah-beyaz Escrima fotoğrafı, yatay şerit). "Sifu Saffet Demir.jpeg" (yanında çocuk olan selfie) gizlilik nedeniyle kullanılmadı.
@@ -43,6 +52,9 @@ Madde numaraları 2026-10-08'deki denetim listesinden:
 - Düşük: `GradeRequirement` tablosu kullanılmıyor, kullanılmayan uçlar (`/public/stats` vb.).
 
 ### Çalışma notları (Claude için)
+- 2026-10-09'dan beri işler doğrudan bulut ortamındaki klonda yapılıp `main`'e push ediliyor (kullanıcının bilgisayarı bağlı değilken). **Kullanıcının bilgisayarındaki klasör geride** — orada çalışmadan önce `git pull` gerekir (bilgisayar bağlıysa Claude bunu `device_bash` ile yapabilir; klasörde silme izni gerekir, `.git/*.lock` kontrolü).
+- Push sonrası ~3-4 dk bekle, canlıyı Claude in Chrome'da Ctrl+Shift+R ile kontrol et (kullanıcının Chrome'unda iki tarayıcı bağlı; "Browser 2" seçilmişti).
+- Kullanıcı commit/push/deploy işini tamamen Claude'a bırakıyor ("ben değil sen zaten commit push yapıyorsun").
 - Claude bulut oturumundan çalışıyor; kullanıcının bilgisayarındaki klasöre `device_bash` ile erişiyor. Push için: yerelde commit → `git bundle` → bulut ortamındaki klona fetch → `git push origin ...:main`. Sunucuya SSH yok; deploy otomatik.
 - Klasörde dosya silme (git'in `.lock` dosyaları dahil) oturum başına kullanıcı izni istiyor; commit sonrası `.git/*.lock` kalmadığını kontrol et.
 - Yerel görsel test: bulut/VM'de `@sparticuz/chromium` + `puppeteer-core` ile ekran görüntüsü; canlı kontrol: Claude in Chrome.
