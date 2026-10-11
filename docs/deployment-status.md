@@ -1,15 +1,17 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-09 — Serhat Hoca'nın hayat hikâyesi anma bölümüne eklendi, Kadıköy ders saatleri düzeltildi (Salı–Perşembe 21:00–22:30) ve ders bilgisi tek alana indirildi. Otomatik deploy kurulu: deploy = `main`'e push. **Sıradaki iş: 2. tur** (aşağıdaki plan). Önce "Bekleyen / kullanıcıdan gelecek" maddelerini kontrol et.
+> Son güncelleme: 2026-10-11 — DemirWteo sayfasına **Demir Escrima** bölümü eklendi (kullanıcının metni). **Demir Wing Tsun metni kullanıcıdan bekleniyor** — gelince `frontend-public/src/content/disciplines.js` içindeki `demir-wing-tsun` girdisinin `paragraphs`'ına eklenecek. Otomatik deploy kurulu: deploy = `main`'e push. Sıradaki iş: 2. tur.
 
-## ŞU AN NEREDEYİZ — 2026-10-09
+## ŞU AN NEREDEYİZ — 2026-10-11
 
 ### Bekleyen / kullanıcıdan gelecek
 - [ ] **Sifu Saffet Demir henüz panele üye olmadı (2026-10-09 itibarıyla kullanıcı oluşturmadı).** Kullanıcı kendisiyle iletişime geçecek. Alternatif: admin panelden (Kullanıcılar → Yeni) onun adına hesap açabilir (e-posta gerekir). Üye olunca (kullanıcı haber verecek): panel → Kullanıcılar → Saffet Demir → onayla, rolü (muhtemelen MANAGER/Eğitmen, unvan SIFU) ayarla, "Tanıtım sitesinde öne çıkan eğitmen" ✔, **Sitedeki Unvan: "Baş Eğitmen"**, Sıralama: 0. Bunu kullanıcı panelden yapabilir ya da Claude tarayıcıdan yardım eder (Claude şifre giremez; kullanıcı Chrome'da giriş yapmış olmalı).
 - [x] ~~Sifu Serhat Demir hayat/hocalık hikâyesi~~ → 2026-10-09 kullanıcı verdi, `FounderMemorial.jsx` içinde varsayılan metin olarak eklendi (4 paragraf + "Kendisini saygı, sevgi ve özlemle anıyoruz." kapanışı). Panelde `kurucu` slug'lı Site İçeriği kaydı açılırsa onun metni (her satır bir paragraf) bunun yerine geçer.
 - [x] ~~Kadıköy ders saatleri~~ → doğrusu **Salı ve Perşembe 21:00–22:30** (2026-10-09). Migration `d4e5f6a7b8ca` `description`'ı günceller, `long_description`'ı boşaltır. Sitedeki okul kartı artık ders bilgisini `description`'dan (panelle aynı alan) gösteriyor; `long_description` sadece ek metin. Panel etiketleri: "Ders Saatleri / Kısa Açıklama" ve "Ek Tanıtım Metni".
-- [ ] DemirWteo sayfası metni ve diğer eğitmen bio'ları — kullanıcı hazırlayacak (2026-10-09: henüz hazır değil).
+- [x] ~~Demir Escrima metni~~ → 2026-10-11 eklendi. DemirWteo sayfası artık: üstte panelden gelen `demirwteo` giriş bloğu, altında **disiplin bölümleri** (`content/disciplines.js` + `components/DisciplineSection.jsx`). Metin kod içinde varsayılan; panelde aynı slug'la (`demir-escrima`, `demir-wing-tsun`) Site İçeriği kaydı açılırsa o geçerli olur (slug önerileri panele eklendi). "Çalışmalarda" etiketleri (60 cm rattan sopa, tek/çift sopa, bıçak, boş el, günlük eşyalar) metinden özetlendi. Kapanış paragrafı + Okullarımız/İletişim butonları kutu içinde.
+- [ ] **Demir Wing Tsun metni** — kullanıcı verecek ("sonra da Demir Wing Tsun için vereceğim"). Gelince `disciplines.js` → `demir-wing-tsun.paragraphs` (+ istenirse `tagline`, `highlights`, `closing`). İki disiplin dolunca sayfada üstte otomatik atlama butonları çıkar.
+- [ ] Eğitmen bio'ları — kullanıcı hazırlayacak.
 - [ ] Panelin iç sayfaları tarayıcıda görsel olarak hiç incelenmedi (sadece koddan). Kullanıcı Chrome'da `app.demirwingtsun.com`'a giriş yaparsa görsel tur yapılacak.
 
 ### PLAN — 2. tur (kullanıcı onayladı, henüz başlanmadı)
