@@ -46,7 +46,7 @@ export default function DemirWteo() {
       )}
 
       {disciplines.length > 1 && (
-        <nav aria-label="Disiplinler" className="flex flex-wrap justify-center gap-2 mt-10">
+        <nav aria-label="Bölümler" className="flex flex-wrap justify-center gap-2 mt-10">
           {disciplines.map((d) => (
             <a key={d.slug} href={`#${d.slug}`} className="btn-secondary btn-sm">{d.title}</a>
           ))}

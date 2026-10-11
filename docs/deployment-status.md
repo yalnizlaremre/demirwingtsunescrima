@@ -1,7 +1,7 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-11 — DemirWteo sayfasına **Demir Wing Tsun** ve **Demir Escrima** bölümleri eklendi (kullanıcının metinleri). Otomatik deploy kurulu: deploy = `main`'e push. Sıradaki iş: 2. tur.
+> Son güncelleme: 2026-10-11 — DemirWteo sayfası: **Demir Wing Tsun**, **Demir Escrima** ve **Derecelendirme Sistemi** bölümleri eklendi (kullanıcının metinleri). Otomatik deploy kurulu: deploy = `main`'e push. Sıradaki iş: 2. tur.
 
 ## ŞU AN NEREDEYİZ — 2026-10-11
 
@@ -11,6 +11,8 @@
 - [x] ~~Kadıköy ders saatleri~~ → doğrusu **Salı ve Perşembe 21:00–22:30** (2026-10-09). Migration `d4e5f6a7b8ca` `description`'ı günceller, `long_description`'ı boşaltır. Sitedeki okul kartı artık ders bilgisini `description`'dan (panelle aynı alan) gösteriyor; `long_description` sadece ek metin. Panel etiketleri: "Ders Saatleri / Kısa Açıklama" ve "Ek Tanıtım Metni".
 - [x] ~~Demir Escrima metni~~ → 2026-10-11 eklendi. DemirWteo sayfası artık: üstte panelden gelen `demirwteo` giriş bloğu, altında **disiplin bölümleri** (`content/disciplines.js` + `components/DisciplineSection.jsx`). Metin kod içinde varsayılan; panelde aynı slug'la (`demir-escrima`, `demir-wing-tsun`) Site İçeriği kaydı açılırsa o geçerli olur (slug önerileri panele eklendi). "Çalışmalarda" etiketleri (60 cm rattan sopa, tek/çift sopa, bıçak, boş el, günlük eşyalar) metinden özetlendi. Kapanış paragrafı + Okullarımız/İletişim butonları kutu içinde.
 - [x] ~~Demir Wing Tsun metni~~ → 2026-10-11 eklendi (`disciplines.js`, ilk sırada; son paragraf kapanış kutusunda). Sayfa başında iki disipline atlama butonları var.
+- [x] ~~Derecelendirme Sistemi metni~~ → 2026-10-11 DemirWteo'ya 3. bölüm olarak eklendi (`disciplines.js` → `derecelendirme-sistemi`; 4 bilgi kutusu: 12 öğrenci derecesi / 5. Usta en üst / 4 ayda seminer / paso yerine dijital; kapanışta "Öğrenci Yönetim Sistemi" butonu). Metin sistemle uyumlu: derece 0–17 (0 = derece yok, 1–12 öğrenci, 13–17 eğitmen → 5. Usta), seminer sınavını geçen öğrenci otomatik +1.
+- [ ] **Uyuşmazlık — kullanıcıya soruldu:** metin "yeni derecesine ait eğitim programı otomatik olarak erişime açılır" diyor ama sistemde **derece programı içeriği özelliği yok**. Seçenekler: (a) özelliği yap — her branş+derece için program içeriği (metin/video/PDF) panelden girilir, öğrenci panelde sadece kendi derecesine (ve öncekilere) ait programı görür; derece artınca yenisi otomatik açılır (mevcut kullanılmayan `GradeRequirement` tablosu genişletilebilir); (b) metni yumuşat.
 - [ ] Eğitmen bio'ları — kullanıcı hazırlayacak.
 - [ ] Panelin iç sayfaları tarayıcıda görsel olarak hiç incelenmedi (sadece koddan). Kullanıcı Chrome'da `app.demirwingtsun.com`'a giriş yaparsa görsel tur yapılacak.
 

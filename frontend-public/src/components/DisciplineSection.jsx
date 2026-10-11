@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import SafeImage from './SafeImage';
+import { APP_URL } from '../config';
 
 function toParagraphs(text) {
   return (text || '').split(/\n+/).map((p) => p.trim()).filter(Boolean);
@@ -23,12 +24,24 @@ export function resolveDiscipline(def, override) {
 export default function DisciplineSection({ d }) {
   return (
     <section id={d.slug} aria-labelledby={`${d.slug}-baslik`} className="scroll-mt-28 mt-16 pt-16 border-t border-dark-700">
-      <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary-600 mb-3">Disiplinlerimiz</p>
+      <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary-600 mb-3">{d.eyebrow || 'Disiplinlerimiz'}</p>
       <h2 id={`${d.slug}-baslik`} className="text-3xl md:text-4xl font-bold mb-2">{d.title}</h2>
       {d.tagline && <p className="text-dark-500 mb-8">{d.tagline}</p>}
 
       {d.image && (
         <SafeImage src={d.image} alt={d.title} className="w-full rounded-xl border border-dark-700 mb-8" />
+      )}
+
+      {d.facts?.length > 0 && (
+        <dl className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          {d.facts.map((f) => (
+            <div key={f.label} className="card p-4">
+              <dt className="sr-only">{f.label}</dt>
+              <dd className="text-2xl font-bold text-primary-600 leading-tight">{f.value}</dd>
+              <dd className="text-sm text-dark-400 mt-1">{f.label}</dd>
+            </div>
+          ))}
+        </dl>
       )}
 
       {d.highlights?.length > 0 && (
@@ -54,8 +67,17 @@ export default function DisciplineSection({ d }) {
         <div className="mt-10 rounded-xl border-l-4 border-primary-600 bg-dark-800 border border-dark-700 p-6">
           <p className="text-lg text-ink leading-relaxed">{d.closing}</p>
           <div className="flex flex-wrap gap-3 mt-5">
-            <Link to="/okullar" className="btn-primary">Okullarımız</Link>
-            <Link to="/iletisim" className="btn-secondary">İletişim</Link>
+            {d.actions === 'student' ? (
+              <>
+                <a href={APP_URL} className="btn-primary">Öğrenci Yönetim Sistemi</a>
+                <Link to="/okullar" className="btn-secondary">Okullarımız</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/okullar" className="btn-primary">Okullarımız</Link>
+                <Link to="/iletisim" className="btn-secondary">İletişim</Link>
+              </>
+            )}
           </div>
         </div>
       )}

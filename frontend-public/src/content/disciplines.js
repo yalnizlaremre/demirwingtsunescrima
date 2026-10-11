@@ -1,4 +1,4 @@
-// DemirWteo sayfasindaki disiplin bolumleri. Metinler kullanicidan geldi
+// DemirWteo sayfasindaki bolumler (disiplinler + Derecelendirme Sistemi, 2026-10-11). Metinler kullanicidan geldi
 // (Demir Escrima ve Demir Wing Tsun: 2026-10-11). `paragraphs` bos olan
 // disiplin sayfada gosterilmez.
 // Panelde Site Icerigi'nde ayni slug ile bir kayit olusturulursa (or. slug
@@ -43,5 +43,28 @@ export const DISCIPLINES = [
     highlights: ['60 cm rattan sopa', 'Tek sopa', 'Çift sopa', 'Bıçak', 'Boş el', 'Günlük eşyalar'],
     closing:
       'Sifu Serhat Demir’in kurduğu organizasyon, Sifu Saffet Demir’in rehberliği ve eğitmenlerin katkılarıyla bu mirası yaşatmaya devam etmektedir. Sizleri Demir Wing Tsun & Escrima Organizasyonu’na bekliyoruz.',
+  },
+  {
+    slug: 'derecelendirme-sistemi',
+    eyebrow: 'Eğitim süreci',
+    title: 'Derecelendirme Sistemi',
+    tagline: 'Kuşak değil, derece sistemiyle ilerleme',
+    // Metindeki sayisal bilgilerin ozeti (metinden alinmistir).
+    facts: [
+      { value: '12', label: 'öğrenci derecesi (Wing Tsun ve Escrima)' },
+      { value: '5. Usta', label: 'organizasyondaki en üst derece' },
+      { value: '4 ay', label: 'seminer ve derece sınavı periyodu' },
+      { value: 'Dijital', label: 'paso yerine Öğrenci Yönetim Sistemi' },
+    ],
+    paragraphs: [
+      'Demir Wing Tsun & Escrima Organizasyonu’nda ilerleme, kuşak sistemiyle değil, derece sistemiyle takip edilir. Wing Tsun ve Escrima eğitimlerinde 12 öğrenci derecesi bulunur. Öğrenci derecelerini tamamlayan ve eğitmenlik yolunda ilerleyen katılımcılar için ise eğitmen dereceleri yer alır. Organizasyondaki en üst seviye, 5. Usta Derece olarak kabul edilir.',
+      'Her derece, öğrencinin teknik bilgisini, uygulama becerisini, disiplinini ve önceki programlara hâkimiyetini kapsar. Yeni başlayan bir öğrenciden kendi derece programını öğrenmesi beklenirken, derece yükseldikçe önceki programların da daha sağlam ve doğru uygulanması beklenir. Bu nedenle öğrencinin sorumluluğu, her seviyede kademeli olarak artar.',
+      'Derece programlarının tamamlanma süresi; öğrencinin antrenman düzenine, çalışmaya ayırdığı zamana ve teknik gelişimine göre değişir. Düzenli yapılan grup antrenmanları ve bireysel çalışmalar gelişimi destekler; düzensiz katılım ise sürecin uzamasına neden olabilir.',
+      'Derece eğitimleri, dört aylık periyotlarla düzenlenen seminerler kapsamında değerlendirilir. Öğrenciler bu seminerlerde kendi derecelerine ait eğitim programını çalışır ve derece sınavına katılır.',
+      'Demir Wing Tsun & Escrima Organizasyonu’nda klasik paso uygulaması yerine, tüm takip işlemleri Öğrenci Yönetim Sistemi üzerinden gerçekleştirilir. Öğrenci; sistem üzerinden seminer ve etkinlik katılımını takip eder. Derece eğitimi ve sınav sürecini başarıyla tamamlayan öğrencinin katılımı, eğitmeni tarafından Öğrenci Yönetim Sistemi üzerinden onaylanır. Onayın ardından öğrencinin derecesi sistem üzerinde bir üst seviyeye güncellenir ve yeni derecesine ait eğitim programı otomatik olarak erişime açılır.',
+    ],
+    closing:
+      'Bu sistem sayesinde her öğrencinin eğitim süreci, derece ilerlemesi, seminer katılımları ve program içeriği düzenli, şeffaf ve kişiye özel biçimde takip edilir.',
+    actions: 'student',
   },
 ];

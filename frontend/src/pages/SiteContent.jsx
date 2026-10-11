@@ -14,6 +14,7 @@ const SUGGESTED_SLUGS = [
   { slug: 'kurucu', label: 'Kurucumuz (Eğitmenler sayfası)' },
   { slug: 'demir-wing-tsun', label: 'Demir Wing Tsun (DemirWteo sayfası)' },
   { slug: 'demir-escrima', label: 'Demir Escrima (DemirWteo sayfası)' },
+  { slug: 'derecelendirme-sistemi', label: 'Derecelendirme Sistemi (DemirWteo sayfası)' },
 ];
 
 function getYouTubeId(url) {
