@@ -1,12 +1,13 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-11 — DemirWteo sayfası: **Demir Wing Tsun**, **Demir Escrima** ve **Derecelendirme Sistemi** bölümleri eklendi (kullanıcının metinleri). Otomatik deploy kurulu: deploy = `main`'e push. Sıradaki iş: 2. tur.
+> Son güncelleme: 2026-10-11 — Eğitmenler sayfasına **Baş Eğitmen — Sifu Saffet Demir** biyografi bölümü eklendi (anma bölümünün altında). DemirWteo: Demir Wing Tsun, Demir Escrima, Derecelendirme Sistemi. Otomatik deploy kurulu: deploy = `main`'e push. Sıradaki iş: 2. tur.
 
 ## ŞU AN NEREDEYİZ — 2026-10-11
 
 ### Bekleyen / kullanıcıdan gelecek
-- [ ] **Sifu Saffet Demir henüz panele üye olmadı (2026-10-09 itibarıyla kullanıcı oluşturmadı).** Kullanıcı kendisiyle iletişime geçecek. Alternatif: admin panelden (Kullanıcılar → Yeni) onun adına hesap açabilir (e-posta gerekir). Üye olunca (kullanıcı haber verecek): panel → Kullanıcılar → Saffet Demir → onayla, rolü (muhtemelen MANAGER/Eğitmen, unvan SIFU) ayarla, "Tanıtım sitesinde öne çıkan eğitmen" ✔, **Sitedeki Unvan: "Baş Eğitmen"**, Sıralama: 0. Bunu kullanıcı panelden yapabilir ya da Claude tarayıcıdan yardım eder (Claude şifre giremez; kullanıcı Chrome'da giriş yapmış olmalı).
+- [x] **Sifu Saffet Demir biyografisi** → 2026-10-11 eklendi: `components/HeadInstructor.jsx`, Eğitmenler sayfasında anma bölümünün altında "BAŞ EĞİTMEN" bölümü. Fotoğraf: `public/sifu-saffet-demir.jpg` (picture/"Sifu Saffet.jpeg" — siyah-beyaz Escrima fotoğrafı, yatay şerit). "Sifu Saffet Demir.jpeg" (yanında çocuk olan selfie) gizlilik nedeniyle kullanılmadı.
+- [ ] **Sifu Saffet Demir henüz panele üye olmadı.** Üye olunca (ya da admin hesabını açınca): rol MANAGER, unvan SIFU, "öne çıkan eğitmen" ✔, **Sitedeki Unvan: "Baş Eğitmen"**. Bu yapılınca `HeadInstructor` bölümü o kaydın fotoğrafını/Instagram'ını (ve bio alanı doluysa onu) kullanır, kişi alttaki kartlarda tekrar görünmez. Bio alanı boş bırakılırsa koddaki biyografi kalır.
 - [x] ~~Sifu Serhat Demir hayat/hocalık hikâyesi~~ → 2026-10-09 kullanıcı verdi, `FounderMemorial.jsx` içinde varsayılan metin olarak eklendi (4 paragraf + "Kendisini saygı, sevgi ve özlemle anıyoruz." kapanışı). Panelde `kurucu` slug'lı Site İçeriği kaydı açılırsa onun metni (her satır bir paragraf) bunun yerine geçer.
 - [x] ~~Kadıköy ders saatleri~~ → doğrusu **Salı ve Perşembe 21:00–22:30** (2026-10-09). Migration `d4e5f6a7b8ca` `description`'ı günceller, `long_description`'ı boşaltır. Sitedeki okul kartı artık ders bilgisini `description`'dan (panelle aynı alan) gösteriyor; `long_description` sadece ek metin. Panel etiketleri: "Ders Saatleri / Kısa Açıklama" ve "Ek Tanıtım Metni".
 - [x] ~~Demir Escrima metni~~ → 2026-10-11 eklendi. DemirWteo sayfası artık: üstte panelden gelen `demirwteo` giriş bloğu, altında **disiplin bölümleri** (`content/disciplines.js` + `components/DisciplineSection.jsx`). Metin kod içinde varsayılan; panelde aynı slug'la (`demir-escrima`, `demir-wing-tsun`) Site İçeriği kaydı açılırsa o geçerli olur (slug önerileri panele eklendi). "Çalışmalarda" etiketleri (60 cm rattan sopa, tek/çift sopa, bıçak, boş el, günlük eşyalar) metinden özetlendi. Kapanış paragrafı + Okullarımız/İletişim butonları kutu içinde.
@@ -14,7 +15,7 @@
 - [x] ~~Derecelendirme Sistemi metni~~ → 2026-10-11 DemirWteo'ya 3. bölüm olarak eklendi (`disciplines.js` → `derecelendirme-sistemi`; 4 bilgi kutusu: 12 öğrenci derecesi / 5. Usta en üst / 4 ayda seminer / paso yerine dijital; kapanışta "Öğrenci Yönetim Sistemi" butonu). Metin sistemle uyumlu: derece 0–17 (0 = derece yok, 1–12 öğrenci, 13–17 eğitmen → 5. Usta), seminer sınavını geçen öğrenci otomatik +1.
 - [x] ~~Derece programı uyuşmazlığı~~ → kullanıcı 2. seçeneği seçti (2026-10-11): metin yumuşatıldı — "…ve öğrenci yeni derecesine ait eğitim programına geçer."; kapanıştaki "ve program içeriği" de çıkarıldı (sistemde derece programı içeriği özelliği YOK; kullanıcı istemedikçe sitede vaat edilmeyecek).
 - [x] DemirWteo sayfasında fotoğraf gösterilmiyor (kullanıcı isteği, 2026-10-11) — panelde `demirwteo` bloğuna görsel girilse de sayfa yok sayar; sadece üstteki logo var.
-- [ ] Eğitmen bio'ları — kullanıcı hazırlayacak.
+- [ ] Diğer eğitmenlerin bio'ları (Emre Yalnızlar, Serkan Çetin, Günder Murat Kocaman) — kullanıcı hazırlayacak; bunlar panelden (Kullanıcılar → Kısa Biyografi) girilebilir.
 - [ ] Panelin iç sayfaları tarayıcıda görsel olarak hiç incelenmedi (sadece koddan). Kullanıcı Chrome'da `app.demirwingtsun.com`'a giriş yaparsa görsel tur yapılacak.
 
 ### PLAN — 2. tur (kullanıcı onayladı, henüz başlanmadı)

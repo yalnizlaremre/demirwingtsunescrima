@@ -4,6 +4,7 @@ import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SafeImage from '../components/SafeImage';
 import FounderMemorial from '../components/FounderMemorial';
+import HeadInstructor, { HEAD_TITLE } from '../components/HeadInstructor';
 import usePageMeta from '../hooks/usePageMeta';
 
 const TITLE_LABELS = { SIFU: 'Sifu', SIHING: 'Sihing' };
@@ -28,6 +29,11 @@ export default function Egitmenler() {
 
   if (loading) return <LoadingSpinner />;
 
+  // Unvani "Bas Egitmen" olan kayit ayri bolumde gosterilir, kartlarda tekrarlanmaz.
+  const isHead = (i) => (i.public_title || '').trim().toLocaleLowerCase('tr') === HEAD_TITLE.toLocaleLowerCase('tr');
+  const head = instructors.find(isHead) || null;
+  const others = instructors.filter((i) => !isHead(i));
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
       <div className="text-center mb-12">
@@ -39,14 +45,16 @@ export default function Egitmenler() {
 
       <FounderMemorial />
 
-      {instructors.length === 0 ? (
+      <HeadInstructor instructor={head} />
+
+      {others.length === 0 ? (
         <div className="text-center text-dark-500 py-16">
           <Users className="mx-auto mb-4" size={40} />
           Henüz eğitmen eklenmemiş.
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {instructors.map((i) => (
+          {others.map((i) => (
             <div key={i.id} className={`card text-center ${i.public_title ? 'border-primary-600/40 ring-1 ring-primary-600/20' : ''}`}>
               <div className="w-24 h-24 rounded-full bg-dark-700 mx-auto mb-4 overflow-hidden flex items-center justify-center">
                 <SafeImage
