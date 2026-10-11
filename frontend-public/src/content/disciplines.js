@@ -1,6 +1,6 @@
 // DemirWteo sayfasindaki disiplin bolumleri. Metinler kullanicidan geldi
-// (Demir Escrima: 2026-10-11). `paragraphs` bos olan disiplin sayfada
-// gosterilmez (Demir Wing Tsun metni kullanici tarafindan hazirlaniyor).
+// (Demir Escrima ve Demir Wing Tsun: 2026-10-11). `paragraphs` bos olan
+// disiplin sayfada gosterilmez.
 // Panelde Site Icerigi'nde ayni slug ile bir kayit olusturulursa (or. slug
 // "demir-escrima") baslik/metin/gorsel o kayittan gelir; metindeki her satir
 // ayri paragraf olur.
@@ -9,9 +9,24 @@ export const DISCIPLINES = [
   {
     slug: 'demir-wing-tsun',
     title: 'Demir Wing Tsun',
-    paragraphs: [],
-    highlights: [],
-    closing: null,
+    tagline: 'Silahsız savunma prensipleri üzerine kurulu eğitim sistemi',
+    paragraphs: [
+      'Demir Wing Tsun, silahsız savunma prensipleri üzerine kurulu; gerçekçi, doğal ve etkili bir eğitim sistemidir. Doğal reflekslerden yararlanan yapısı sayesinde her yaş ve seviyeden kadın ve erkek katılımcının öğrenebileceği, günlük hayatta uygulanabilir beceriler kazandırmayı hedefler.',
+      'Eğitimlerde, karşılaşılabilecek riskli durumlarda kontrollü hareket etmek, mesafeyi doğru yönetmek, saldırganın hareket ve gücünü kendi aleyhine yönlendirmek ile güvenli biçimde uzaklaşmak esas alınır. İlk temas sonrasında gelişen yakın mesafe mücadelelerinde duyusal farkındalık ve doğru tepki verme becerileri geliştirilir.',
+      'Demir Wing Tsun çalışmaları; tekme, yumruk, diz–dirsek–kafa, tutma–kontrol–atma ve yerde mücadele olmak üzere farklı mesafelerde savunma prensiplerini ele alır. Bıçak, sopa ve yakın mesafedeki ateşli silah tehditlerine karşı korunma, kontrol ve güvenli uzaklaşma çalışmaları da eğitimlerin kapsamında yer alır.',
+      'Hedef, gereksiz şiddete başvurmadan; mümkün olan en kısa sürede, en az kuvvetle etkili kontrol sağlayabilmek ve riskli bir durumdan güvenli şekilde uzaklaşabilmektir. Bunun yanında eğitimler, fiziksel gelişimi ve yağ yakımını desteklerken; disiplin, özgüven, farkındalık ve güçlü bir aile ortamı da sunar.',
+    ],
+    // Metindeki calisma iceriklerinin kisa ozeti (metinden alinmistir).
+    highlights: [
+      'Tekme',
+      'Yumruk',
+      'Diz – dirsek – kafa',
+      'Tutma – kontrol – atma',
+      'Yerde mücadele',
+      'Bıçak, sopa ve ateşli silah tehditlerine karşı korunma',
+    ],
+    closing:
+      'Demir Wing Tsun, Sifu Serhat Demir’in eğitim mirası ve Sifu Saffet Demir’in rehberliği doğrultusunda İstanbul ve Tekirdağ’daki okullarda sürdürülmektedir.',
   },
   {
     slug: 'demir-escrima',
