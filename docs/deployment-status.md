@@ -1,10 +1,18 @@
 # WTEO — Deployment Durumu / Kaldığımız Yer
 
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
-> Son güncelleme: 2026-10-11 (oturum sonu) — Bugün: DemirWteo'ya Demir Wing Tsun / Demir Escrima / Derecelendirme Sistemi; Eğitmenler'e Baş Eğitmen Sifu Saffet Demir bölümü + Sifu Emre Yalnızlar biyografisi. Hepsi CANLIDA. Kullanıcı burada ara verdi. **Devam edince:** önce aşağıdaki "Kullanıcıya sorulacak" maddesini sor, sonra 2. tura (İletişim sayfası) geç.
+> Son güncelleme: 2026-10-26 (oturum sonu) — **Kurucumuz sayfası (`/kurucumuz`) push edildi (`5fd1136`), otomatik deploy ile canlıya geçiyor.** Kullanıcı burada ara verdi. **Devam edince:** (1) canlıda `/kurucumuz`, `/egitmenler` (Baş Eğitmen bölümü + bio pencereleri duruyor mu) ve menü/footer bağlantısını kontrol et; (2) aşağıdaki açık sorular; (3) 2. tur (İletişim sayfası).
 
 ## ŞU AN NEREDEYİZ — 2026-10-26
 - **Kurucumuz sayfası yapıldı** (`/kurucumuz`, menü + footer'da "Kurucumuz"; `frontend-public/src/pages/Kurucu.jsx`): portre, ad, 1978 – 26 Ekim 2025 ve kullanıcının verdiği hayat hikâyesi (eski `FounderMemorial.jsx` bölümü bu sayfaya taşındı, dosya silindi). Panelde Site İçeriği slug `kurucu` kaydı açılırsa ilk kaydın metni (satır = paragraf) varsayılanın yerine geçer. Eğitmenler sayfasındaki anma bölümü kaldırıldı (Baş Eğitmen bölümü ve bio pencereleri duruyor). Anı/mesaj bölümü, soy ağacı ve galeri **bilerek yok** (kullanıcı istemedi). 2. turdaki "anasayfaya kurucu şeridi" maddesi açık (kısa şerit → `/kurucumuz`); "DemirWteo'da soy ağacı" maddesi şimdilik düşürüldü.
+
+### Bu oturumda (2026-10-26) kararlar ve ayrıntılar
+- Kullanıcı kurucu için **ayrı sayfa** istedi, adı **"Kurucumuz"**, adres `/kurucumuz`. Sayfa **yalın**: portre + ad + yıllar + hayat hikâyesi + kapanış. İstenmeyenler: anı/mesaj bölümü, "Hocadan Öğrenciye" soy ağacı, "Anılarda" galerisi, Eğitmenler'de anma şeridi.
+- Metin: kullanıcının 2026-10-09'da verdiği 4 paragraf (`Kurucu.jsx` → `DEFAULTS.paragraphs`) + "Kendisini saygı, sevgi ve özlemle anıyoruz." Eski "Sevgi ve Özlem İle" satırı kullanılmıyor. Doğum–vefat satırı kodda sabit.
+- Önemli ders: başka bir oturum aynı dosyaları (FounderMemorial, Egitmenler) değiştirmişti ve ben haberdar olmadan benzer bir sayfa yazmıştım; push'tan önce `git fetch` + `HEAD..origin/main` bakmak çakışmayı yakaladı. Kullanıcı "ezmeden karşılaştır" dedi; rebase ile çözüldü. **Her iş başında `git fetch` ve `git log HEAD..origin/main` yap.**
+- Yerel önizleme: `frontend-public` içinde `npx vite --host 0.0.0.0 --port 5174` (yalnız IPv6 dinlerse tarayıcı bağlanamayabiliyor); backend yerelde çalışmıyor, API'den gelen içerik (eğitmen kartları, panel metinleri) görünmez. Kullanıcı kuralı: **commit/push'tan önce yerelde tarayıcıda göster, onay al.**
+- Takipsiz dosyalar bilerek commit edilmedi: `picture/Sifu-Serhat.jpeg`, `screenshots/`.
+- 2. turdaki "anasayfaya kurucu şeridi" maddesi hâlâ açık (kısa şerit → `/kurucumuz`); "DemirWteo'da soy ağacı" maddesi kullanıcı isteğiyle şimdilik düşürüldü.
 
 ## ŞU AN NEREDEYİZ — 2026-10-11
 
