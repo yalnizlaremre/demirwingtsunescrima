@@ -3,7 +3,6 @@ import { Users, Instagram, X } from 'lucide-react';
 import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SafeImage from '../components/SafeImage';
-import FounderMemorial from '../components/FounderMemorial';
 import HeadInstructor, { HEAD_TITLE } from '../components/HeadInstructor';
 import usePageMeta from '../hooks/usePageMeta';
 
@@ -55,7 +54,6 @@ export default function Egitmenler() {
         </p>
       </div>
 
-      <FounderMemorial />
 
       <HeadInstructor instructor={head} />
 

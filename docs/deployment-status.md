@@ -3,6 +3,9 @@
 > Bu dosya oturumlar arası devamlılık için tutuluyor. "Nerede kaldık" dendiğinde buradan bak.
 > Son güncelleme: 2026-10-11 (oturum sonu) — Bugün: DemirWteo'ya Demir Wing Tsun / Demir Escrima / Derecelendirme Sistemi; Eğitmenler'e Baş Eğitmen Sifu Saffet Demir bölümü + Sifu Emre Yalnızlar biyografisi. Hepsi CANLIDA. Kullanıcı burada ara verdi. **Devam edince:** önce aşağıdaki "Kullanıcıya sorulacak" maddesini sor, sonra 2. tura (İletişim sayfası) geç.
 
+## ŞU AN NEREDEYİZ — 2026-10-26
+- **Kurucumuz sayfası yapıldı** (`/kurucumuz`, menü + footer'da "Kurucumuz"; `frontend-public/src/pages/Kurucu.jsx`): portre, ad, 1978 – 26 Ekim 2025 ve kullanıcının verdiği hayat hikâyesi (eski `FounderMemorial.jsx` bölümü bu sayfaya taşındı, dosya silindi). Panelde Site İçeriği slug `kurucu` kaydı açılırsa ilk kaydın metni (satır = paragraf) varsayılanın yerine geçer. Eğitmenler sayfasındaki anma bölümü kaldırıldı (Baş Eğitmen bölümü ve bio pencereleri duruyor). Anı/mesaj bölümü, soy ağacı ve galeri **bilerek yok** (kullanıcı istemedi). 2. turdaki "anasayfaya kurucu şeridi" maddesi açık (kısa şerit → `/kurucumuz`); "DemirWteo'da soy ağacı" maddesi şimdilik düşürüldü.
+
 ## ŞU AN NEREDEYİZ — 2026-10-11
 
 ### Kullanıcıya sorulacak (açık soru)
