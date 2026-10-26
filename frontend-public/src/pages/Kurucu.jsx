@@ -15,7 +15,7 @@ const DEFAULTS = {
     'Sifu Serhat Demir, 1978’de İstanbul’da doğdu. Dövüş sanatlarına olan ilgisi, ağabeyi Saffet Demir’in etkisiyle küçük yaşlarda başladı. Shotokan Karate, Shaolin Kung Fu ve Kickboks gibi çeşitli dallarda eğitim aldı. 1991’de Wing Tsun ile tanıştı ve 1994’te Mustafa Şahin ile Sifu Salih Avcı’nın liderliğindeki EWTO okullarında Wing Tsun eğitimine başladı.',
     '2005’te kendi grubunu kurarak Bakırköy’de Wing Tsun dersleri vermeye başladı; aynı zamanda Saffet Demir’in yanında asistanlık görevine devam etti. Grup çalışmaları farklı bölgelerde sürdü; İstanbul’da ve Tekirdağ’da öğrenciler yetiştirdi.',
     '2019 yılı Ekim ayı itibarıyla Demir Wing Tsun & Escrima Organizasyonu’nu kurdu. Wing Tsun ve Escrima disiplinlerindeki bilgi ve tecrübesini öğrencileriyle paylaşarak gelişimlerine katkı sağladı.',
-    'Sifu Serhat Demir, Ekim 2025’te vefat etmiştir. Dövüş sanatlarına olan tutkusu, yetiştirdiği öğrenciler ve kurduğu Demir Wing Tsun & Escrima Organizasyonu aracılığıyla yaşamaya devam etmektedir.',
+    'Sifu Serhat Demir, 26 Ekim 2025’te vefat etmiştir. Dövüş sanatlarına olan tutkusu, yetiştirdiği öğrenciler ve kurduğu Demir Wing Tsun & Escrima Organizasyonu aracılığıyla yaşamaya devam etmektedir.',
   ],
   closing: 'Kendisini saygı, sevgi ve özlemle anıyoruz.',
 };
